@@ -3,8 +3,8 @@ class RossCli < Formula
 
   desc "Ross CLI tool"
   homepage "https://github.com/ResearchOS/ross_cli"
-  url "https://github.com/ResearchOS/ross_cli/ross-0.1.0.tar.gz"
-  sha256 "your_package_sha256_here"  # Replace with actual SHA256
+  url "https://github.com/ResearchOS/ross_cli/archive/refs/tags/0.1.0.tar.gz"
+  sha256 "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"  # Replace with actual SHA256
   license "MIT"
 
   depends_on "python@3.9"
