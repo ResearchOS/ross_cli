@@ -1,0 +1,6 @@
+# Version manifest
+PackageIdentifier: ResearchOS.RossCLI
+PackageVersion: 0.1.1
+DefaultLocale: en-US
+ManifestType: version
+ManifestVersion: 1.4.0

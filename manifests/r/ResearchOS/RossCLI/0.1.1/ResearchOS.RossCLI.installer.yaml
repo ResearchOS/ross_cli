@@ -1,0 +1,16 @@
+# Installer manifest
+PackageIdentifier: ResearchOS.RossCLI
+PackageVersion: 0.1.1
+InstallerLocale: en-US
+MinimumOSVersion: 10.0.0.0
+InstallerType: portable
+Scope: user
+InstallModes:
+  - silent
+  - silentWithProgress
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/ResearchOS/ross_cli/releases/download/v0.1.0/ross-0.1.0-win64.zip
+    InstallerSha256: YOUR-SHA256-HASH
+ManifestType: installer
+ManifestVersion: 1.4.0
