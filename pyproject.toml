@@ -3,12 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "rto_projects"
+name = "ross-cli"
 version = "0.1.0"
-description = "A simple, GitHub based repository for data science projects."
+description = "A simple, private, GitHub based index system for data science projects."
 dependencies = [
     "tomli",
-    "tomli-w"
+    "tomli-w",
+    "typer"
 ]
 authors = [
     {name = "Mitchell Tillman", email = "mtillman14@gmail.com"}
@@ -19,4 +20,4 @@ maintainers = [
 readme = "README.md"
 
 [project.scripts]
-rto = "rto_projects.cli:app"
+ross = "ross_cli.cli:app"

@@ -3,7 +3,7 @@ import os
 import subprocess
 import re
 
-def get_remote_urls_from_git_repo(directory="."):
+def get_remote_url_from_git_repo(directory="."):
     """
     Extracts all remote URLs from a git repository in the specified directory.
     

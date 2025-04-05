@@ -5,16 +5,17 @@ from typing import List
 import typer
 import tomli
 
-from .git.github import get_remote_urls_from_git_repo, git_push_to_remote
+from .git.github import get_remote_url_from_git_repo, git_push_to_remote
 from .git.index import get_package_remote_url_from_index_file
 from .commands import add_to_index, install, uninstall, release
 from .setup import setup
 
 app = typer.Typer()
 
-DEFAULT_INDEX_FILE_PATH = os.path.expanduser("~/.rto/indices/index1.toml")
-DEFAULT_INSTALL_FOLDER_PATH = os.path.join(os.getcwd(), "src")
-DEFAULT_PYPROJECT_TOML_PATH = os.path.join(os.getcwd(), "pyproject.toml")
+index_app = typer.Typer() # Create a new app for the index command
+app.add_typer(index_app, name="index") # Add the index app to the main app
+
+from .constants import *
 
 @app.command(name="install")
 def install_command(name: str, index_file_path = DEFAULT_INDEX_FILE_PATH, install_folder_path: str = DEFAULT_INSTALL_FOLDER_PATH, args: List[str] = []):
@@ -58,7 +59,7 @@ def add_to_index_command(name: str, package_folder_path: str = os.getcwd(), inde
     result = setup(index_file_path)
 
     toml_file_path = index_file_path
-    remote_url = get_remote_urls_from_git_repo()
+    remote_url = get_remote_url_from_git_repo()
     add_to_index.update_toml_index_file(toml_file_path, name, remote_url)
     git_push_to_remote(os.path.dirname(index_file_path))
     result = add_to_index.create_package_structure(name, package_folder_path)
@@ -82,3 +83,34 @@ def release_command(pyproject_toml_path: str = DEFAULT_PYPROJECT_TOML_PATH, args
     release.release_package(pyproject_toml, args)
 
     typer.echo(f"Package {name} version {version} released successfully.")
+
+##############################################################################
+########################### Index command ####################################
+##############################################################################
+@index_app.command(name="create")
+def index_create_command(index_file_path: str = DEFAULT_INDEX_FILE_PATH):
+    """Create the index file."""
+    result = setup(index_file_path)
+    if result == 0:
+        typer.echo(f"Index file created at {index_file_path}.")
+    else:
+        typer.echo(f"Index file already exists at {index_file_path}.")
+        raise typer.Exit(1)
+    
+@index_app.command(name="print")
+def index_print_command(index_file_path: str = DEFAULT_INDEX_FILE_PATH):
+    """Print the index file."""
+    result = setup(index_file_path)
+    if result == 0:
+        with open(index_file_path, "rb") as f:
+            toml_file = tomli.load(f)
+            typer.echo(toml_file)
+    else:
+        typer.echo(f"Index file does not exist at {index_file_path}.")
+        raise typer.Exit(1)
+    
+@index_app.command(name="locate")
+def index_locate_command(index_file_path: str = DEFAULT_INDEX_FILE_PATH):
+    """Locate a package in the index file."""
+    print("The index file is located at: ")
+    typer.echo(index_file_path)

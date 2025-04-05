@@ -4,10 +4,10 @@ import subprocess
 import tomli_w
 
 from .cli import DEFAULT_INDEX_FILE_PATH
-from .git.github import get_remote_urls_from_git_repo
+from .git.github import get_remote_url_from_git_repo
 
 def setup(index_file_path: str = DEFAULT_INDEX_FILE_PATH):
-    """Create the index file at the specified location."""
+    """Create the config file and the index file at the specified location."""
     index_folder_path = os.path.dirname(index_file_path)
     os.makedirs(index_folder_path, exist_ok=True)    
 
@@ -32,7 +32,7 @@ def setup(index_file_path: str = DEFAULT_INDEX_FILE_PATH):
              # Add the remote repository
             subprocess.run(["git", "remote", "add", "origin", url], cwd=index_folder_path)
         else:
-            url = get_remote_urls_from_git_repo(index_folder_path)
+            url = get_remote_url_from_git_repo(index_folder_path)
         
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")

@@ -3,7 +3,7 @@ import os
 import tomli
 import subprocess
 
-from .github import get_remote_urls_from_git_repo
+from .github import get_remote_url_from_git_repo
 
 def get_package_remote_url_from_index_file(name: str, index_file_path: str):
     """Get the remote URL from the index file."""
@@ -12,7 +12,7 @@ def get_package_remote_url_from_index_file(name: str, index_file_path: str):
     
     # Get any updates from GitHub for the index file
     parent_folder = os.path.dirname(index_file_path)
-    index_repo_remote_url = get_remote_urls_from_git_repo(parent_folder)
+    index_repo_remote_url = get_remote_url_from_git_repo(parent_folder)
     try:
         subprocess.run(["git", "pull", index_repo_remote_url])
     except subprocess.CalledProcessError as e:
