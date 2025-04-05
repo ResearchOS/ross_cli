@@ -1,14 +1,15 @@
 import os
 import subprocess
 from typing import List
+from pprint import pprint
 
 import typer
 import tomli
+import tomli_w
 
-from .git.github import get_remote_url_from_git_repo, git_push_to_remote
+from .git.github import get_remote_url_from_git_repo, git_push_to_remote, parse_github_url
 from .git.index import get_package_remote_url_from_index_file
 from .commands import add_to_index, install, uninstall, release
-from .setup import setup
 
 app = typer.Typer()
 
@@ -18,7 +19,7 @@ app.add_typer(index_app, name="index") # Add the index app to the main app
 from .constants import *
 
 @app.command(name="install")
-def install_command(name: str, index_file_path = DEFAULT_INDEX_FILE_PATH, install_folder_path: str = DEFAULT_INSTALL_FOLDER_PATH, args: List[str] = []):
+def install_command(name: str, index_file_path: str = None, install_folder_path: str = DEFAULT_INSTALL_FOLDER_PATH, args: List[str] = []):
     """Install a package.
     1. Get the URL from the .toml file (default: ~/.rto/indices/index1.toml)
     2. Install the package using pip"""
@@ -40,7 +41,7 @@ def uninstall_command(name: str, install_folder_path: str = DEFAULT_INSTALL_FOLD
     os.rmdir(os.path.join(install_folder_path, name))
 
 @app.command(name="add")
-def add_to_index_command(name: str, package_folder_path: str = os.getcwd(), index_file_path = DEFAULT_INDEX_FILE_PATH):
+def add_to_index_command(name: str, package_folder_path: str = os.getcwd(), index_file_path: str = None):
     """Create a new package.
     1. Register the package with the .toml file living in the user's home directory. Throw error if file does not exist.
         - Locate the .toml file (default: ~/.rto/indices/index1.toml)
@@ -56,7 +57,6 @@ def add_to_index_command(name: str, package_folder_path: str = os.getcwd(), inde
         .gitignore
     """
     typer.echo(f"Creating new package {name}...")
-    result = setup(index_file_path)
 
     toml_file_path = index_file_path
     remote_url = get_remote_url_from_git_repo()
@@ -84,33 +84,73 @@ def release_command(pyproject_toml_path: str = DEFAULT_PYPROJECT_TOML_PATH, args
 
     typer.echo(f"Package {name} version {version} released successfully.")
 
+@app.command(name="tap")
+def tap_command(remote_url: str):
+    """Add the index GitHub repository to the list of indices in the config file at DEFAULT_ROSS_CONFIG_FILE_PATH.
+    1. Parse for GitHub username and repository name from the URL
+    2. Fail if the folder ~/.ross/indices/<username/repo> exists on disk, or ~/.ross/indices/<username/repo>/.toml exists in ~/.ross/ross_config.toml.
+    3. Clone the GitHub repository to ~/.ross/indices/<username/repo>. 
+    4. If ~/.ross/indices/<username/repo>/index.toml does not exist, create it.
+    5. Add the index.toml file path to ~/.ross/ross_config.toml.
+    6. Push the changes to the remote repository."""
+    # Check for the existence of the config file    
+    if not os.path.exists(DEFAULT_ROSS_CONFIG_FILE_PATH):
+        raise FileNotFoundError(f"ROSS config file {DEFAULT_ROSS_CONFIG_FILE_PATH} does not exist.")
+    
+    # Parse for GitHub username and repository name from the URL
+    username, repo_name = parse_github_url(remote_url)
+    repo_git_file_path = os.path.join(DEFAULT_ROSS_INDICES_FOLDER, username, repo_name, '.git') 
+    repo_folder_path = os.path.join(DEFAULT_ROSS_INDICES_FOLDER, username, repo_name)    
+    
+    # Check if the index file path already exists in the config file
+    with open(DEFAULT_ROSS_CONFIG_FILE_PATH, 'rb') as f:
+        ross_config = tomli.load(f)
+        if "index" not in ross_config:
+            ross_config["index"] = []
+        for index in ross_config["index"]:
+            if index["path"] == repo_folder_path:
+                raise ValueError(f"Aborting. Index file {index['path']} already exists in {DEFAULT_ROSS_CONFIG_FILE_PATH}.")
+            
+    # Clone the GitHub repository to ~/.ross/indices/<username/repo>
+    if os.path.exists(repo_git_file_path):
+        typer.echo(f"Repository already exists at {repo_git_file_path}.")
+        typer.echo("Running `git pull` on the repository.")
+        subprocess.run(["git", "pull"], cwd=repo_folder_path, check=True)
+    else:
+        if os.path.exists(repo_folder_path):
+            raise ValueError(f"Cannot clone index from remote because local folder already exists at {repo_folder_path}.")
+        subprocess.run(["git", "clone", remote_url, repo_folder_path], check=True)
+
+    # Create the index file if it doesn't exist
+    index_file_path = os.path.join(repo_folder_path, "index.toml")
+    if not os.path.exists(index_file_path):
+        with open(index_file_path, "wb") as f:
+            tomli_w.dump({}, f)
+        # git push to remote
+        subprocess.run(["git", "add", index_file_path], cwd=repo_folder_path, check=True)
+        subprocess.run(["git", "commit", "-m", "Add index.toml file"], cwd=repo_folder_path, check=True)
+        git_push_to_remote(repo_folder_path)
+
+    # Add the index.toml file path to DEFAULT_DEFAULT_ROSS_CONFIG_FILE_PATH
+    ross_config["index"].append({"name": repo_name, "path": index_file_path})
+    with open(DEFAULT_ROSS_CONFIG_FILE_PATH, "wb") as f:
+        tomli_w.dump(ross_config, f)
+
 ##############################################################################
 ########################### Index command ####################################
 ##############################################################################
-@index_app.command(name="create")
-def index_create_command(index_file_path: str = DEFAULT_INDEX_FILE_PATH):
-    """Create the index file."""
-    result = setup(index_file_path)
-    if result == 0:
-        typer.echo(f"Index file created at {index_file_path}.")
-    else:
-        typer.echo(f"Index file already exists at {index_file_path}.")
-        raise typer.Exit(1)
-    
 @index_app.command(name="print")
-def index_print_command(index_file_path: str = DEFAULT_INDEX_FILE_PATH):
+def index_print_command(index_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH):
     """Print the index file."""
-    result = setup(index_file_path)
-    if result == 0:
-        with open(index_file_path, "rb") as f:
-            toml_file = tomli.load(f)
-            typer.echo(toml_file)
-    else:
-        typer.echo(f"Index file does not exist at {index_file_path}.")
-        raise typer.Exit(1)
+    if not os.path.exists(index_file_path):
+        raise FileNotFoundError(f"File {index_file_path} does not exist.")
+    
+    with open(index_file_path, "rb") as f:
+        toml_file = tomli.load(f)
+        pprint(toml_file)
     
 @index_app.command(name="locate")
-def index_locate_command(index_file_path: str = DEFAULT_INDEX_FILE_PATH):
+def index_locate_command():
     """Locate a package in the index file."""
     print("The index file is located at: ")
-    typer.echo(index_file_path)
+    typer.echo(DEFAULT_ROSS_CONFIG_FILE_PATH)

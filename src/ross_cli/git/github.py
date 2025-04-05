@@ -2,6 +2,8 @@
 import os
 import subprocess
 import re
+from typing import Tuple
+from urllib.parse import urlparse
 
 def get_remote_url_from_git_repo(directory="."):
     """
@@ -90,3 +92,33 @@ def git_push_to_remote(directory="."):
         Exception(f"Git command failed: {e.stderr.strip()}")
     except Exception as e:
         Exception(f"Error: {str(e)}")
+
+def parse_github_url(url: str) -> Tuple[str, str]:
+    """Parse GitHub username and repository name from URL.
+    
+    Args:
+        url: GitHub repository URL (HTTPS or SSH format)
+        
+    Returns:
+        Tuple of (username, repository_name)
+        
+    Raises:
+        ValueError: If URL format is invalid
+    """
+    # Handle HTTPS URLs (https://github.com/username/repo.git)
+    if url.startswith('https://'):
+        parts = urlparse(url).path.strip('/').split('/')
+        if len(parts) != 2:
+            raise ValueError(f"Invalid GitHub URL format: {url}")
+        return parts[0], parts[1].replace('.git', '')
+        
+    # Handle SSH URLs (git@github.com:username/repo.git)
+    elif url.startswith('git@'):
+        pattern = r'git@github\.com:([^/]+)/([^/]+)\.git'
+        match = re.match(pattern, url)
+        if not match:
+            raise ValueError(f"Invalid GitHub SSH URL format: {url}")
+        return match.group(1), match.group(2)
+    
+    else:
+        raise ValueError(f"URL must start with 'https://' or 'git@': {url}")

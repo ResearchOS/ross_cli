@@ -19,5 +19,9 @@ maintainers = [
 ]
 readme = "README.md"
 
+[project.urls]
+Homepage = "https://github.com/ResearchOS/ross_cli"
+Repository = "https://github.com/ResearchOS/ross_cli"
+
 [project.scripts]
 ross = "ross_cli.cli:app"
