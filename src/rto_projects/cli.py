@@ -1,0 +1,84 @@
+import os
+import subprocess
+from typing import List
+
+import typer
+import tomli
+
+from .git.github import get_remote_urls_from_git_repo, git_push_to_remote
+from .git.index import get_package_remote_url_from_index_file
+from .commands import add_to_index, install, uninstall, release
+from .setup import setup
+
+app = typer.Typer()
+
+DEFAULT_INDEX_FILE_PATH = os.path.expanduser("~/.rto/indices/index1.toml")
+DEFAULT_INSTALL_FOLDER_PATH = os.path.join(os.getcwd(), "src")
+DEFAULT_PYPROJECT_TOML_PATH = os.path.join(os.getcwd(), "pyproject.toml")
+
+@app.command(name="install")
+def install_command(name: str, index_file_path = DEFAULT_INDEX_FILE_PATH, install_folder_path: str = DEFAULT_INSTALL_FOLDER_PATH, args: List[str] = []):
+    """Install a package.
+    1. Get the URL from the .toml file (default: ~/.rto/indices/index1.toml)
+    2. Install the package using pip"""
+    typer.echo(f"Installing {name}...")
+    result = setup(index_file_path)
+
+    remote_url = get_package_remote_url_from_index_file(name, index_file_path)    
+    github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
+
+    # Set the PIP_SRC environment variable to the install folder path
+    os.environ["PIP_SRC"] = install_folder_path
+    subprocess.run(["pip", "install", "-e", github_full_url] + args)
+
+@app.command(name="uninstall")
+def uninstall_command(name: str, install_folder_path: str = DEFAULT_INSTALL_FOLDER_PATH, args: List[str] = []):
+    """Uninstall a package."""
+    typer.echo(f"Uninstalling {name}...")
+    subprocess.run(["pip", "uninstall", name] + args)
+    os.rmdir(os.path.join(install_folder_path, name))
+
+@app.command(name="add")
+def add_to_index_command(name: str, package_folder_path: str = os.getcwd(), index_file_path = DEFAULT_INDEX_FILE_PATH):
+    """Create a new package.
+    1. Register the package with the .toml file living in the user's home directory. Throw error if file does not exist.
+        - Locate the .toml file (default: ~/.rto/indices/index1.toml)
+        - Get the remote URLs from the git repository (fail if folder is not a git repo, and error if 0 or 2+ remotes exist)
+        - Add the package to the .toml file (error if it already exists)
+        [package_name]
+        url = "https://github.com/username/repo.git"
+    2. Create the package directory and files in the `package_folder_path` (default: current working directory). Don't create each file/folder if it already exists.
+        - README.md
+        - src/
+        - tests/
+        - docs/
+        .gitignore
+    """
+    typer.echo(f"Creating new package {name}...")
+    result = setup(index_file_path)
+
+    toml_file_path = index_file_path
+    remote_url = get_remote_urls_from_git_repo()
+    add_to_index.update_toml_index_file(toml_file_path, name, remote_url)
+    git_push_to_remote(os.path.dirname(index_file_path))
+    result = add_to_index.create_package_structure(name, package_folder_path)
+    if result == 0:
+        typer.echo(f"Package {name} created successfully.")
+
+@app.command(name="release")
+def release_command(pyproject_toml_path: str = DEFAULT_PYPROJECT_TOML_PATH, args: List[str] = ['--fail-on-no-commits', ]):
+    """Release a new version of a package."""
+    if not os.path.exists(pyproject_toml_path):
+        raise typer.BadParameter(f"File {pyproject_toml_path} does not exist.")
+    
+    pyproject_folder_path = os.path.dirname(pyproject_toml_path)
+    os.chdir(pyproject_folder_path)
+    pyproject_toml = tomli.load(pyproject_toml_path)
+    name = pyproject_toml["project"]["name"]
+    version = pyproject_toml["project"]["version"]    
+
+    typer.echo(f"Releasing package {name} version {version}...")
+    
+    release.release_package(pyproject_toml, args)
+
+    typer.echo(f"Package {name} version {version} released successfully.")
