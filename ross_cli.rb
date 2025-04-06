@@ -3,9 +3,11 @@ class RossCli < Formula
 
   desc "Ross CLI tool"
   homepage "https://github.com/ResearchOS/ross_cli"
-  url "https://github.com/ResearchOS/ross_cli/archive/v0.1.1.tar.gz"
-  sha256 "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"
+  url "https://github.com/ResearchOS/ross_cli.git",
+      tag:      "v0.1.1",
+      revision: "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"
   license "MIT"
+  head "https://github.com/ResearchOS/ross_cli.git", branch: "main"
 
   depends_on "python@3.9"
 
