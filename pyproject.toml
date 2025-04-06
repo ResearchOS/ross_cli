@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ross-cli"
-version = "0.1.1"
+version = "0.1.2"
 description = "A simple, private, GitHub based index system for data science projects."
 dependencies = [
     "tomli",

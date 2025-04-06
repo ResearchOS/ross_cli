@@ -1,0 +1,10 @@
+# Locale manifest
+PackageIdentifier: ResearchOS.RossCLI
+PackageVersion: 0.1.2
+PackageLocale: en-US
+Publisher: ResearchOS
+PackageName: Ross CLI
+License: MIT
+ShortDescription: Research Operating System CLI tool
+ManifestType: defaultLocale
+ManifestVersion: 1.4.0
