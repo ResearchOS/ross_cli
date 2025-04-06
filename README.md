@@ -5,8 +5,8 @@ GitHub-based packaging repository
 
 ### macOS
 ```bash
-brew tap researchos/ross
-brew install ross-cli
+brew tap researchos/ross_cli
+brew install ross_cli
 ```
 
 ### Windows

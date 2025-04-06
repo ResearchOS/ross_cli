@@ -3,7 +3,7 @@ class RossCli < Formula
 
   desc "Ross CLI tool"
   homepage "https://github.com/ResearchOS/ross_cli"
-  url "https://github.com/ResearchOS/ross_cli.git",
+  url "https://github.com/archive/refs/tags/v0.1.2.tar.gz",
       tag:      "v0.1.2",
       revision: "79eb13e1f6486b70e03615959c7ec52098a13140b03eb7d660dd27820b156593"
   license "MIT"
