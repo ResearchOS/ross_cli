@@ -74,11 +74,14 @@ class RossCli < Formula
 
   def post_install
       # Create the config directory and file
-      system "mkdir", "-p", "#{Dir.home}/.ross"
+      config_dir = "#{ENV["HOME"]}/Library/Application Support/ross"
+      config_file = "#{config_dir}/ross_config.toml"
+
+      system "mkdir", "-p", config_dir
       
       # Only create config file if it doesn't exist
-      unless File.exist?("#{Dir.home}/.ross/ross_config.toml")
-        (Dir.home/".ross/ross_config.toml").write <<~EOS
+      unless File.exist?(config_file)
+        (Pathname.new(config_file)).write <<~EOS
           # Ross default configuration
           [general]
           log = "info"
