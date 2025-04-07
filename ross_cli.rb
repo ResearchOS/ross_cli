@@ -74,7 +74,7 @@ class RossCli < Formula
 
   def post_install
       # Create the config directory and file
-      config_dir = "~/.ross"
+      config_dir = "/opt/homebrew/.ross"
       config_file = "#{config_dir}/ross_config.toml"
 
       system "mkdir -p #{config_dir}"
