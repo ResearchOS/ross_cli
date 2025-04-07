@@ -22,7 +22,7 @@ DEFAULT_ROSS_CONFIG_CONTENT = {
 # Constants for file paths
 PROJECT_FOLDER = os.getcwd()
 DEFAULT_ROSS_ROOT_FOLDER = os.path.join(os.path.expanduser("~"), ".ross")
-DEFAULT_ROSS_INDICES_FOLDER = os.path.join(DEFAULT_ROSS_ROOT_FOLDER, "indices")
+DEFAULT_ROSS_INDICES_FOLDER = os.path.join(DEFAULT_ROSS_ROOT_FOLDER, "indexes")
 DEFAULT_ROSS_CONFIG_FILE_PATH = os.path.join(DEFAULT_ROSS_ROOT_FOLDER, "ross_config.toml")
 DEFAULT_PIP_SRC_FOLDER_PATH = os.path.join(PROJECT_FOLDER, "src")
 DEFAULT_PYPROJECT_TOML_PATH = os.path.join(PROJECT_FOLDER, "pyproject.toml")

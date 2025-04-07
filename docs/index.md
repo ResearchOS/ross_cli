@@ -55,11 +55,11 @@ ross init
 Creates the `rossproject.toml` file in the current directory, and creates a minimal project folder structure.
 
 # Tap an index
-Before installing any packages, you need to `tap` (add) an index to tell `ross` where it should be looking for packages. Indices are GitHub repositories owned by you or someone else that contain an `index.toml` file. This file contains a list of package names & URL's.
+Before installing any packages, you need to `tap` (add) an index to tell `ross` where it should be looking for packages. Indexes are GitHub repositories owned by you or someone else that contain an `index.toml` file. This file contains a list of package names & URL's.
 ```bash
 ross tap https://github.com/github_user/github_repo
 ```
-This clones the repo to your computer at `~/.ross/taps/github_user/github_repo` and creates an `index.toml` file in that directory, if it doesn't already exist.
+This clones the repo to your computer at `~/.ross/indexes/github_user/github_repo` and creates an `index.toml` file in that directory, if it doesn't already exist.
 
 ## Create an index
 An index is just a GitHub repository. You can create one by [going to GitHub's website and creating a new repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/quickstart-for-repositories). 
@@ -76,7 +76,7 @@ url = "https://github.com/example_user/example_package"
 ```bash
 ross install example_package
 ```
-This will search through all of the tapped indices for the package name, and `pip install --editable git+<url>` the package. Installing a package in editable mode allows you to have just as much control over the packages you install as if you had written it yourself.
+This will search through all of the tapped indexes for the package name, and `pip install --editable git+<url>` the package. Installing a package in editable mode allows you to have just as much control over the packages you install as if you had written it yourself.
 
 # Release a package (optional, not yet implemented, requires `gh` CLI)
 ```bash

@@ -45,7 +45,7 @@ def tap_command(remote_url: str):
 @app.command(name="install")
 def install_command(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, args: List[str] = []):
     """Install a package.
-    1. Get the URL from the .toml file (default: ~/.ross/indices/index1.toml)
+    1. Get the URL from the .toml file
     2. Install the package using pip""" 
     install.install(package_name, install_folder_path, args)
 

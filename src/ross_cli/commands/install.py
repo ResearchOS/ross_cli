@@ -8,8 +8,8 @@ from ..constants import *
 from ..git.index import get_package_remote_url
 
 def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, args: List[str] = []):
-    """Install a package.
-    1. Get the URL from the .toml file (default: ~/.ross/indices/index1.toml)
+    f"""Install a package.
+    1. Get the URL from the .toml file (default: {DEFAULT_ROSS_INDICES_FOLDER})
     2. Install the package using pip""" 
 
     # Check that this folder contains a rossproject.toml file
