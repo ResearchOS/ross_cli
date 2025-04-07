@@ -1,6 +1,3 @@
-# Documentation: https://docs.brew.sh/Formula-Cookbook
-#                https://rubydoc.brew.sh/Formula
-# PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
 class RossCli < Formula
   include Language::Python::Virtualenv
 
@@ -11,12 +8,6 @@ class RossCli < Formula
   license "MIT"
 
   depends_on "python@3.13"
-
-  # Additional dependency
-  # resource "" do
-  #   url ""
-  #   sha256 ""
-  # end
 
   resource "click" do
     url "https://files.pythonhosted.org/packages/b9/2e/0090cbf739cee7d23781ad4b89a9894a41538e4fcf4c31dcdd705b78eb8b/click-8.1.8.tar.gz"
@@ -72,25 +63,15 @@ class RossCli < Formula
     virtualenv_install_with_resources
   end
 
-  def post_install
-      # Create the config directory and file
-      home = ENV["HOME"]
-      config_dir = File.join("#{home}", ".ross")
-      config_file = File.join(config_dir, "ross_config.toml")
-
-      system "mkdir", "-p", config_dir
-      
-      # Only create config file if it doesn't exist
-      unless File.exist?(config_file)
-        (Pathname.new(config_file)).write <<~EOS
-          # Ross default configuration
-          [general]
-          log = "info"
-          
-          [index]
-        EOS
-      end
-    end
+  def caveats
+    <<~EOS
+      To finish setup, run:
+  
+        ross init
+  
+      This will create ~/.ross/ross_config.toml
+    EOS
+  end
 
   test do
     # `test do` will create, run in and delete a temporary directory.

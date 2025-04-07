@@ -3,11 +3,12 @@ import os
 import tomli
 
 # Create the default configuration content
-# Use os.path.join for cross-platform compatibility
 default_ross_config_content_str = f"""
+# Ross default configuration
+[general]
+log = "info"
+
 [[index]]
-name = "default"
-path = "{os.path.join(os.path.expanduser('~'), '.ross', 'indices', 'default_index.toml')}"
 """
 DEFAULT_ROSS_CONFIG_CONTENT = tomli.loads(default_ross_config_content_str)  # Parse the TOML content
 del default_ross_config_content_str # Delete the default_ross_config_content_str variable to keep the namespace clean

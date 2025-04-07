@@ -24,7 +24,6 @@ def install_command(name: str, index_file_path: str = None, install_folder_path:
     1. Get the URL from the .toml file (default: ~/.rto/indices/index1.toml)
     2. Install the package using pip"""
     typer.echo(f"Installing {name}...")
-    result = setup(index_file_path)
 
     remote_url = get_package_remote_url_from_index_file(name, index_file_path)    
     github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
@@ -136,21 +135,31 @@ def tap_command(remote_url: str):
     with open(DEFAULT_ROSS_CONFIG_FILE_PATH, "wb") as f:
         tomli_w.dump(ross_config, f)
 
-##############################################################################
-########################### Index command ####################################
-##############################################################################
-@index_app.command(name="print")
-def index_print_command(index_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH):
-    """Print the index file."""
-    if not os.path.exists(index_file_path):
-        raise FileNotFoundError(f"File {index_file_path} does not exist.")
+@app.command(name="config")
+def config_command():
+    """Print information about the ROSS CLI and its configuration."""
+    typer.echo("ROSS command line interface (CLI) information:")
+    typer.echo(f"ROSS root folder location: {DEFAULT_ROSS_ROOT_FOLDER}.")
+    typer.echo(f"ROSS configuration file location: {DEFAULT_ROSS_CONFIG_FILE_PATH}.")
+    typer.echo(f"ROSS indices folder location: {DEFAULT_ROSS_INDICES_FOLDER}.")
     
-    with open(index_file_path, "rb") as f:
-        toml_file = tomli.load(f)
-        pprint(toml_file)
-    
-@index_app.command(name="locate")
-def index_locate_command():
-    """Locate a package in the index file."""
-    print("The index file is located at: ")
-    typer.echo(DEFAULT_ROSS_CONFIG_FILE_PATH)
+    # Show config content
+    try:
+        with open(DEFAULT_ROSS_CONFIG_FILE_PATH, 'rb') as f:
+            config = tomli.load(f)
+            typer.echo("\nCurrent configuration:")
+            pprint(config)
+    except FileNotFoundError:
+        typer.echo("No configuration file found. Run 'ross init' to create one.")
+
+@app.command(name="init")
+def init_command():
+    """Initialize the ROSS CLI."""
+    typer.echo("Initializing ROSS command line interface (CLI)...")
+    if not os.path.exists(DEFAULT_ROSS_CONFIG_FILE_PATH):
+        os.makedirs(os.path.dirname(DEFAULT_ROSS_CONFIG_FILE_PATH), exist_ok=True)
+        with open(DEFAULT_ROSS_CONFIG_FILE_PATH, "wb") as f:
+            tomli_w.dump(DEFAULT_ROSS_CONFIG_CONTENT, f)
+        typer.echo(f"ROSS config file created at {DEFAULT_ROSS_CONFIG_FILE_PATH}.")
+    else:
+        typer.echo(f"Initialization stopped. ROSS config file already exists at {DEFAULT_ROSS_CONFIG_FILE_PATH}.")
