@@ -104,8 +104,8 @@ dependencies = [
 This gets converted to [a standard `pyproject.toml` file](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#a-full-example) when you `ross release` the package.
 
 # Add your package to an index
-After your package's repository has at least one release, you can add it to an index. This will allow other users to install your package using `ross install <package_name>`.
+After your package's repository has at least one release, you can add it to an index of your choice. This will allow other users to `ross install` your package.
 ```bash
-ross add package_github_user/package_github_repo index_github_user/index_github_repo
+ross add github_user/github_repo
 ```
-This command adds the package that you authored to the `index_github_user/index_github_repo` index's `index.toml` file. It will then `git push` the changes to the remote repository.
+This command adds the package in the current folder to the `index.toml` file in `github_user/github_repo`. It will then `git push` the changes to the remote repository.
