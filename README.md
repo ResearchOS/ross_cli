@@ -4,7 +4,7 @@
 Each project/package's metadata is stored in a `rossproject.toml` text file, which is a stripped-down version of the `pyproject.toml` file used by `pip`. This file contains information about the project, such as its name, version, author, and dependencies.
 
 # Dependencies
-- Python installation
+- Python
 - Git CLI
 - GitHub account
 - `gh` CLI (optional, for releasing packages)
@@ -47,45 +47,63 @@ source ~/.bashrc
 ross cli-init
 ```
 
-# Usage
-## Create a new project
+# Create a new project
 ```bash
 cd /path/to/your/project/folder
 ross init
 ```
 Creates the `rossproject.toml` file in the current directory, and creates a minimal project folder structure.
 
-## Tap an index
+# Tap an index
 Before installing any packages, you need to `tap` (add) an index to tell `ross` where it should be looking for packages. Indices are GitHub repositories owned by you or someone else that contain an `index.toml` file. This file contains a list of package names & URL's.
 ```bash
 ross tap https://github.com/github_user/github_repo
 ```
 This clones the repo to your computer at `~/.ross/taps/github_user/github_repo` and creates an `index.toml` file in that directory, if it doesn't already exist.
 
-### Create an index
+## Create an index
 An index is just a GitHub repository. You can create one by [going to GitHub's website and creating a new repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/quickstart-for-repositories). 
 
 It is OK if the repository is empty - `ross` will create the `index.toml` file for you.
 
-### Example index.toml
+## Example index.toml
 ```toml
 [[package]]
 url = "https://github.com/example_user/example_package"
 ```
 
-## Install a package
+# Install a package
 ```bash
 ross install example_package
 ```
 This will search through all of the tapped indices for the package name, and `pip install --editable git+<url>` the package. Installing a package in editable mode allows you to have just as much control over the packages you install as if you had written it yourself.
 
-## Release a package (optional, not yet implemented, requires `gh` CLI)
+# Release a package (optional, not yet implemented, requires `gh` CLI)
 ```bash
 ross release v#.#.#
 ```
 This will create a new release of the package using the `gh` CLI. The version number should be in the format `v#.#.#`, e.g. `v0.1.0`. This will use the information from the `rossproject.toml` file to update the `pyproject.toml` file, and create a new release on GitHub.
 
-## Add your package to an index
+## rossproject.toml format for releases
+To release a package, you need to have a `rossproject.toml` file in the root of your package's repository. This file should contain the following information:
+```toml
+name = "example_package"
+version = "0.1.0"
+description = "A short description of the package"
+language = "python"
+authors = [
+    "Author1",
+    "Author2"
+]
+dependencies = [
+    "numpy",
+    "pandas",
+    "my_other_package"
+]
+```
+This gets converted to [a standard `pyproject.toml` file](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#a-full-example) when you `ross release` the package.
+
+# Add your package to an index
 After your package's repository has at least one release, you can add it to an index. This will allow other users to install your package using `ross install <package_name>`.
 ```bash
 ross add package_github_user/package_github_repo index_github_user/index_github_repo
