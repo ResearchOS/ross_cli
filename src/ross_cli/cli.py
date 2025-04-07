@@ -101,6 +101,9 @@ def cli_init_command():
 
 def version_callback(value: bool):
     """Print the version of the ROSS CLI."""  
+    if not value:
+        return
+        
     __version__ = version("ross_cli")
     meta = metadata("ross_cli")
     __date__ = meta.get("Date")  # Add this to your pyproject.toml

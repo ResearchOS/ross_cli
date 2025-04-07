@@ -3,7 +3,7 @@ class RossCli < Formula
 
   desc "GitHub-based packaging repository"
   homepage "https://github.com/ResearchOS/ross_cli"
-  url "https://github.com/ResearchOS/ross_cli/archive/refs/tags/v0.1.3.tar.gz"
+  url "https://github.com/ResearchOS/ross_cli/archive/refs/tags/v0.1.4.tar.gz"
   sha256 "14f30206e8b126ffd038bfd510c0f5f641d7d00e79b1436fc3c0df35d2335582"
   license "MIT"
 
