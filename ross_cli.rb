@@ -73,12 +73,11 @@ class RossCli < Formula
   end
 
   def post_install
-      require "fileutils"
       # Create the config directory and file
-      config_dir = File.expand_path("~/.ross")
+      config_dir = "~/.ross"
       config_file = "#{config_dir}/ross_config.toml"
 
-      FileUtils.mkdir_p(config_dir)
+      system "mkdir -p #{config_dir}"
       
       # Only create config file if it doesn't exist
       unless File.exist?(config_file)
