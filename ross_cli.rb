@@ -74,10 +74,11 @@ class RossCli < Formula
 
   def post_install
       # Create the config directory and file
-      config_dir = "/opt/homebrew/.ross"
-      config_file = "#{config_dir}/ross_config.toml"
+      home = ENV["HOME"]
+      config_dir = File.join("#{home}", ".ross")
+      config_file = File.join(config_dir, "ross_config.toml")
 
-      system "mkdir -p #{config_dir}"
+      system "mkdir", "-p", config_dir
       
       # Only create config file if it doesn't exist
       unless File.exist?(config_file)
