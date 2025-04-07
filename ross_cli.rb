@@ -67,7 +67,7 @@ class RossCli < Formula
     <<~EOS
       To finish setup, run:
   
-        ross init
+        ross cli-init
   
       This will create ~/.ross/ross_config.toml
     EOS
