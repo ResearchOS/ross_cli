@@ -62,6 +62,11 @@ ross tap https://github.com/github_user/github_repo
 ```
 This clones the repo to your computer at `~/.ross/taps/github_user/github_repo` and creates an `index.toml` file in that directory, if it doesn't already exist.
 
+### Create an index
+An index is just a GitHub repository. You can create one by [going to GitHub's website and creating a new repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/quickstart-for-repositories). 
+
+It is OK if the repository is empty - `ross` will create the `index.toml` file for you.
+
 ### Example index.toml
 ```toml
 [[package]]
