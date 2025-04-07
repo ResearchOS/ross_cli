@@ -13,15 +13,19 @@ Each project/package's metadata is stored in a `rossproject.toml` text file, whi
 ## Cross-platform
 Using `pip`, either in the global Python environment or in a project-specific virtual environment:
 ```bash
+# Optional
 cd /path/to/preferred/installation/folder
+```
+
+```bash
 pip install git+https://github.com/ResearchOS/ross_cli.git
 ross cli-init
 ```
 
 ## Linux/MacOS
-### Using Homebrew
+### Using Homebrew (recommended)
 ```bash
-brew tap ResearchOS/ross_cli
+brew tap ResearchOS/ross_cli https://github.com/ResearchOS/ross_cli
 brew install ross_cli
 ross cli-init
 ```
@@ -32,7 +36,7 @@ ross cli-init
 # e.g. ~/ross_cli
 cd /path/to/preferred/installation/folder
 
-# Clone the repository to that folder
+# Clone this repository to that folder
 git clone https://github.com/ResearchOS/ross_cli.git
 
 # Add the `ross` CLI to your shell's rc file (e.g. ~/.bashrc, ~/.zshrc, ~/.bash_profile, etc.)
@@ -61,7 +65,6 @@ This clones the repo to your computer at `~/.ross/taps/github_user/github_repo` 
 ### Example index.toml
 ```toml
 [[package]]
-name = "example_package"
 url = "https://github.com/example_user/example_package"
 ```
 
@@ -71,14 +74,15 @@ ross install example_package
 ```
 This will search through all of the tapped indices for the package name, and `pip install --editable git+<url>` the package. Installing a package in editable mode allows you to have just as much control over the packages you install as if you had written it yourself.
 
-## Release a package (optional, requires `gh` CLI, not yet implemented)
+## Release a package (optional, not yet implemented, requires `gh` CLI)
 ```bash
 ross release v#.#.#
 ```
 This will create a new release of the package using the `gh` CLI. The version number should be in the format `v#.#.#`, e.g. `v0.1.0`. This will use the information from the `rossproject.toml` file to update the `pyproject.toml` file, and create a new release on GitHub.
 
 ## Add your package to an index
+After your package's repository has at least one release, you can add it to an index. This will allow other users to install your package using `ross install <package_name>`.
 ```bash
-ross add example_package github_user/github_repo
+ross add package_github_user/package_github_repo index_github_user/index_github_repo
 ```
-This will add the `example_package` that you authored to the `github_user/github_repo` index's `index.toml` file and `git push` the changes to the remote repository. Anyone who taps that index will then be able to install the package.
+This command adds the package that you authored to the `index_github_user/index_github_repo` index's `index.toml` file. It will then `git push` the changes to the remote repository.
