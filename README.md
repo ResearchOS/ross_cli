@@ -13,14 +13,33 @@ Each project/package's metadata is stored in a `rossproject.toml` text file, whi
 ## Cross-platform
 Using `pip`, either in the global Python environment or in a project-specific virtual environment:
 ```bash
-pip install ross_cli
+cd /path/to/preferred/installation/folder
+pip install git+https://github.com/ResearchOS/ross_cli.git
 ross cli-init
 ```
 
 ## Linux/MacOS
-Using Homebrew:
+### Using Homebrew
 ```bash
+brew tap ResearchOS/ross_cli
 brew install ross_cli
+ross cli-init
+```
+
+### Manually
+```bash
+# Navigate to where on your computer you want to install the package
+# e.g. ~/ross_cli
+cd /path/to/preferred/installation/folder
+
+# Clone the repository to that folder
+git clone https://github.com/ResearchOS/ross_cli.git
+
+# Add the `ross` CLI to your shell's rc file (e.g. ~/.bashrc, ~/.zshrc, ~/.bash_profile, etc.)
+echo 'export PATH="$PATH:/path/to/ross_cli"' >> ~/.bashrc
+source ~/.bashrc
+
+# Initialize the CLI
 ross cli-init
 ```
 
