@@ -59,11 +59,11 @@ def create_package_structure(package_name: str, package_folder_path: str, remote
     # Build the rtoproject.toml file
     rtoproject_toml = {
         "name": package_name,
-        "version": "0.1.2",
+        "version": "0.1.0",
         "description": f"A new package called {package_name}",
-        "language": "None",
+        "language": "python",
         "dependencies": [],
-        "authors": []        
+        "authors": []
     }
 
     if remote_url:
