@@ -21,16 +21,16 @@ def tap_github_repo_for_ross_index(remote_url: str):
     # Check if the index file path already exists in the config file
     with open(DEFAULT_ROSS_CONFIG_FILE_PATH, 'rb') as f:
         ross_config = tomli.load(f)
-        if "index" not in ross_config:
-            ross_config["index"] = []
-        for index in ross_config["index"]:
-            if index["path"] == repo_folder_path:
-                typer.echo(f"Aborting. Index file already exists in ROSS config at: {DEFAULT_ROSS_CONFIG_FILE_PATH}.")
-                typer.echo(f"Path: {index['path']}")
-                typer.echo(f"Remote URL: {index['url']}")
-                return
+    if "index" not in ross_config:
+        ross_config["index"] = []
+    for index in ross_config["index"]:
+        if "path" in index and index["path"] == repo_folder_path:
+            typer.echo(f"Aborting. Index file already exists in ROSS config at: {DEFAULT_ROSS_CONFIG_FILE_PATH}.")
+            typer.echo(f"Path: {index['path']}")
+            typer.echo(f"Remote URL: {index['url']}")
+            return
             
-    # Clone the GitHub repository to ~/.ross/indices/<username/repo>
+    # Clone the GitHub repository to ~/.ross/indexes/<username/repo>
     if os.path.exists(repo_git_file_path):
         typer.echo(f"Repository already exists at {repo_git_file_path}.")
         typer.echo("Running `git pull` on the repository.")

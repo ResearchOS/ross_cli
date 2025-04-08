@@ -37,7 +37,7 @@ def get_remote_url_from_git_repo(directory="."):
         os.chdir(original_dir)
         
         # Parse the output
-        remotes = {}
+        remotes = []
         for line in result.stdout.splitlines():
             # Extract remote name, URL and type (fetch/push)
             match = re.match(r'^(\S+)\s+(\S+)\s+\((\w+)\)$', line)
@@ -46,7 +46,7 @@ def get_remote_url_from_git_repo(directory="."):
                 
                 # Only store fetch URLs to avoid duplicates (each remote has both fetch and push)
                 if remote_type == 'fetch':
-                    remotes[remote_name] = url
+                    remotes.append(url)
         
         if not remotes:
             Exception("No remotes found. Please ensure the repository has a remote.")
@@ -56,7 +56,7 @@ def get_remote_url_from_git_repo(directory="."):
 
         remote = remotes[0] # Get the string, not the list
             
-        return remote, None
+        return remote
         
     except subprocess.CalledProcessError as e:
         Exception(f"Git command failed: {e.stderr.strip()}")

@@ -8,7 +8,7 @@ import typer
 import tomli
 import tomli_w
 
-from .commands import index, init, tap, install
+from .commands import index, init, tap, install, release
 
 app = typer.Typer()
 
@@ -40,6 +40,18 @@ def tap_command(remote_url: str):
     5. Add the index.toml file path to ~/.ross/ross_config.toml.
     6. Push the changes to the remote repository."""
     tap.tap_github_repo_for_ross_index(remote_url)
+
+@app.command(name="add-to-index")
+def add_to_index_command(index_name: str, package_folder_path: str = os.getcwd()):
+    """Add a package to the index.
+    1. Register the package with the .toml file living in the user's home directory. Throw error if file does not exist.
+        - Locate the .toml file (default: ~/.ross/indices/index1.toml)
+        - Get the remote URLs from the git repository (fail if folder is not a git repo, and error if 0 or 2+ remotes exist)
+        - Add the package to the .toml file (error if it already exists)
+        [package_name]
+        url = "https://github.com/username/repo"
+    """
+    index.add_to_index(index_name, package_folder_path)
     
 
 @app.command(name="install")
@@ -49,25 +61,23 @@ def install_command(package_name: str, install_folder_path: str = DEFAULT_PIP_SR
     2. Install the package using pip""" 
     install.install(package_name, install_folder_path, args)
 
+# Maybe I don't need to support an uninstall command right now, and the user could just use pip?
+# @app.command(name="uninstall")
+# def uninstall_command(package_name: str, args: List[str] = []):
+#     """Uninstall a package."""
+#     typer.echo(f"Uninstalling {package_name}...")
+#     subprocess.run(["pip", "uninstall", package_name] + args)
 
-@app.command(name="uninstall")
-def uninstall_command(name: str, args: List[str] = []):
-    """Uninstall a package."""
-    typer.echo(f"Uninstalling {name}...")
-    subprocess.run(["pip", "uninstall", name] + args)
+@app.command(name="release")
+def release_command(release_type: str = None):
+    """Release a new version of this package on GitHub.
+    Versions follow semantic versioning guidelines.
+    "patch" = +0.0.1, "minor" = +0.1.0, "major" = +1.0.0
+    Run without an argument to not increment the version number."""    
+    if release_type is not None and release_type not in RELEASE_TYPES:
+        typer.echo(f"Release type must be one of: {", ".join(RELEASE_TYPES)}")
+    release.release(release_type)
 
-
-@app.command(name="add-to-index")
-def add_to_index_command(package_name: str, index_name: str, package_folder_path: str = os.getcwd()):
-    """Add a package to the index.
-    1. Register the package with the .toml file living in the user's home directory. Throw error if file does not exist.
-        - Locate the .toml file (default: ~/.ross/indices/index1.toml)
-        - Get the remote URLs from the git repository (fail if folder is not a git repo, and error if 0 or 2+ remotes exist)
-        - Add the package to the .toml file (error if it already exists)
-        [package_name]
-        url = "https://github.com/username/repo.git"
-    """
-    index.add_to_index(package_name, index_name, package_folder_path)
 
 @app.command(name="config")
 def config_command():

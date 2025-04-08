@@ -78,7 +78,7 @@ ross install example_package
 ```
 This will search through all of the tapped indexes for the package name, and `pip install --editable git+<url>` the package. Installing a package in editable mode allows you to have just as much control over the packages you install as if you had written it yourself.
 
-# Release a package (optional, not yet implemented, requires `gh` CLI)
+# Release a package (optional, requires `gh` CLI)
 ```bash
 ross release v#.#.#
 ```

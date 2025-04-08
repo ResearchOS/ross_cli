@@ -1,22 +1,31 @@
 import os
 
+RELEASE_TYPES = ["patch", "minor", "major"]
+
+DEFAULT_PACKAGE_NAME = "template"
+
 # rossproject.toml default content
-DEFAULT_ROSSPROJECT_TOML_CONTENT = {
-    "name": "template",
-    "description": "A template for ROSS packages",
-    "version": "0.1.0",
-    "repository_url": "",
-    "language": "python",
-    "authors": [],
-    "dependencies": []
-}
+DEFAULT_ROSSPROJECT_TOML_STR = """
+# ROSS project configuration file
+name = "{DEFAULT_PACKAGE_NAME}"
+description = "A template for ROSS packages"
+version = "0.1.0"
+repository_url = "{repository_url}"
+language = "python"
+authors = [
+
+]
+dependencies = [
+
+]
+"""
 
 # ~/.ross/ross_config.toml default configuration content 
 DEFAULT_ROSS_CONFIG_CONTENT = {
+    "about": "ROSS (https://github.com/ResearchOS/ross_cli) configuration file",
     "general": {
         "log": "info"
-    },
-    "index": []  # This needs to be an empty list to become [[index]] in TOML
+    }
 }
 
 # Constants for file paths

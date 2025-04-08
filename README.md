@@ -78,7 +78,7 @@ ross install example_package
 ```
 This will search through all of the tapped indexes for the package name, and `pip install --editable git+<url>` the package. Installing a package in editable mode allows you to have just as much control over the packages you install as if you had written it yourself.
 
-# Release a package (optional, not yet implemented, requires `gh` CLI)
+# Release a package (optional, requires `gh` CLI)
 ```bash
 ross release v#.#.#
 ```
@@ -106,6 +106,6 @@ This gets converted to [a standard `pyproject.toml` file](https://packaging.pyth
 # Add your package to an index
 After your package's repository has at least one release, you can add it to an index of your choice. This will allow other users to `ross install` your package.
 ```bash
-ross add github_user/github_repo
+ross add-to-index github_user/github_repo
 ```
 This command adds the package in the current folder to the `index.toml` file in `github_user/github_repo`. It will then `git push` the changes to the remote repository.
