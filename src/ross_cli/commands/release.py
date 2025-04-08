@@ -41,11 +41,15 @@ def release(release_type: str = None):
         with open(DEFAULT_PYPROJECT_TOML_PATH, "wb") as f:
             tomli_w.dump(pyproject_toml, f)
 
-
     # git push
     subprocess.run(["git", "add", DEFAULT_PYPROJECT_TOML_PATH], check=True)
-    subprocess.run(["git", "commit", "-m", "Updating version"])
-    subprocess.run(["git", "push"], check=True)
+    subprocess.run(["git", "commit", "-m", f"Updating version to {rossproject_toml["version"]}"])
+    try:
+        subprocess.run(["git", "push"], check=True)
+    except:
+        typer.echo("Failed to `git push`, likely because you do not have permission to push to this repository.")
+        typer.echo("Try opening a pull request instead, or contact the repository's maintainer(s) to change your permissions.")
+        return
 
     # GitHub release
     try:
@@ -56,9 +60,9 @@ def release(release_type: str = None):
     tag = "v" + version
     subprocess.run(["gh", "release", "create", tag], check=True)
 
+
 def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
     """Build the pyproject.toml file from the rossproject.toml file."""
-
     pyproject_toml = {}
     pyproject_toml["project"]  = {}
     pyproject_toml["project"]["name"] = rossproject_toml["name"] if "name" in rossproject_toml else ValueError("name not found in rossproject.toml")
