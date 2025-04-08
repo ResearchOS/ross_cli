@@ -119,7 +119,7 @@ def version_callback(value: bool):
     __date__ = meta.get("Date")  # Add this to your pyproject.toml
     __url__ = f"https://github.com/ResearchOS/ross_cli/releases/tag/v{__version__}"
 
-    typer.echo(f"ross cli version {__version__} ({__date__})")
+    typer.echo(f"ross cli version {__version__}")
     typer.echo(__url__)
     raise typer.Exit()
 

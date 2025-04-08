@@ -22,9 +22,6 @@ maintainers = [
 readme = "README.md"
 license = {text = "MIT"}
 
-[project.metadata]
-date = "2025-04-06"
-
 [project.urls]
 Homepage = "https://github.com/ResearchOS/ross_cli"
 Repository = "https://github.com/ResearchOS/ross_cli"
