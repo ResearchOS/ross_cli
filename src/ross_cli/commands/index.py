@@ -104,9 +104,11 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
     # Push the changes to the remote repository
     index_folder_path = os.path.dirname(index_file_path)
     os.chdir(index_folder_path)
+    subprocess.run(["git", "pull"], check=True)
     subprocess.run(["git", "add", index_file_path], check=True)
     subprocess.run(["git", "commit", "-m", f"Add {package_name} to index"], check=True)
     subprocess.run(["git", "push"], check=True)  # Push the changes to the remote repository
+
 
 def get_index_path(index_name: str, config: dict) -> str:
     """Helper function for add_to_index to get the path to the specified index from the config.
