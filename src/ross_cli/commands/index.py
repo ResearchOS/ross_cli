@@ -106,7 +106,7 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
     subprocess.run(["git", "commit", "-m", f"Add {package_name} to index"], check=True)
     subprocess.run(["git", "push"], check=True)  # Push the changes to the remote repository
 
-def get_index_path(index_name: str, config: dict):
+def get_index_path(index_name: str, config: dict) -> str:
     """Helper function for add_to_index to get the path to the specified index from the config.
     Currently assumes that the index lives in ~/.ross/indexes/username/repo.
     TODO: What if the repository name changes? Probably shouldn't have the repo name in the path."""
@@ -124,11 +124,11 @@ def get_index_path(index_name: str, config: dict):
     repo_idx = [idx for idx, user_repo in enumerate(indexes_username_repo) if index_name in user_repo]
     if len(repo_idx) == 0:
         typer.echo("No indices found matching that name.")
-        return
+        raise typer.Exit()
     elif len(repo_idx) > 1:
         typer.echo("Multiple indices found matching that name:")
         typer.echo(', '.join(indexes_username_repo[i] for i in repo_idx))
-        return
+        raise typer.Exit()
 
     repo_idx = repo_idx[0]
     index_path = config["index"][repo_idx]["path"]
