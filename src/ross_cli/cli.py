@@ -74,9 +74,9 @@ def release_command(release_type: str = None):
     Versions follow semantic versioning guidelines.
     "patch" = +0.0.1, "minor" = +0.1.0, "major" = +1.0.0
     Run without an argument to not increment the version number."""    
-    if release_type is not None and release_type not in RELEASE_TYPES:
-        release_types_str = ", ".join(RELEASE_TYPES)
-        typer.echo(f"Release type must be one of: {release_types_str}, or omitted")
+    if release_type is not None and release_type not in RELEASE_TYPES:        
+        typer.echo(f"Release type must be one of: {', '.join(RELEASE_TYPES)}, or omitted")
+        return
     release.release(release_type)
 
 

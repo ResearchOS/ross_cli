@@ -43,7 +43,7 @@ def release(release_type: str = None):
 
     # git push
     subprocess.run(["git", "add", DEFAULT_PYPROJECT_TOML_PATH], check=True)
-    subprocess.run(["git", "commit", "-m", f"Updating version to {rossproject_toml["version"]}"])
+    subprocess.run(["git", "commit", "-m", f"Updating version to {rossproject_toml['version']}"])
     try:
         subprocess.run(["git", "push"], check=True)
     except:
