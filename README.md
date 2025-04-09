@@ -109,3 +109,12 @@ After your package's repository has at least one release, you can add it to an i
 ross add-to-index github_user/github_repo
 ```
 This command adds the package in the current folder to the `index.toml` file in `github_user/github_repo`. It will then `git push` the changes to the remote repository.
+
+# ROSS Configuration File Format
+```toml
+[general]
+log = "info"
+
+[[index]]
+path = "/Users/username/.ross/indexes/ResearchOS/ross_cli/index.toml"
+```
