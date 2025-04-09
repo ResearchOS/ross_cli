@@ -26,9 +26,8 @@ def tap_github_repo_for_ross_index(remote_url: str):
         ross_config["index"] = []
     for index in ross_config["index"]:
         if "path" in index and index["path"] == index_toml_file_path:
-            typer.echo(f"Aborting. Index file already exists in ROSS config at: {DEFAULT_ROSS_CONFIG_FILE_PATH}.")
-            typer.echo(f"Path: {index['path']}")
-            typer.echo(f"Remote URL: {index['url']}")
+            typer.echo(f"Aborting. Index file already exists in ROSS config at:")
+            typer.echo(f"{index['path']}")
             return
             
     # Clone the GitHub repository to ~/.ross/indexes/<username/repo>
