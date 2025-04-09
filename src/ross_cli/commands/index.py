@@ -1,6 +1,7 @@
 import os
 from pprint import pprint
 import subprocess
+import json
 
 import tomli
 import tomli_w
@@ -24,6 +25,11 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
         typer.echo(f"Folder {package_folder_path} is not a git repository.")
         raise typer.Exit()
     
+    # Check for the rossproject.toml file
+    if not os.path.exists(DEFAULT_ROSSPROJECT_TOML_PATH):
+        typer.echo("Missing rossproject.toml file")
+        raise typer.Exit()
+    
     # Get the index path from the config file
     with open(DEFAULT_ROSS_CONFIG_FILE_PATH, "rb") as f:
         config = tomli.load(f)
@@ -38,8 +44,20 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
     except subprocess.CalledProcessError:
         parts = package_folder_path.split(os.sep)
         name = parts[-1]
-        typer.echo("`git pull` failed. Does this package's git repo have an associated GitHub repository?")
-        typer.echo(f'If not, make a new private GitHub repository, either at github.com or by running `gh repo create {name} --source="." --public`')
+        # try:
+        #     gh_api_user = json.load(subprocess.run(["gh", "api", "user"], capture_output=True, text=True, check=True))
+        #     user = gh_api_user["login"]
+        # except:
+        #     user = "github_user"
+        typer.echo("`git pull` failed. Make sure this package's git repo has an associated GitHub repository")
+        typer.echo(f'To associate this git repo with a new private GitHub repository, do the following:')
+        typer.echo("git add .")
+        typer.echo('git commit -m "Initial commit"')
+        typer.echo(f'gh repo create {name} --source=. --public --push')
+        # typer.echo(f'gh repo create {name} --source="." --public')
+        # typer.echo(f'git remote add origin https://github.com/{user}/{name}.git')
+        # typer.echo('git branch -M main')
+        # typer.echo('git push -u origin main')
         raise typer.Exit()        
 
     # Get the index path
