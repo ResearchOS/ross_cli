@@ -40,6 +40,7 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
     
     # Run git pull to get the latest version of the index file
     try:
+        typer.echo("Running `git pull`")
         subprocess.run(["git", "pull"], check=True)
     except subprocess.CalledProcessError:
         parts = package_folder_path.split(os.sep)
@@ -115,8 +116,8 @@ def get_index_path(index_name: str, config: dict):
         path = index["path"]
         parts = path.split(os.sep)
         if parts[-1].endswith(".toml"):
-            parts = parts[0:-2] # Remove the last part if it contains e.g. "index.toml"
-        username_repo = os.path.join(parts[-2:])
+            parts = parts[0:-1] # Remove the last part if it contains e.g. "index.toml"
+        username_repo = os.sep.join(parts[-2:])
         indexes_username_repo.append(username_repo)
 
     # Determine which repo it's in
