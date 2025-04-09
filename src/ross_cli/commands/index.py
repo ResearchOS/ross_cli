@@ -33,7 +33,14 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
         raise typer.Exit()
     
     # Run git pull to get the latest version of the index file
-    subprocess.run(["git", "pull"], check=True)
+    try:
+        subprocess.run(["git", "pull"], check=True)
+    except subprocess.CalledProcessError:
+        parts = package_folder_path.split(os.sep)
+        name = parts[-1]
+        typer.echo("`git pull` failed. Does this package's git repo have an associated GitHub repository?")
+        typer.echo(f'If not, make a new private GitHub repository, either at github.com or by running `gh repo create {name} --source="." --public`')
+        raise typer.Exit()        
 
     # Get the index path
     index_file_path = get_index_path(index_name, config)

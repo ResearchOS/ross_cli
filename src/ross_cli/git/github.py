@@ -25,7 +25,8 @@ def get_remote_url_from_git_repo(directory="."):
         
         # Check if the directory is a git repository
         if not os.path.isdir('.git'):
-            Exception("The specified directory is not a git repository.")
+            typer.echo("The specified directory is not a git repository.")
+            raise typer.Exit()
         
         # Run git remote command to get remotes
         result = subprocess.run(
@@ -51,19 +52,23 @@ def get_remote_url_from_git_repo(directory="."):
                     remotes.append(url)
         
         if not remotes:
-            Exception("No remotes found. Please ensure the repository has a remote.")
+            typer.echo("No remotes found. Please ensure the repository has a remote.")
+            raise typer.Exit()
         
         if len(remotes) != 1:
-            Exception("Multiple remotes found. Please ensure there is only one remote.")
+            typer.echo("Multiple remotes found. Please ensure there is only one remote.")
+            raise typer.Exit()
 
         remote = remotes[0] # Get the string, not the list
             
         return remote
         
     except subprocess.CalledProcessError as e:
-        Exception(f"Git command failed: {e.stderr.strip()}")
+        typer.echo(f"Git command failed: {e.stderr.strip()}")
+        raise typer.Exit()
     except Exception as e:
-        Exception(f"Error: {str(e)}")
+        typer.echo(f"Error: {str(e)}")
+        raise typer.Exit()
 
 def git_push_to_remote(directory="."):
     """
@@ -79,7 +84,8 @@ def git_push_to_remote(directory="."):
         
         # Check if the directory is a git repository
         if not os.path.isdir('.git'):
-            Exception("The specified directory is not a git repository.")
+            typer.echo("The specified directory is not a git repository.")
+            raise typer.Exit()
         
         # Run git push command
         subprocess.run(
@@ -91,9 +97,12 @@ def git_push_to_remote(directory="."):
         os.chdir(original_dir)
         
     except subprocess.CalledProcessError as e:
-        Exception(f"Git command failed: {e.stderr.strip()}")
-    except Exception as e:
-        Exception(f"Error: {str(e)}")
+        typer.echo(f"Git command failed: {e.stderr.strip()}")
+        raise typer.Exit()
+    except typer.echo as e:
+        raise typer.Exit()
+        typer.echo(f"Error: {str(e)}")
+        raise typer.Exit()
 
 def parse_github_url(url: str) -> Tuple[str, str]:
     """Parse GitHub username and repository name from URL.
