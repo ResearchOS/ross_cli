@@ -83,16 +83,17 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
     if not package_name:
         typer.echo(f"Package name not found in {rossproject_toml_path}.")
         raise typer.Exit()
-
-    # Check if the package is already in the index
-    if package_name in index_content["package"]:
-        typer.echo(f"Package {package_name} already exists in the index.")    
-        raise typer.Exit()
     
     # Get the remote URL from the git repository
     remote_url = get_remote_url_from_git_repo(package_folder_path)
     if remote_url.endswith(".git"):
         remote_url = remote_url[:-4]
+
+    # Check if the package is already in the index
+    for package in index_content["package"]:
+        if remote_url in package["url"]:    
+            typer.echo(f"Package {package_name} already exists in the index.")    
+            raise typer.Exit()    
     
     # Add the package to the index
     index_content["package"].append({"url": remote_url})
@@ -109,6 +110,7 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
     subprocess.run(["git", "commit", "-m", f"Add {package_name} to index"], check=True)
     subprocess.run(["git", "push"], check=True)  # Push the changes to the remote repository
 
+    typer.echo(f"Successfully added package {package_name} to index {index_name}")
 
 def get_index_path(index_name: str, config: dict) -> str:
     """Helper function for add_to_index to get the path to the specified index from the config.

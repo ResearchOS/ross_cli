@@ -10,7 +10,8 @@ from ..constants import DEFAULT_ROSS_CONFIG_FILE_PATH
 def get_index_files_from_config(config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH):
     """Get the index files from the config file."""
     if not os.path.isfile(config_file_path):
-        raise FileNotFoundError(f"{config_file_path} is not a file or does not exist.")
+        typer.echo(f"{config_file_path} is not a file or does not exist.")
+        raise typer.Exit()
     
     with open(config_file_path, "rb") as f:
         toml_content = tomli.load(f)
@@ -46,8 +47,9 @@ def get_package_remote_url_from_index_file(package_name: str, index_file_path: s
     with open(index_file_path, "rb") as f:
         toml_content = tomli.load(f)
 
-    if package_name not in toml_content:
-        typer.echo(f"{package_name} not found in {index_file_path}")
-        raise typer.Exit()
+    for package in toml_content:
+        if package_name not in package["url"]:
+            typer.echo(f"{package_name} not found in {index_file_path}")
+            raise typer.Exit()
     
     return toml_content[package_name]["url"]  # Return the URL associated with the package name

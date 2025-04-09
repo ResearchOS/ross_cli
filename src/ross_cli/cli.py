@@ -1,5 +1,4 @@
 import os
-import subprocess
 from typing import List
 from pprint import pprint
 from importlib.metadata import version, metadata
@@ -41,6 +40,7 @@ def tap_command(remote_url: str):
     6. Push the changes to the remote repository."""
     tap.tap_github_repo_for_ross_index(remote_url)
 
+
 @app.command(name="add-to-index")
 def add_to_index_command(index_name: str, package_folder_path: str = os.getcwd()):
     """Add a package to the index.
@@ -61,12 +61,14 @@ def install_command(package_name: str, install_folder_path: str = DEFAULT_PIP_SR
     2. Install the package using pip""" 
     install.install(package_name, install_folder_path, args)
 
+
 # Maybe I don't need to support an uninstall command right now, and the user could just use pip?
 # @app.command(name="uninstall")
 # def uninstall_command(package_name: str, args: List[str] = []):
 #     """Uninstall a package."""
 #     typer.echo(f"Uninstalling {package_name}...")
 #     subprocess.run(["pip", "uninstall", package_name] + args)
+
 
 @app.command(name="release")
 def release_command(release_type: str = None):
@@ -92,11 +94,12 @@ def config_command():
     try:
         with open(DEFAULT_ROSS_CONFIG_FILE_PATH, 'rb') as f:
             config = tomli.load(f)
-            typer.echo("\nCurrent configuration:")
-            pprint(config)
+        typer.echo("\nCurrent configuration:")
+        pprint(config)
     except:
         typer.echo(f"No configuration file found at {DEFAULT_ROSSPROJECT_TOML_PATH}")
         typer.echo("Run 'ross cli-init' to create it.")
+
 
 @app.command(name="cli-init")
 def cli_init_command():
@@ -109,6 +112,7 @@ def cli_init_command():
         typer.echo(f"ROSS config file created at {DEFAULT_ROSS_CONFIG_FILE_PATH}.")
     else:
         typer.echo(f"Aborted initialization. ROSS config file already exists at {DEFAULT_ROSS_CONFIG_FILE_PATH}.")
+
 
 def version_callback(value: bool):
     """Print the version of the ROSS CLI."""  
@@ -123,6 +127,7 @@ def version_callback(value: bool):
     typer.echo(f"ross cli version {__version__}")
     typer.echo(__url__)
     raise typer.Exit()
+
 
 @app.callback()
 def main(
