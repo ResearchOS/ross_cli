@@ -9,6 +9,14 @@ def init_ross_project():
     """Initialize a new ROSS project in the current directory.
     1. Create a new rossproject.toml file in the current directory.
     2. Create the package files and folders if they don't exist."""
+    # Check if there is a .git file in this folder
+    folder_name = os.path.dirname(DEFAULT_ROSSPROJECT_TOML_PATH)
+    git_file_path = os.path.join(folder_name, '.git')
+    if not os.path.exists(git_file_path):
+        typer.echo("This folder does not contain a git repo! Please create one first.")
+        raise typer.Exit()
+    
+    # Create the rossproject.toml file
     if os.path.exists(DEFAULT_ROSSPROJECT_TOML_PATH):
         typer.echo("rossproject.toml file already exists in current directory.")
     else:

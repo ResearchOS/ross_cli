@@ -94,7 +94,7 @@ def config_command():
             config = tomli.load(f)
             typer.echo("\nCurrent configuration:")
             pprint(config)
-    except FileNotFoundError:
+    except:
         typer.echo(f"No configuration file found at {DEFAULT_ROSSPROJECT_TOML_PATH}")
         typer.echo("Run 'ross cli-init' to create it.")
 
