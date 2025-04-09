@@ -1,7 +1,8 @@
 import os
+import subprocess
 
 import tomli
-import subprocess
+import typer
 
 from .github import get_remote_url_from_git_repo
 from ..constants import DEFAULT_ROSS_CONFIG_FILE_PATH
@@ -24,12 +25,14 @@ def get_package_remote_url(package_name: str, config_file_path: str = DEFAULT_RO
             return get_package_remote_url_from_index_file(package_name, index_file["path"])
         except ValueError:
             continue
-    raise ValueError(f"{package_name} not found in any index file.")
+    typer.echo(f"{package_name} not found in any index file.")
+    raise typer.Exit()
 
 def get_package_remote_url_from_index_file(package_name: str, index_file_path: str):
     """Get the remote URL from the index file."""
     if not os.path.isfile(index_file_path):
-        raise FileNotFoundError(f"{index_file_path} is not a file or does not exist.")
+        typer.echo(f"{index_file_path} is not a file or does not exist.")
+        raise typer.Exit()
     
     # Get any updates from GitHub for the index file
     parent_folder = os.path.dirname(index_file_path)
@@ -37,12 +40,14 @@ def get_package_remote_url_from_index_file(package_name: str, index_file_path: s
     try:
         subprocess.run(["git", "pull", index_repo_remote_url])
     except subprocess.CalledProcessError as e:
-        raise Exception(f"Git command failed: {e.stderr.strip()}")
+        typer.echo(f"Git command failed: {e.stderr.strip()}")
+        raise typer.Exit()
     
     with open(index_file_path, "rb") as f:
         toml_content = tomli.load(f)
 
     if package_name not in toml_content:
-        raise ValueError(f"{package_name} not found in {index_file_path}")
+        typer.echo(f"{package_name} not found in {index_file_path}")
+        raise typer.Exit()
     
     return toml_content[package_name]["url"]  # Return the URL associated with the package name

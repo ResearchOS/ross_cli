@@ -12,7 +12,8 @@ def release(release_type: str = None):
     """Release a new version of the package on GitHub."""
     # Create the pyproject.toml file from the rossproject.toml file.
     if not os.path.exists(DEFAULT_ROSSPROJECT_TOML_PATH):
-        raise FileNotFoundError("Missing rossproject.toml file")
+        typer.echo("Missing rossproject.toml file")
+        raise typer.Exit()
     with open(DEFAULT_ROSSPROJECT_TOML_PATH, "rb") as f:
         rossproject_toml = tomli.load(f)
 

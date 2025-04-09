@@ -5,6 +5,8 @@ import re
 from typing import Tuple
 from urllib.parse import urlparse
 
+import typer
+
 def get_remote_url_from_git_repo(directory="."):
     """
     Extracts all remote URLs from a git repository in the specified directory.
@@ -109,7 +111,8 @@ def parse_github_url(url: str) -> Tuple[str, str]:
     if url.startswith('https://'):
         parts = urlparse(url).path.strip('/').split('/')
         if len(parts) != 2:
-            raise ValueError(f"Invalid GitHub URL format: {url}")
+            typer.echo(f"Invalid GitHub URL format: {url}")
+            raise typer.Exit()
         return parts[0], parts[1].replace('.git', '')
         
     # Handle SSH URLs (git@github.com:username/repo.git)
@@ -117,8 +120,10 @@ def parse_github_url(url: str) -> Tuple[str, str]:
         pattern = r'git@github\.com:([^/]+)/([^/]+)\.git'
         match = re.match(pattern, url)
         if not match:
-            raise ValueError(f"Invalid GitHub SSH URL format: {url}")
+            typer.echo(f"Invalid GitHub SSH URL format: {url}")
+            raise typer.Exit()
         return match.group(1), match.group(2)
     
     else:
-        raise ValueError(f"URL must start with 'https://' or 'git@': {url}")
+        typer.echo(f"URL must start with 'https://' or 'git@': {url}")
+        raise typer.Exit()

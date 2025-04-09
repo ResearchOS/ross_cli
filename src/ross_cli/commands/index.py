@@ -12,7 +12,7 @@ from ..git.github import get_remote_url_from_git_repo
 def print(index_file_path: str) -> None:
     """Print the index file."""
     if not os.path.exists(index_file_path):
-        raise ValueError(f"File {index_file_path} does not exist.")
+        typer.echo(f"File {index_file_path} does not exist.")
     
     with open(index_file_path, "rb") as f:
         pprint(tomli.load(f))  # Use pprint to print the loaded TOML file
@@ -21,14 +21,16 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
     """Add the specified package to the specified index."""
     # Check if the package folder is a git repository
     if not os.path.isdir(os.path.join(package_folder_path, ".git")):
-        raise ValueError(f"Folder {package_folder_path} is not a git repository.")
+        typer.echo(f"Folder {package_folder_path} is not a git repository.")
+        raise typer.Exit()
     
     # Get the index path from the config file
     with open(DEFAULT_ROSS_CONFIG_FILE_PATH, "rb") as f:
         config = tomli.load(f)
 
     if "index" not in config:
-        raise ValueError(f"No indices found in the config file.")
+        typer.echo(f"No indexes found in the config file.")
+        raise typer.Exit()
     
     # Run git pull to get the latest version of the index file
     subprocess.run(["git", "pull"], check=True)
@@ -46,17 +48,20 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
     # Get the package name from the rossproject.toml file
     rossproject_toml_path = os.path.join(package_folder_path, "rossproject.toml")
     if not os.path.exists(rossproject_toml_path):
-        raise ValueError(f"File {rossproject_toml_path} does not exist.")
+        typer.echo(f"File {rossproject_toml_path} does not exist.")
+        raise typer.Exit()
     
     with open(rossproject_toml_path, "rb") as f:
         rossproject_content = tomli.load(f)
     package_name = rossproject_content.get("name", None)
     if not package_name:
-        raise ValueError(f"Package name not found in {rossproject_toml_path}.")
+        typer.echo(f"Package name not found in {rossproject_toml_path}.")
+        raise typer.Exit()
 
     # Check if the package is already in the index
     if package_name in index_content["package"]:
-        raise ValueError(f"Package {package_name} already exists in the index.")    
+        typer.echo(f"Package {package_name} already exists in the index.")    
+        raise typer.Exit()
     
     # Get the remote URL from the git repository
     remote_url = get_remote_url_from_git_repo(package_folder_path)
