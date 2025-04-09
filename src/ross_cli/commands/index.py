@@ -98,8 +98,8 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
     index_content["package"].append({"url": remote_url})
     
     # Save the updated index to the file
-    with open(index_content, "wb") as f:
-        tomli_w.dump(index_name, f)  # Use tomli to dump the updated index to the file
+    with open(index_file_path, "wb") as f:
+        tomli_w.dump(index_content, f)  # Use tomli to dump the updated index to the file
 
     # Push the changes to the remote repository
     subprocess.run(["git", "add", index_file_path], check=True)
