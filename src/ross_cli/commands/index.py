@@ -102,6 +102,8 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
         tomli_w.dump(index_content, f)  # Use tomli to dump the updated index to the file
 
     # Push the changes to the remote repository
+    index_folder_path = os.path.dirname(index_file_path)
+    os.chdir(index_folder_path)
     subprocess.run(["git", "add", index_file_path], check=True)
     subprocess.run(["git", "commit", "-m", f"Add {package_name} to index"], check=True)
     subprocess.run(["git", "push"], check=True)  # Push the changes to the remote repository
