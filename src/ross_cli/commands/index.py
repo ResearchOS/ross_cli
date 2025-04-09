@@ -4,6 +4,7 @@ import subprocess
 
 import tomli
 import tomli_w
+import typer
 
 from ..constants import *
 from ..git.github import get_remote_url_from_git_repo
@@ -18,19 +19,25 @@ def print(index_file_path: str) -> None:
     
 def add_to_index(index_name: str, package_folder_path: str) -> None:
     """Add the specified package to the specified index."""
+    # Check if the package folder is a git repository
+    if not os.path.isdir(os.path.join(package_folder_path, ".git")):
+        raise ValueError(f"Folder {package_folder_path} is not a git repository.")
+    
     # Get the index path from the config file
     with open(DEFAULT_ROSS_CONFIG_FILE_PATH, "rb") as f:
         config = tomli.load(f)
 
-    if "index" not in config or index_name not in config["index"]:
-        raise ValueError(f"Index {index_name} not found in the config file.")
+    if "index" not in config:
+        raise ValueError(f"No indices found in the config file.")
     
     # Run git pull to get the latest version of the index file
     subprocess.run(["git", "pull"], check=True)
+
+    # Get the index path
+    index_file_path = get_index_path(index_name, config)
     
-    # Load the index file
-    index_path = config["index"][index_name]["path"]
-    with open(index_path, "rb") as f:
+    # Load the index file    
+    with open(index_file_path, "rb") as f:
         index_content = tomli.load(f)
 
     if "package" not in index_content:
@@ -49,11 +56,7 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
 
     # Check if the package is already in the index
     if package_name in index_content["package"]:
-        raise ValueError(f"Package {package_name} already exists in the index.")
-    
-    # Check if the package folder is a git repository
-    if not os.path.isdir(os.path.join(package_folder_path, ".git")):
-        raise ValueError(f"Folder {package_folder_path} is not a git repository.")
+        raise ValueError(f"Package {package_name} already exists in the index.")    
     
     # Get the remote URL from the git repository
     remote_url = get_remote_url_from_git_repo(package_folder_path)
@@ -68,6 +71,35 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
         tomli_w.dump(index_name, f)  # Use tomli to dump the updated index to the file
 
     # Push the changes to the remote repository
-    subprocess.run(["git", "add", index_path], check=True)
+    subprocess.run(["git", "add", index_file_path], check=True)
     subprocess.run(["git", "commit", "-m", f"Add {package_name} to index"], check=True)
     subprocess.run(["git", "push"], check=True)  # Push the changes to the remote repository
+
+def get_index_path(index_name: str, config: dict):
+    """Helper function for add_to_index to get the path to the specified index from the config.
+    Currently assumes that the index lives in ~/.ross/indexes/username/repo.
+    TODO: What if the repository name changes? Probably shouldn't have the repo name in the path."""
+    # Get all of the index usernames & repos
+    indexes_username_repo = []
+    for index in config["index"]:
+        path = index["path"]
+        parts = path.split(os.sep)
+        if parts[-1].endswith(".toml"):
+            parts = parts[0:-2] # Remove the last part if it contains e.g. "index.toml"
+        username_repo = os.path.join(parts[-2:])
+        indexes_username_repo.append(username_repo)
+
+    # Determine which repo it's in
+    repo_idx = [idx for idx, user_repo in enumerate(indexes_username_repo) if index_name in user_repo]
+    if len(repo_idx) == 0:
+        typer.echo("No indices found matching that name.")
+        return
+    elif len(repo_idx) > 1:
+        typer.echo("Multiple indices found matching that name:")
+        typer.echo(', '.join(indexes_username_repo[i] for i in repo_idx))
+        return
+
+    repo_idx = repo_idx[0]
+    index_path = config["index"][repo_idx]["path"]
+    
+    return index_path
