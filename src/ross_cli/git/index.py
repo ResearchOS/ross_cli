@@ -24,7 +24,8 @@ def get_package_remote_url(package_name: str, config_file_path: str = DEFAULT_RO
     typer.echo(index_files)
     for index_file in index_files:
         try:
-            return get_package_remote_url_from_index_file(package_name, index_file["path"])
+            remote_url = get_package_remote_url_from_index_file(package_name, index_file["path"])
+            return remote_url
         except:
             continue
     typer.echo(f"{package_name} not found in any index file.")
