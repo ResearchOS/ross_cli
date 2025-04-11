@@ -58,6 +58,10 @@ def tap_github_repo_for_ross_index(remote_url: str):
     with open(DEFAULT_ROSS_CONFIG_FILE_PATH, "wb") as f:
         tomli_w.dump(ross_config, f)
 
+    github_user_folder = os.path.dirname(repo_folder_path)
+    typer.echo(f"Added folder during tap: {github_user_folder}")
+    typer.echo(f"Successfully tapped:     {remote_url}")
+
 def untap_ross_index(remote_url: str):
     """Remove the GitHub repository from the ROSS index. Also remove the index folder from the .ross/indexes folder"""
     # Check for the existence of the config file
@@ -100,8 +104,8 @@ def untap_ross_index(remote_url: str):
 
     # Remove it from disk
     if "path" in index and os.path.exists(index["path"]):
-        index_folder = os.path.dirname(index["path"])
-        shutil.rmtree(index_folder)
-        typer.echo(f"Removed folder during untap: {index_folder}")
+        github_user_folder_path = os.path.dirname(repo_folder_path)
+        shutil.rmtree(github_user_folder_path)
+        typer.echo(f"Removed folder during untap: {github_user_folder_path}")
 
     typer.echo(f"Successfully untapped: {remote_url}")    
