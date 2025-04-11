@@ -25,7 +25,7 @@ def release(release_type: str = None):
     version = rossproject_toml["version"]    
     if version[0] == "v":
         version = version[1:]
-    dot_indices = [m.start() for m in re.finditer(".", version)]
+    dot_indices = [m.start() for m in re.finditer(r"\.", version)]
     if release_type == "patch":
         chars_before = version[0:dot_indices[1]+1]
         new_num = str(int(version[dot_indices[1]+1:]) + 1)
