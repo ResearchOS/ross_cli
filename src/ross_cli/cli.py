@@ -134,8 +134,8 @@ def version_callback(value: bool):
     __url__ = f"https://github.com/ResearchOS/ross_cli/releases/tag/v{__version__}"
 
     typer.echo(f"ross cli version {__version__}")
-    typer.echo(f"URL: {__url__}")
-    typer.echo(f"Path: {os.path.dirname(__file__)}")
+    typer.echo(f"GitHub repository: {__url__}")
+    typer.echo(f"local path:        {os.path.dirname(__file__)}")
     raise typer.Exit()
 
 
