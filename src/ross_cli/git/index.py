@@ -26,7 +26,8 @@ def get_package_remote_url(package_name: str, config_file_path: str = DEFAULT_RO
         try:
             remote_url = get_package_remote_url_from_index_file(package_name, index_file["path"])
             print(f"Remote URL: {remote_url}")
-            return remote_url
+            if remote_url is not None:
+                return remote_url
         except:
             continue
     typer.echo(f"{package_name} not found in any index file.")
@@ -52,9 +53,10 @@ def get_package_remote_url_from_index_file(package_name: str, index_file_path: s
 
     print(f"Index TOML content: {toml_content}")
 
-    for package in toml_content["package"]:
-        if package_name not in package["url"]:
-            typer.echo(f"{package_name} not found in {index_file_path}")
-            raise typer.Exit()
+    packages = toml_content["package"]
+    for package in packages:
+        if package_name in package["url"]:
+            return package["url"]
     
-    return toml_content[package_name]["url"]  # Return the URL associated with the package name
+    typer.echo(f"{package_name} not found in {index_file_path}")
+    return None
