@@ -31,7 +31,7 @@ def init_command():
 
 @app.command(name="tap")
 def tap_command(remote_url: str):
-    """Add the index GitHub repository to the list of indices in the config file at DEFAULT_ROSS_CONFIG_FILE_PATH.
+    f"""Add the index GitHub repository to the list of indices in the config file at {DEFAULT_ROSS_CONFIG_FILE_PATH}
     1. Parse for GitHub username and repository name from the URL
     2. Fail if the folder ~/.ross/indices/<username/repo> exists on disk, or ~/.ross/indices/<username/repo>/.toml exists in ~/.ross/ross_config.toml.
     3. Clone the GitHub repository to ~/.ross/indices/<username/repo>. 
@@ -39,6 +39,15 @@ def tap_command(remote_url: str):
     5. Add the index.toml file path to ~/.ross/ross_config.toml.
     6. Push the changes to the remote repository."""
     tap.tap_github_repo_for_ross_index(remote_url)
+
+@app.command(name="untap")
+def untap_command(remote_url: str):
+    f"""Remove the index GitHub repository from the list of indices in the config file at {DEFAULT_ROSS_CONFIG_FILE_PATH}    
+
+    Args:
+        remote_url (str): The url of the remote
+    """
+    tap.untap_ross_index(remote_url)
 
 
 @app.command(name="add-to-index")
@@ -125,7 +134,8 @@ def version_callback(value: bool):
     __url__ = f"https://github.com/ResearchOS/ross_cli/releases/tag/v{__version__}"
 
     typer.echo(f"ross cli version {__version__}")
-    typer.echo(__url__)
+    typer.echo(f"URL: {__url__}")
+    typer.echo(f"Path: {os.path.dirname(__file__)}")
     raise typer.Exit()
 
 
