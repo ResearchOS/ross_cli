@@ -50,10 +50,10 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
             # Get the current directory
             pip_install = False
             root_dir = os.getcwd()
-            os.chdir(DEFAULT_PIP_SRC_FOLDER_PATH)
+            os.chdir(install_folder_path)
             subprocess.run(["gh", "repo", "clone", f"{github_user}/{github_repo}"])
             # Read the pyproject.toml file for the official package name
-            pyproject_toml_path = os.path.join(DEFAULT_PIP_SRC_FOLDER_PATH, github_repo, 'pyproject.toml')
+            pyproject_toml_path = os.path.join(install_folder_path, github_repo, 'pyproject.toml')
             with open(pyproject_toml_path, 'rb') as f:
                 pyproject_content = tomli.load(f)
         except:
@@ -62,14 +62,16 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
             typer.echo("Make sure you have authorized the `gh` CLI by running `gh auth login`")
             raise typer.Exit()    
 
-    if "project" not in pyproject_content or "name" not in pyproject_content["project"]:
+    if "project" in pyproject_content and "name" in pyproject_content["project"]:
         official_package_name = pyproject_content["project"]["name"]
-
-    github_full_url_with_egg = github_full_url + "#" + official_package_name
+    else:
+        typer.echo("pyproject.toml missing [project][name] field")
+        raise typer.Exit()    
 
     # Set the PIP_SRC environment variable to the install folder path
     os.environ["PIP_SRC"] = install_folder_path
     if pip_install:
+        github_full_url_with_egg = github_full_url + "#" + official_package_name
         typer.echo(f"pip installing package {package_name}...")
         subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
     else:
