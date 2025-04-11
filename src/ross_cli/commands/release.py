@@ -81,7 +81,8 @@ def release(release_type: str = None):
         typer.echo("`gh` CLI not found. Check the official repository for more information: https://github.com/cli/cli")
         return
     tag = "v" + version
-    subprocess.run(["gh", "release", "create", tag], check=True)    
+    release_url = subprocess.run(["gh", "release", "create", tag], check=True, capture_output=True)
+    typer.echo(f"Successfully released to {release_url}")
 
 
 def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
