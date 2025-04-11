@@ -53,7 +53,13 @@ def get_remote_url_from_git_repo(directory="."):
                     remotes.append(url)
         
         if not remotes:
-            typer.echo("No remotes found. Please ensure the repository has a remote.")
+            typer.echo("No remotes found. Please ensure this new local git repository has a remote.")
+            typer.echo("To create a GitHub repository: either use the GitHub website, or run `gh repo create`")
+            typer.echo("\nAdd the files:                     git add .")
+            typer.echo("Commit the files:                    git commit -m 'Initial commit'")
+            typer.echo("Add the GitHub repository as remote: git remote add origin https://github.com/USERNAME/REPOSITORY.git")
+            typer.echo("Rename the default branch to main:   git branch -M main")
+            typer.echo("Push your changes to GitHub:         git push -u origin main")
             raise typer.Exit()
         
         if len(remotes) != 1:

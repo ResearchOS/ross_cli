@@ -17,7 +17,7 @@ app.add_typer(index_app, name="index") # Add the index app to the main app
 from .constants import *
 
 @app.command(name="init")
-def init_command():
+def init_command(name: str = None):
     """Initialize a new ROSS project in the current directory.
     1. Create a new rossproject.toml file in the current directory.
     2. Create the package files and folders if they don't exist (default: current working directory). Don't create each file/folder if it already exists.
@@ -26,7 +26,7 @@ def init_command():
         - tests/
         - docs/
         .gitignore"""
-    init.init_ross_project()
+    init.init_ross_project(name)
 
 
 @app.command(name="tap")
