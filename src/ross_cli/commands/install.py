@@ -27,9 +27,11 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         remote_url = remote_url + ".git"
     github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
 
+    github_full_url_with_egg = github_full_url + "#" + package_name.replace("/", "-")
+
     # Set the PIP_SRC environment variable to the install folder path
     os.environ["PIP_SRC"] = install_folder_path
     typer.echo(f"Installing package {package_name}...")
-    subprocess.run(["pip", "install", "-e", github_full_url] + args, check=True)
+    subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
 
     typer.echo(f"Successfully installed package {package_name}")
