@@ -77,6 +77,10 @@ def release(release_type: str = None):
     tag = "v" + version
     subprocess.run(["gh", "release", "create", tag], check=True)
 
+    # Write the updated version number back to the rossproject.toml file.
+    with open(DEFAULT_ROSSPROJECT_TOML_PATH, 'wb') as f:
+        tomli_w.dump(rossproject_toml, f)
+
 
 def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
     """Build the pyproject.toml file from the rossproject.toml file."""
