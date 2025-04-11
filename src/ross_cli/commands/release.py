@@ -47,7 +47,7 @@ def release(release_type: str = None):
     if not os.path.exists(DEFAULT_PYPROJECT_TOML_PATH):
         pyproject_toml_content_orig = {}
     else:
-        with open(DEFAULT_PYPROJECT_TOML_PATH, 'wb') as f:
+        with open(DEFAULT_PYPROJECT_TOML_PATH, 'rb') as f:
             pyproject_toml_content_orig = tomli.load(f)
 
     # Overwrite the original data, preserving other fields that may have been added.
