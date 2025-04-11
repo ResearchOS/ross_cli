@@ -25,6 +25,7 @@ def get_package_remote_url(package_name: str, config_file_path: str = DEFAULT_RO
     for index_file in index_files:
         try:
             remote_url = get_package_remote_url_from_index_file(package_name, index_file["path"])
+            print(f"Remote URL: {remote_url}")
             return remote_url
         except:
             continue
@@ -48,6 +49,8 @@ def get_package_remote_url_from_index_file(package_name: str, index_file_path: s
     
     with open(index_file_path, "rb") as f:
         toml_content = tomli.load(f)
+
+    print(f"Index TOML content: {toml_content}")
 
     for package in toml_content:
         if package_name not in package["url"]:
