@@ -74,7 +74,10 @@ def untap_ross_index(remote_url: str):
     with open(DEFAULT_ROSS_CONFIG_FILE_PATH, 'rb') as f:
         ross_config_toml = tomli.load(f)
 
-    if "index" not in ross_config_toml or len(ross_config_toml["index"]) == 0:
+    if "index" not in ross_config_toml:
+        ross_config_toml["index"] = []
+
+    if len(ross_config_toml["index"]) == 0:
         typer.echo("No indexes present in the config file. Aborting...")
         typer.Exit()
 
