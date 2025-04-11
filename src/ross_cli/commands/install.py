@@ -1,11 +1,14 @@
 import os
 from typing import List
+from urllib.request import urlopen
 
 import subprocess
 import typer
+import tomli
 
 from ..constants import *
 from ..git.index import get_package_remote_url
+from ..git.github import get_default_branch_name
 
 def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, args: List[str] = []):
     f"""Install a package.
@@ -23,14 +26,18 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         os.makedirs(install_folder_path, exist_ok=True)    
 
     remote_url = get_package_remote_url(package_name)
+    main_branch_name = get_default_branch_name(remote_url)
+    pyproject_toml_url = f"{remote_url}/{main_branch_name}/pyproject.toml"
+    with urlopen(pyproject_toml_url) as response:
+        pyproject_content = tomli.load(response.read().decode())
     # if not remote_url.endswith(".git"):
     #     remote_url = remote_url + ".git"
     github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
 
-    url_parts = remote_url.split("/")
-    full_package_name = "-".join(url_parts[-2:])
+    if "project" not in pyproject_content or "name" not in pyproject_content["project"]:
+        official_package_name = pyproject_content["project"]["name"]
 
-    github_full_url_with_egg = github_full_url + "#" + full_package_name
+    github_full_url_with_egg = github_full_url + "#" + official_package_name
 
     # Set the PIP_SRC environment variable to the install folder path
     os.environ["PIP_SRC"] = install_folder_path

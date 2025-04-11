@@ -4,6 +4,7 @@ import subprocess
 import re
 from typing import Tuple
 from urllib.parse import urlparse
+import json
 
 import typer
 
@@ -136,3 +137,26 @@ def parse_github_url(url: str) -> Tuple[str, str]:
     else:
         typer.echo(f"URL must start with 'https://' or 'git@': {url}")
         raise typer.Exit()
+    
+def get_default_branch_name(remote_url: str) -> str:
+    """Get the name of the default branch from the GitHub repository URL"""
+    # Get the default branch name
+    try:
+        # Extract owner/repo from remote_url
+        url_parts = remote_url.split("/")
+        repo_path = f"{url_parts[-2]}/{url_parts[-1]}"
+        if repo_path.endswith(".git"):
+            repo_path = repo_path[:-4]
+            
+        result = subprocess.run(
+            ["gh", "api", f"repos/{repo_path}"], 
+            capture_output=True, 
+            text=True,
+            check=True
+        )
+        default_branch = json.loads(result.stdout)["default_branch"]
+    except subprocess.CalledProcessError:
+        typer.echo("Failed to get default branch from GitHub repository, falling back to 'main'")
+        default_branch = "main"
+
+    return default_branch
