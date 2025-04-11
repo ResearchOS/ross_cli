@@ -88,17 +88,20 @@ def untap_ross_index(remote_url: str):
 
     # Remove it from the index
     indexes = ross_config_toml["index"]
+    index = {"path": ""}
     for index in indexes:
         if "path" in index and index["path"] == index_toml_file_path:            
             ross_config_toml["index"].remove(index)            
-            break    
+            break
 
     # Save the modified config file
     with open(DEFAULT_ROSS_CONFIG_FILE_PATH, 'wb') as f:
         tomli_w.dump(ross_config_toml, f)
 
     # Remove it from disk
-    index_folder = os.path.dirname(index["path"])
-    shutil.rmtree(index_folder)
+    if "path" in index and os.path.exists(index["path"]):
+        index_folder = os.path.dirname(index["path"])
+        shutil.rmtree(index_folder)
+        typer.echo(f"Removed folder during untap: {index_folder}")
 
-    typer.echo(f"Successfully untapped: {remote_url}")
+    typer.echo(f"Successfully untapped: {remote_url}")    
