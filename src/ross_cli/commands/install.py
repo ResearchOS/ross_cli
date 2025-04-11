@@ -26,8 +26,11 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         os.makedirs(install_folder_path, exist_ok=True)    
 
     remote_url = get_package_remote_url(package_name)
+    url_parts = remote_url.split("/")
+    github_user = url_parts[-2]
+    github_repo = url_parts[-1]
     main_branch_name = get_default_branch_name(remote_url)
-    pyproject_toml_url = f"{remote_url}/{main_branch_name}/pyproject.toml"
+    pyproject_toml_url = f"https://raw.githubusercontent.com/{github_user}/{github_repo}/{main_branch_name}/pyproject.toml"
     with urlopen(pyproject_toml_url) as response:
         pyproject_content = tomli.load(response.read().decode())
     # if not remote_url.endswith(".git"):
