@@ -52,7 +52,7 @@ def get_package_remote_url_from_index_file(package_name: str, index_file_path: s
 
     print(f"Index TOML content: {toml_content}")
 
-    for package in toml_content:
+    for package in toml_content["package"]:
         if package_name not in package["url"]:
             typer.echo(f"{package_name} not found in {index_file_path}")
             raise typer.Exit()
