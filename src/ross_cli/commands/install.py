@@ -23,8 +23,8 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         os.makedirs(install_folder_path, exist_ok=True)    
 
     remote_url = get_package_remote_url(package_name)
-    if not remote_url.endswith(".git"):
-        remote_url = remote_url + ".git"
+    # if not remote_url.endswith(".git"):
+    #     remote_url = remote_url + ".git"
     github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
 
     url_parts = remote_url.split("/")
