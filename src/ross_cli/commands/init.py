@@ -17,9 +17,10 @@ def init_ross_project(name: str):
         raise typer.Exit()
     
     # Create the README.md file so there's something to commit
-    if "README.md" in INIT_PATHS:
-        if not os.path.exists(INIT_PATHS["README.md"]):
-            with open(path, "w") as f:
+    readme_key = "README.md"
+    if readme_key in INIT_PATHS:
+        if not os.path.exists(INIT_PATHS[readme_key]):
+            with open(INIT_PATHS[readme_key], "w") as f:
                 f.write("")
     
     remote_url = get_remote_url_from_git_repo(".")
