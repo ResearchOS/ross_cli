@@ -42,10 +42,21 @@ def release(release_type: str = None):
     if release_type is not None:
         rossproject_toml["version"] = chars_before + new_num + chars_after
 
-    pyproject_toml = build_pyproject_from_rossproject(rossproject_toml)
+    # Get the new pyproject_toml data
+    pyproject_toml_new = build_pyproject_from_rossproject(rossproject_toml)
     if not os.path.exists(DEFAULT_PYPROJECT_TOML_PATH):
-        with open(DEFAULT_PYPROJECT_TOML_PATH, "wb") as f:
-            tomli_w.dump(pyproject_toml, f)
+        pyproject_toml_content_orig = {}
+    else:
+        with open(DEFAULT_PYPROJECT_TOML_PATH, 'wb') as f:
+            pyproject_toml_content_orig = tomli.load(f)
+
+    # Overwrite the original data, preserving other fields that may have been added.
+    pyproject_toml_content = pyproject_toml_content_orig
+    for fld in pyproject_toml_new:
+        pyproject_toml_content[fld] = pyproject_toml_new[fld]
+
+    with open(DEFAULT_PYPROJECT_TOML_PATH, "wb") as f:
+        tomli_w.dump(pyproject_toml_content, f)
 
     # git push
     subprocess.run(["git", "add", DEFAULT_PYPROJECT_TOML_PATH], check=True)
@@ -59,7 +70,7 @@ def release(release_type: str = None):
 
     # GitHub release
     try:
-        subprocess.run(["gh", "--version"])
+        subprocess.run(["gh", "--version"], capture_output=True)
     except:
         typer.echo("`gh` CLI not found. Check the official repository for more information: https://github.com/cli/cli")
         return
@@ -71,15 +82,24 @@ def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
     """Build the pyproject.toml file from the rossproject.toml file."""
     pyproject_toml = {}
     pyproject_toml["project"]  = {}
-    pyproject_toml["project"]["name"] = rossproject_toml["name"] if "name" in rossproject_toml else ValueError("name not found in rossproject.toml")
-    pyproject_toml["project"]["version"] = rossproject_toml["version"] if "version" in rossproject_toml else ValueError("version not found in rossproject.toml")
-    pyproject_toml["project"]["description"] = rossproject_toml["description"] if "description" in rossproject_toml else ValueError("description not found in rossproject.toml")
-    pyproject_toml["project"]["dependencies"] = rossproject_toml["dependencies"] if "dependencies" in rossproject_toml else ValueError("dependencies not found in rossproject.toml")
-    pyproject_toml["project"]["authors"] = rossproject_toml["authors"] if "authors" in rossproject_toml else ValueError("authors not found in rossproject.toml")
-    pyproject_toml["project"]["readme"] = rossproject_toml["readme"] if "readme" in rossproject_toml else ValueError("readme not found in rossproject.toml")
+    pyproject_toml["project"]["name"] = rossproject_toml["name"] if "name" in rossproject_toml else None
+    pyproject_toml["project"]["version"] = rossproject_toml["version"] if "version" in rossproject_toml else None
+    pyproject_toml["project"]["description"] = rossproject_toml["description"] if "description" in rossproject_toml else None
+    pyproject_toml["project"]["dependencies"] = rossproject_toml["dependencies"] if "dependencies" in rossproject_toml else None
+    pyproject_toml["project"]["authors"] = rossproject_toml["authors"] if "authors" in rossproject_toml else None
+    pyproject_toml["project"]["readme"] = rossproject_toml["readme"] if "readme" in rossproject_toml else None
 
     pyproject_toml["build-system"] = {}
     pyproject_toml["build-system"]["requires"] = ["hatchling"]
     pyproject_toml["build-system"]["build-backend"] = "hatchling.build"
+
+    any_missing = False
+    for fld in pyproject_toml["project"]:
+        if pyproject_toml["project"][fld] is None:
+            typer.echo(f"rossproject.toml field {fld} is missing!")
+            any_missing = True
+
+    if any_missing:
+        raise typer.Exit()
 
     return pyproject_toml

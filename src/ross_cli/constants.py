@@ -20,6 +20,7 @@ authors = [
 dependencies = [
 
 ]
+readme = "README.md"
 """
 
 # ~/.ross/ross_config.toml default configuration content 
