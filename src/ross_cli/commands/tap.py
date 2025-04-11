@@ -63,7 +63,7 @@ def untap_ross_index(remote_url: str):
     # Check for the existence of the config file
     if not os.path.exists(DEFAULT_ROSS_CONFIG_FILE_PATH):
         typer.echo("ROSS config file missing")
-        typer.Exit()
+        raise typer.Exit()
 
     # Parse for GitHub username and repository name from the URL
     username, repo_name = parse_github_url(remote_url)
@@ -79,12 +79,12 @@ def untap_ross_index(remote_url: str):
 
     if len(ross_config_toml["index"]) == 0:
         typer.echo("No indexes present in the config file. Aborting...")
-        typer.Exit()
+        raise typer.Exit()
 
     # Check that the .git file exists
     if not os.path.exists(repo_git_file_path):
         typer.echo(f"Repository not found at: {repo_git_file_path}")
-        typer.Exit()
+        raise typer.Exit()
 
     # Remove it from the index
     indexes = ross_config_toml["index"]
