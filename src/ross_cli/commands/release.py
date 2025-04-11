@@ -55,11 +55,16 @@ def release(release_type: str = None):
     for fld in pyproject_toml_new:
         pyproject_toml_content[fld] = pyproject_toml_new[fld]
 
+    # Write the pyproject.toml file
     with open(DEFAULT_PYPROJECT_TOML_PATH, "wb") as f:
         tomli_w.dump(pyproject_toml_content, f)
 
+    # Write the updated version number back to the rossproject.toml file.
+    with open(DEFAULT_ROSSPROJECT_TOML_PATH, 'wb') as f:
+        tomli_w.dump(rossproject_toml, f)
+
     # git push
-    subprocess.run(["git", "add", DEFAULT_PYPROJECT_TOML_PATH], check=True)
+    subprocess.run(["git", "add", DEFAULT_PYPROJECT_TOML_PATH, DEFAULT_ROSSPROJECT_TOML_PATH], check=True)
     subprocess.run(["git", "commit", "-m", f"Updating version to {rossproject_toml['version']}"])
     try:
         subprocess.run(["git", "push"], check=True)
@@ -75,11 +80,7 @@ def release(release_type: str = None):
         typer.echo("`gh` CLI not found. Check the official repository for more information: https://github.com/cli/cli")
         return
     tag = "v" + version
-    subprocess.run(["gh", "release", "create", tag], check=True)
-
-    # Write the updated version number back to the rossproject.toml file.
-    with open(DEFAULT_ROSSPROJECT_TOML_PATH, 'wb') as f:
-        tomli_w.dump(rossproject_toml, f)
+    subprocess.run(["gh", "release", "create", tag], check=True)    
 
 
 def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
