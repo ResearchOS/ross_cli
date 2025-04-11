@@ -81,7 +81,8 @@ def release(release_type: str = None):
         typer.echo("`gh` CLI not found. Check the official repository for more information: https://github.com/cli/cli")
         return
     tag = "v" + version
-    release_url = subprocess.run(["gh", "release", "create", tag], check=True, capture_output=True)
+    result = subprocess.run(["gh", "release", "create", tag], check=True, capture_output=True)
+    release_url = result.stdout.strip()
     typer.echo(f"Successfully released to {release_url}")
 
 
