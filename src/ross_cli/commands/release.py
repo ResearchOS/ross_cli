@@ -17,6 +17,11 @@ def release(release_type: str = None):
     with open(DEFAULT_ROSSPROJECT_TOML_PATH, "rb") as f:
         rossproject_toml = tomli.load(f)
 
+    if not re.match(SEMANTIC_VERSIONING_REGEX, rossproject_toml["version"]):
+        typer.echo("Version number does not follow semantic versioning! For example, 'v1.0.0'.")
+        typer.echo("See https://semver.org for the full semantic versioning specification.")
+        raise typer.Exit()
+
     version = rossproject_toml["version"]    
     if version[0] == "v":
         version = version[1:]

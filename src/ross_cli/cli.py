@@ -95,9 +95,9 @@ def release_command(release_type: str = None):
 def config_command():
     """Print information about the ROSS CLI and its configuration."""
     typer.echo("ROSS command line interface (CLI) information:\n")
-    typer.echo(f"ROSS root folder location: {DEFAULT_ROSS_ROOT_FOLDER}")
+    typer.echo(f"ROSS root folder location:        {DEFAULT_ROSS_ROOT_FOLDER}")
     typer.echo(f"ROSS configuration file location: {DEFAULT_ROSS_CONFIG_FILE_PATH}")
-    typer.echo(f"ROSS indices folder location: {DEFAULT_ROSS_INDICES_FOLDER}")
+    typer.echo(f"ROSS indexes folder location:     {DEFAULT_ROSS_INDICES_FOLDER}")
     
     # Show config content
     try:

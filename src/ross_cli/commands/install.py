@@ -13,10 +13,10 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     2. Install the package using pip""" 
 
     # Check that this folder contains a rossproject.toml file
-    if not os.path.exists(DEFAULT_ROSSPROJECT_TOML_PATH):
-        typer.echo(f"Current directory is not a ROSS project, missing rossproject.toml file.")
-        typer.echo("Run `ross init` to create a rossproject.toml in this folder.")
-        return
+    # if not os.path.exists(DEFAULT_ROSSPROJECT_TOML_PATH):
+    #     typer.echo(f"Current directory is not a ROSS project, missing rossproject.toml file.")
+    #     typer.echo("Run `ross init` to create a rossproject.toml in this folder.")
+    #     return
     
     # Check that the install folder exists
     if not os.path.exists(install_folder_path):

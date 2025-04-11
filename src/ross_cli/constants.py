@@ -1,5 +1,7 @@
 import os
 
+SEMANTIC_VERSIONING_REGEX = "^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
+
 RELEASE_TYPES = ["patch", "minor", "major"]
 
 DEFAULT_PACKAGE_NAME = "template"
