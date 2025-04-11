@@ -72,14 +72,14 @@ def release(release_type: str = None):
     except:
         typer.echo("Failed to `git push`, likely because you do not have permission to push to this repository.")
         typer.echo("Try opening a pull request instead, or contact the repository's maintainer(s) to change your permissions.")
-        return
+        raise typer.Exit()
 
     # GitHub release
     try:
         subprocess.run(["gh", "--version"], capture_output=True)
     except:
         typer.echo("`gh` CLI not found. Check the official repository for more information: https://github.com/cli/cli")
-        return
+        raise typer.Exit()
     tag = "v" + version
     result = subprocess.run(["gh", "release", "create", tag], check=True, capture_output=True)
     release_url = result.stdout.strip()

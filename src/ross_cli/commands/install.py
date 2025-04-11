@@ -31,11 +31,36 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     github_repo = url_parts[-1]
     main_branch_name = get_default_branch_name(remote_url)
     pyproject_toml_url = f"https://raw.githubusercontent.com/{github_user}/{github_repo}/{main_branch_name}/pyproject.toml"
-    with urlopen(pyproject_toml_url) as response:
-        pyproject_content = tomli.load(response.read().decode())
-    # if not remote_url.endswith(".git"):
-    #     remote_url = remote_url + ".git"
     github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
+    try:
+        pip_install = True
+        with urlopen(pyproject_toml_url) as response:
+            pyproject_content = tomli.load(response.read().decode())
+    except:
+        typer.echo("Failed to directly `pip install` the GitHub repository. The repository is likely private.")
+        typer.echo("Switching to `gh clone` method. This requires you to have read access to the private repository.")
+
+        try:
+            subprocess.run(["gh", "--version"], capture_output=True)
+        except:
+            typer.echo("`gh` CLI not found. Check the official repository for more information: https://github.com/cli/cli")
+            raise typer.Exit()
+
+        try:
+            # Get the current directory
+            pip_install = False
+            root_dir = os.getcwd()
+            os.chdir(DEFAULT_PIP_SRC_FOLDER_PATH)
+            subprocess.run(["gh", "repo", "clone", f"{github_user}/{github_repo}"])
+            # Read the pyproject.toml file for the official package name
+            pyproject_toml_path = os.path.join(DEFAULT_PIP_SRC_FOLDER_PATH, github_repo, 'pyproject.toml')
+            with open(pyproject_toml_path, 'rb') as f:
+                pyproject_content = tomli.load(f)
+        except:
+            os.chdir(root_dir)
+            typer.echo(f"Failed to `gh clone` the repository. Check the URL: {remote_url}")
+            typer.echo("Make sure you have authorized the `gh` CLI by running `gh auth login`")
+            raise typer.Exit()    
 
     if "project" not in pyproject_content or "name" not in pyproject_content["project"]:
         official_package_name = pyproject_content["project"]["name"]
@@ -44,7 +69,17 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
 
     # Set the PIP_SRC environment variable to the install folder path
     os.environ["PIP_SRC"] = install_folder_path
-    typer.echo(f"Installing package {package_name}...")
-    subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
+    if pip_install:
+        typer.echo(f"pip installing package {package_name}...")
+        subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
+    else:
+        typer.echo(f"pip installing from `gh clone` package {package_name}...")
+        # Rename the folder
+        cloned_folder = os.path.dirname(pyproject_toml_path)
+        official_name_folder = os.path.join(os.path.dirname(cloned_folder), official_package_name)
+        os.rename(cloned_folder, official_name_folder)
+        # pip install -e from that folder
+        os.chdir(root_dir)
+        subprocess.run(["pip", "install", "-e", official_name_folder] + args, check=True)
 
     typer.echo(f"Successfully installed package {package_name}")
