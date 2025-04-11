@@ -40,7 +40,8 @@ def release(release_type: str = None):
         chars_after = ".0.0"
     
     if release_type is not None:
-        rossproject_toml["version"] = chars_before + new_num + chars_after
+        version = chars_before + new_num + chars_after
+        rossproject_toml["version"] = version
 
     # Get the new pyproject_toml data
     pyproject_toml_new = build_pyproject_from_rossproject(rossproject_toml)
