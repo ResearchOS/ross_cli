@@ -92,7 +92,7 @@ def untap_ross_index(remote_url: str):
 
     # Save the modified config file
     with open(DEFAULT_ROSS_CONFIG_FILE_PATH, 'wb') as f:
-        tomli_w.dump(ross_config_toml)
+        tomli_w.dump(ross_config_toml, f)
 
     # Remove it from disk
     index_folder = os.path.dirname(index["path"])
