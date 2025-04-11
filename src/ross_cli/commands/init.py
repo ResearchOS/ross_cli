@@ -29,6 +29,8 @@ def init_ross_project(name: str):
         url_parts = remote_url.split("/")
         repo_name = url_parts[-1]
         name = repo_name
+        if name.endswith(".git"):
+            name = name[0:-4] # Remove .git from the name
     
     # Create the rossproject.toml file
     if os.path.exists(DEFAULT_ROSSPROJECT_TOML_PATH):

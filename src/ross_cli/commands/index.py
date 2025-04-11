@@ -45,20 +45,11 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
     except subprocess.CalledProcessError:
         parts = package_folder_path.split(os.sep)
         name = parts[-1]
-        # try:
-        #     gh_api_user = json.load(subprocess.run(["gh", "api", "user"], capture_output=True, text=True, check=True))
-        #     user = gh_api_user["login"]
-        # except:
-        #     user = "github_user"
         typer.echo("`git pull` failed. Make sure this package's git repo has an associated GitHub repository")
         typer.echo(f'To associate this git repo with a new private GitHub repository, do the following:')
         typer.echo("git add .")
         typer.echo('git commit -m "Initial commit"')
         typer.echo(f'gh repo create {name} --source=. --public --push')
-        # typer.echo(f'gh repo create {name} --source="." --public')
-        # typer.echo(f'git remote add origin https://github.com/{user}/{name}.git')
-        # typer.echo('git branch -M main')
-        # typer.echo('git push -u origin main')
         raise typer.Exit()        
 
     # Get the index path

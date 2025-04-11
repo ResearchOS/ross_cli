@@ -36,7 +36,7 @@ PROJECT_FOLDER = os.getcwd()
 DEFAULT_ROSS_ROOT_FOLDER = os.path.join(os.path.expanduser("~"), ".ross")
 DEFAULT_ROSS_INDICES_FOLDER = os.path.join(DEFAULT_ROSS_ROOT_FOLDER, "indexes")
 DEFAULT_ROSS_CONFIG_FILE_PATH = os.path.join(DEFAULT_ROSS_ROOT_FOLDER, "ross_config.toml")
-DEFAULT_PIP_SRC_FOLDER_PATH = os.path.join(PROJECT_FOLDER, "src")
+DEFAULT_PIP_SRC_FOLDER_PATH = os.path.join(PROJECT_FOLDER, "src", "installed")
 DEFAULT_PYPROJECT_TOML_PATH = os.path.join(PROJECT_FOLDER, "pyproject.toml")
 DEFAULT_ROSSPROJECT_TOML_PATH = os.path.join(PROJECT_FOLDER, "rossproject.toml")
 
@@ -45,7 +45,8 @@ DEFAULT_ROSSPROJECT_TOML_PATH = os.path.join(PROJECT_FOLDER, "rossproject.toml")
 INIT_PATHS = {
     "README.md": os.path.join(PROJECT_FOLDER, "README.md"),
     "src/": os.path.join(PROJECT_FOLDER, "src"),
+    "src/installed": DEFAULT_PIP_SRC_FOLDER_PATH,
     "tests/": os.path.join(PROJECT_FOLDER, "tests"),
     "docs/": os.path.join(PROJECT_FOLDER, "docs"),
-    ".gitignore": os.path.join(PROJECT_FOLDER, ".gitignore")
+    ".gitignore": os.path.join(PROJECT_FOLDER, ".gitignore")    
 }
