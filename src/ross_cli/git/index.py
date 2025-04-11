@@ -21,6 +21,7 @@ def get_index_files_from_config(config_file_path: str = DEFAULT_ROSS_CONFIG_FILE
 def get_package_remote_url(package_name: str, config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH) -> str:
     """Get the remote URL from the index file."""
     index_files = get_index_files_from_config(config_file_path)
+    typer.echo(index_files)
     for index_file in index_files:
         try:
             return get_package_remote_url_from_index_file(package_name, index_file["path"])

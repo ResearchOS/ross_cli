@@ -29,3 +29,5 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     os.environ["PIP_SRC"] = install_folder_path
     typer.echo(f"Installing {package_name}...")
     subprocess.run(["pip", "install", "-e", github_full_url] + args, check=True)
+
+    typer.echo(f"Successfully installed {package_name}")
