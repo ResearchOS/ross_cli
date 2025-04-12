@@ -1,7 +1,6 @@
 import os
 from pprint import pprint
 import subprocess
-import json
 
 import tomli
 import tomli_w

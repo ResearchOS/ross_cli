@@ -118,3 +118,5 @@ log = "info"
 [[index]]
 path = "/Users/username/.ross/indexes/ResearchOS/ross_cli/index.toml"
 ```
+
+![ROSSProject Specs](docs/figures/rossproject%20specs.png)
