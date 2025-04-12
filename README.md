@@ -119,4 +119,5 @@ log = "info"
 path = "/Users/username/.ross/indexes/ResearchOS/ross_cli/index.toml"
 ```
 
+## rossproject.toml input & install options
 ![ROSSProject Specs](docs/figures/rossproject%20specs.png)
