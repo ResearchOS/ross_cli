@@ -30,16 +30,15 @@ def init_ross_project(package_name: str):
     if package_name is None:        
         url_parts = repository_url.split("/")
         repo_name = url_parts[-1]
-        package_name = repo_name
+        package_name = repo_name[:-4] # Remove the '.git' suffix
     
     # Create the rossproject.toml file
     if os.path.exists(DEFAULT_ROSSPROJECT_TOML_PATH):
         typer.echo("rossproject.toml file already exists in current directory.")
     else:
-        # Create a new rossproject.toml file
         # Remove the .git suffix from the URL
-        if repository_url.endswith(".git"):
-            repository_url_no_git = repository_url[:-4]
+        repository_url_no_git = repository_url[:-4]
+        # Write a new rossproject.toml file        
         toml_str_content = DEFAULT_ROSSPROJECT_TOML_STR.format(repository_url=repository_url_no_git, DEFAULT_PACKAGE_NAME=package_name)
         with open(DEFAULT_ROSSPROJECT_TOML_PATH, "wb") as f:
             f.write(toml_str_content.encode("utf-8"))

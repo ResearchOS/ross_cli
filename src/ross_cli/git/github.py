@@ -62,6 +62,9 @@ def get_remote_url_from_git_repo(directory="."):
             raise typer.Exit()
 
         remote = remotes[0] # Get the string, not the list
+
+        if not remote.endswith(".git"):
+            raise ValueError("TESTING ONLY. Error! Remote URL should end with '.git'!")
             
         return remote
         
@@ -101,8 +104,7 @@ def git_push_to_remote(directory="."):
     except subprocess.CalledProcessError as e:
         typer.echo(f"Git command failed: {e.stderr.strip()}")
         raise typer.Exit()
-    except typer.echo as e:
-        raise typer.Exit()
+    except typer.echo as e:        
         typer.echo(f"Error: {str(e)}")
         raise typer.Exit()
 

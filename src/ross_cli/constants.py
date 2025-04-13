@@ -1,5 +1,7 @@
 import os
 
+REQUIRED_INDEX_KEYS = ["url", "uuid", "index_path"] # The keys in the config file for each index.
+
 CLI_NAME = "ross" # The name of this package
 
 SUPPORTED_LANGUAGES = ['python', 'r', 'matlab']
