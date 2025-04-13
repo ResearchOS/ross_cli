@@ -26,7 +26,7 @@ def add_to_index(index_name: str, package_folder_path: str) -> None:
     
     # Check for the rossproject.toml file
     if not os.path.exists(DEFAULT_ROSSPROJECT_TOML_PATH):
-        typer.echo("Missing rossproject.toml file")
+        typer.echo(f"Folder {package_folder_path} is missing a rossproject.toml file")
         raise typer.Exit()
     
     # Get the index path from the config file

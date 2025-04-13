@@ -7,7 +7,7 @@ import tomli_w
 import typer
 
 from ..constants import *
-from ..git.github import parse_github_url
+from ..utils.config import load_config, validate_index_entries
 from .release import is_valid_url
 
 def tap_github_repo_for_ross_index(remote_url: str, index_relative_path = "index.toml"):
@@ -17,25 +17,13 @@ def tap_github_repo_for_ross_index(remote_url: str, index_relative_path = "index
     2. "uuid": Tapped index UUID
     3. "index_path": Relative path to the index.toml file within the repository (default: index.toml)
     """
-    # Check for the existence of the config file    
-    if not os.path.exists(DEFAULT_ROSS_CONFIG_FILE_PATH):
-        typer.echo(f"ROSS config file {DEFAULT_ROSS_CONFIG_FILE_PATH} does not exist.")
-        raise typer.Exit()
-    
-    # Read the config file
-    with open(DEFAULT_ROSS_CONFIG_FILE_PATH, 'rb') as f:
-        ross_config = tomli.load(f)
+    ross_config = load_config()
 
     # Initialize the index key
     if "index" not in ross_config:
         ross_config["index"] = []
 
-    # Validate the index entries
-    for index in ross_config["index"]:
-        for key in REQUIRED_INDEX_KEYS:
-            if key not in index:
-                typer.echo(f"Missing field: {key} from index in config file at {DEFAULT_ROSS_CONFIG_FILE_PATH}")
-                raise typer.Exit()
+    validate_index_entries(ross_config["index"])
             
     # Make sure the remote URL ends in .git
     if not remote_url.endswith('.git'):
@@ -69,14 +57,7 @@ def tap_github_repo_for_ross_index(remote_url: str, index_relative_path = "index
 
 def untap_ross_index(remote_url: str):
     """Remove the GitHub repository from the ROSS index. Also remove the index folder from the .ross/indexes folder"""
-    # Check for the existence of the config file
-    if not os.path.exists(DEFAULT_ROSS_CONFIG_FILE_PATH):
-        typer.echo("ROSS config file missing")
-        raise typer.Exit()
-    
-    # Read in the ROSS config file
-    with open(DEFAULT_ROSS_CONFIG_FILE_PATH, 'rb') as f:
-        ross_config_toml = tomli.load(f) 
+    ross_config_toml = load_config()
 
     # Ensure "index" field is initialized
     if "index" not in ross_config_toml:
@@ -90,14 +71,9 @@ def untap_ross_index(remote_url: str):
     if not remote_url.endswith(".git"):
         remote_url = remote_url + ".git"
 
-    # Validate the index entries
-    for index in ross_config_toml["index"]:
-        for key in REQUIRED_INDEX_KEYS:
-            if key not in index:
-                typer.echo(f"Missing field: {key} from index in config file at {DEFAULT_ROSS_CONFIG_FILE_PATH}")
-                raise typer.Exit()
+    validate_index_entries(ross_config_toml["index"])
 
-    # Remove it from the index    
+    # Remove this index from the list
     for index in ross_config_toml["index"]:
         if index["url"] == remote_url:            
             ross_config_toml["index"].remove(index)            
