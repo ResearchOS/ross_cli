@@ -1,5 +1,5 @@
 # Overview
-`ross` (Research Open Source Software) is a command-line interface (CLI) for installing and sharing data science projects written in any programming language. `ross` is built on top of `pip`, `git`, and `github`, and is designed to be easy to use and flexible.
+`ross` (Research Open Source Software) is a command-line interface (CLI) for installing and sharing data science projects written in Python, MATLAB, and R. `ross` is built on top of `pip`, `git`, and `github` (via `gh` cli), and is designed with researchers in mind to be easy to use and flexible.
 
 Each project/package's metadata is stored in a `rossproject.toml` text file, which is a stripped-down version of the `pyproject.toml` file used by `pip`. This file contains information about the project, such as its name, version, author, and dependencies.
 
@@ -7,7 +7,7 @@ Each project/package's metadata is stored in a `rossproject.toml` text file, whi
 - Python
 - Git CLI
 - GitHub account
-- `gh` CLI (optional, for releasing packages)
+- `gh` CLI
 
 # Installation
 ## Cross-platform
@@ -30,7 +30,7 @@ brew install ross_cli
 ross cli-init
 ```
 
-### Manually
+### Manually from GitHub
 ```bash
 # Navigate to where on your computer you want to install the package
 # e.g. ~/ross_cli
@@ -59,17 +59,21 @@ Before installing any packages, you need to `tap` (add) an index to tell `ross` 
 ```bash
 ross tap https://github.com/github_user/github_repo
 ```
-This clones the repo to your computer at `~/.ross/indexes/github_user/github_repo` and creates an `index.toml` file in that directory, if it doesn't already exist.
+This clones adds the index's URL to your configuration file.
 
 ## Create an index
-An index is just a GitHub repository. You can create one by [going to GitHub's website and creating a new repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/quickstart-for-repositories). 
+An index is just a GitHub repository (hosted by GitHub in the cloud). You can create one following your preferred method, or by [going to GitHub's website and creating a new repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/quickstart-for-repositories). 
 
-It is OK if the repository is empty - `ross` will create the `index.toml` file for you.
+It is OK if the index repository is empty - `ross` will create the `index.toml` file for you.
 
-## Example index.toml
+## index.toml format
+This is the format of the `index.toml` file that exists in each ROSS indexed GitHub repository.
 ```toml
 [[package]]
-url = "https://github.com/example_user/example_package"
+url = "https://github.com/example_user1/example_package1"
+
+[[package]]
+url = "https://github.com/example_user1/example_package2"
 ```
 
 # Install a package
@@ -78,7 +82,10 @@ ross install example_package
 ```
 This will search through all of the tapped indexes for the package name, and `pip install --editable git+<url>` the package. Installing a package in editable mode allows you to have just as much control over the packages you install as if you had written it yourself.
 
-# Release a package (optional, requires `gh` CLI)
+### Installing MATLAB and R packages
+`pip install` is a native Python command. For MATLAB and R, the appropriate installation commands are executed - `git clone`, and `install.packages()`, respectively.
+
+# Release a package (optional)
 ```bash
 ross release v#.#.#
 ```
@@ -92,8 +99,8 @@ version = "0.1.0"
 description = "A short description of the package"
 language = "python"
 authors = [
-    "Author1",
-    "Author2"
+    "Author 1 Name",
+    "Author 2 Name"
 ]
 dependencies = [
     "numpy",
@@ -106,9 +113,9 @@ This gets converted to [a standard `pyproject.toml` file](https://packaging.pyth
 # Add your package to an index
 After your package's repository has at least one release, you can add it to an index of your choice. This will allow other users to `ross install` your package.
 ```bash
-ross add-to-index github_user/github_repo
+ross add-to-index https://github.com/username/repo/index.toml
 ```
-This command adds the package in the current folder to the `index.toml` file in `github_user/github_repo`. It will then `git push` the changes to the remote repository.
+This command adds the specified package in the current folder to the specified `index.toml` file in the GitHub repository. You must have write access to that index repository to do this.
 
 # ROSS Configuration File Format
 ```toml

@@ -40,6 +40,7 @@ def tap_command(remote_url: str):
     6. Push the changes to the remote repository."""
     tap.tap_github_repo_for_ross_index(remote_url)
 
+
 @app.command(name="untap")
 def untap_command(remote_url: str):
     f"""Remove the index GitHub repository from the list of indices in the config file at {DEFAULT_ROSS_CONFIG_FILE_PATH}    
@@ -51,16 +52,13 @@ def untap_command(remote_url: str):
 
 
 @app.command(name="add-to-index")
-def add_to_index_command(index_name: str, package_folder_path: str = os.getcwd()):
+def add_to_index_command(index_file_url: str, package_folder_path: str = os.getcwd()):
     """Add a package to the index.
-    1. Register the package with the .toml file living in the user's home directory. Throw error if file does not exist.
-        - Locate the .toml file (default: ~/.ross/indices/index1.toml)
-        - Get the remote URLs from the git repository (fail if folder is not a git repo, and error if 0 or 2+ remotes exist)
-        - Add the package to the .toml file (error if it already exists)
-        [package_name]
-        url = "https://github.com/username/repo"
+    Index file format:
+    [package_name]
+    url = "https://github.com/username/repo/blob/main/index.toml"
     """
-    index.add_to_index(index_name, package_folder_path)
+    index.add_to_index(index_file_url, package_folder_path)
     
 
 @app.command(name="install")

@@ -5,8 +5,11 @@ import re
 from typing import Tuple
 from urllib.parse import urlparse
 import json
+import base64
 
 import typer
+
+from ..utils.urls import is_valid_url
 
 def get_remote_url_from_git_repo(directory="."):
     """
@@ -163,3 +166,44 @@ def get_default_branch_name(remote_url: str) -> str:
         default_branch = "main"
 
     return default_branch
+
+def read_github_file(file_url: str) -> str:
+    """Read a file from GitHub. 
+    The file URL is of one of the two following forms:
+    1. https://github.com/username/repo/path/to/file.ext (mirrors file structure)
+    2. https://github.com/username/repo/blob/main/file.ext (directly copied from GitHub site)
+    """
+
+    file_url = file_url.replace("blob/main", "")
+
+    GITHUB_COM_STR = "github.com/"
+    HTTPS_GITHUB_COM_STR = "https://github.com/"
+    if GITHUB_COM_STR not in file_url:
+        typer.echo("Invalid GitHub URL")
+        raise typer.Exit()
+
+    # Standardize the URL prefix
+    github_com_index = file_url.index(GITHUB_COM_STR)
+    file_url = file_url.replace(file_url[0:github_com_index + len(GITHUB_COM_STR)], HTTPS_GITHUB_COM_STR)
+
+    if not is_valid_url:
+        typer.echo(f"Invalid URL {file_url}")
+
+    path_part = file_url[len(HTTPS_GITHUB_COM_STR):]
+
+    # Split the remaining path
+    parts = path_part.split('/', 2)  # Split into max 3 parts
+    if len(parts) < 3:
+        typer.echo("URL doesn't have enough components")
+        raise typer.Exit()
+    
+    username = parts[0]
+    repo_name = parts[1]
+    file_path = parts[2]
+
+    api_endpoint = f"/repos/{username}/{repo_name}/contents/{file_path}"
+    command = ["gh", "api", api_endpoint]
+    result = subprocess.run(command, check=True, capture_output=True, text=True)
+    content_json = json.loads(result.stdout)
+    content = base64.b64decode(content_json["content"]).decode("utf-8")
+    return content

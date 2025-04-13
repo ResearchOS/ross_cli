@@ -12,11 +12,20 @@ RELEASE_TYPES = ["patch", "minor", "major"]
 
 DEFAULT_PACKAGE_NAME = "template"
 
+ROSSPROJECT_REQUIRED_FIELDS = [
+    "name",    
+    "version",
+    "repository_url",
+    "language",
+    "authors",
+    "dependencies",
+    "readme"
+]
+
 # rossproject.toml default content
 DEFAULT_ROSSPROJECT_TOML_STR = """
 # ROSS project configuration file
 name = "{DEFAULT_PACKAGE_NAME}"
-description = "A template for ROSS packages"
 version = "0.1.0"
 repository_url = "{repository_url}"
 language = "python"
