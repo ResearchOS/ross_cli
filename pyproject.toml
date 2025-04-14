@@ -10,9 +10,10 @@ dependencies = []
 
 [project]
 name = "ross_cli"
-version = "0.1.6"
+version = "0.1.7"
 authors = []
 readme = "README.md"
 dependencies = [
     "https://github.com/ResearchOS/ross_cli.git",
+    "numpy==2",
 ]
