@@ -207,3 +207,56 @@ def read_github_file(file_url: str) -> str:
     content_json = json.loads(result.stdout)
     content = base64.b64decode(content_json["content"]).decode("utf-8")
     return content
+
+def create_empty_file_in_repo(repo_git_url, file_path, commit_message="Add empty file"):
+    """
+    Create an empty file in a GitHub repository using the GitHub CLI.
+    
+    Args:
+        repo_git_url (str): GitHub repository URL ending with .git
+        file_path (str): Path where the file should be created
+        commit_message (str): Commit message for the file creation
+    
+    Returns:
+        dict: GitHub API response data
+    """
+    # Extract owner and repo name from git URL
+    path_parts = urlparse(repo_git_url).path.strip('/').split('/')
+    if path_parts[-1].endswith('.git'):
+        path_parts[-1] = path_parts[-1][:-4]  # Remove .git suffix
+    
+    owner = path_parts[-2]
+    repo = path_parts[-1]
+    
+    # Base64 encode empty content (required by GitHub API)
+    empty_content = ""
+    encoded_content = base64.b64encode(empty_content.encode()).decode()
+    
+    # Prepare the gh CLI command
+    api_path = f"repos/{owner}/{repo}/contents/{file_path}"
+    
+    # Build the command
+    command = [
+        "gh", "api",
+        "--method", "PUT",
+        api_path,
+        "-f", f"message={commit_message}",
+        "-f", f"content={encoded_content}"
+    ]
+    
+    # Execute the command
+    try:
+        result = subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        # Parse the JSON response
+        response_data = json.loads(result.stdout)
+        return response_data
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing GitHub CLI command: {e}")
+        if e.stderr:
+            print(f"Error output: {e.stderr}")
+        raise

@@ -1,2 +1,4 @@
 # Winget manifests
 !manifests/
+*.pyc
+rossproject.toml

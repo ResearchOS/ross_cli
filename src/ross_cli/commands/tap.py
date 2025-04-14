@@ -1,5 +1,3 @@
-import os
-import shutil
 import uuid
 
 import tomli
@@ -9,6 +7,8 @@ import typer
 from ..constants import *
 from ..utils.config import load_config, validate_index_entries
 from .release import is_valid_url
+from ..git.github import get_default_branch_name, create_empty_file_in_repo
+from ..utils.urls import check_url_exists
 
 def tap_github_repo_for_ross_index(remote_url: str, index_relative_path = "index.toml"):
     f"""Add a GitHub repository as a ROSS index.
@@ -44,10 +44,24 @@ def tap_github_repo_for_ross_index(remote_url: str, index_relative_path = "index
     # Create the dict for this index
     index_dict = {
         "url": remote_url,
-        "uuid": uuid.uuid4(),
+        "uuid": str(uuid.uuid4()),
         "index_path": index_relative_path
     }
     ross_config["index"].append(index_dict)
+
+    # Create the index.toml file if it does not exist already.
+    # 1. Query GitHub to see if the index.toml file exists.
+    # 2. If so, do nothing.
+    # 3. If not, create it.
+    remote_url_no_git = remote_url[:-4]
+    default_branch_name = get_default_branch_name(remote_url)
+    index_toml_url = remote_url_no_git + f"/blob/{default_branch_name}/index.toml"
+    if not check_url_exists(index_toml_url):
+        typer.echo(f"index file not found, attempting to create index file at: {index_toml_url}")
+        try:
+            create_empty_file_in_repo(remote_url, index_relative_path)
+        except:
+            typer.echo(f"Failed to create index.toml file. Please create the file manually at: {remote_url_no_git}")
 
     # Write the ross config file    
     with open(DEFAULT_ROSS_CONFIG_FILE_PATH, "wb") as f:

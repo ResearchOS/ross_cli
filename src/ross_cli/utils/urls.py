@@ -36,7 +36,6 @@ def check_url_exists(url: str) -> bool:
         # Make HTTP request to PyPI API
         with urllib.request.urlopen(url) as response:
             if response.status == 200:
-                data = json.loads(response.read().decode('utf-8'))
                 return True
             return False
     except urllib.error.HTTPError as e:

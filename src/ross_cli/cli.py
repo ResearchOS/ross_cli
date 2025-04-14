@@ -69,14 +69,6 @@ def install_command(package_name: str, install_folder_path: str = DEFAULT_PIP_SR
     install.install(package_name, install_folder_path, args)
 
 
-# Maybe I don't need to support an uninstall command right now, and the user could just use pip?
-# @app.command(name="uninstall")
-# def uninstall_command(package_name: str, args: List[str] = []):
-#     """Uninstall a package."""
-#     typer.echo(f"Uninstalling {package_name}...")
-#     subprocess.run(["pip", "uninstall", package_name] + args)
-
-
 @app.command(name="release")
 def release_command(
     release_type: str = typer.Argument(
@@ -148,3 +140,6 @@ def main(
 ):
     """ROSS command line interface (CLI)"""
     return
+
+if __name__=="__main__":
+    cli_init_command()

@@ -6,7 +6,7 @@ CLI_NAME = "ross" # The name of this package
 
 SUPPORTED_LANGUAGES = ['python', 'r', 'matlab']
 
-SEMANTIC_VERSIONING_REGEX = "^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
+SEMANTIC_VERSIONING_REGEX = r"^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
 
 RELEASE_TYPES = ["patch", "minor", "major"]
 
@@ -60,7 +60,7 @@ DEFAULT_ROSSPROJECT_TOML_PATH = os.path.join(PROJECT_FOLDER, "rossproject.toml")
 INIT_PATHS = {
     "README.md": os.path.join(PROJECT_FOLDER, "README.md"),
     "src/": os.path.join(PROJECT_FOLDER, "src"),
-    "src/installed": DEFAULT_PIP_SRC_FOLDER_PATH,
+    "src/installed/": DEFAULT_PIP_SRC_FOLDER_PATH,
     "tests/": os.path.join(PROJECT_FOLDER, "tests"),
     "docs/": os.path.join(PROJECT_FOLDER, "docs"),
     ".gitignore": os.path.join(PROJECT_FOLDER, ".gitignore")    
