@@ -24,3 +24,5 @@ def load_rossproject(rossproject_toml_path: str) -> dict:
 
     if not fields_ok:
         raise typer.Exit()
+    
+    return rossproject

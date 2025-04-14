@@ -9,7 +9,7 @@ import base64
 
 import typer
 
-from ..utils.urls import is_valid_url
+from ..utils.urls import is_valid_url, check_url_exists
 
 def get_remote_url_from_git_repo(directory="."):
     """
@@ -174,7 +174,7 @@ def read_github_file(file_url: str) -> str:
     2. https://github.com/username/repo/blob/main/file.ext (directly copied from GitHub site)
     """
 
-    file_url = file_url.replace("blob/main", "")
+    file_url = file_url.replace("/blob/main", "")
 
     GITHUB_COM_STR = "github.com/"
     HTTPS_GITHUB_COM_STR = "https://github.com/"
@@ -199,7 +199,7 @@ def read_github_file(file_url: str) -> str:
     
     username = parts[0]
     repo_name = parts[1]
-    file_path = parts[2]
+    file_path = parts[2:]
 
     api_endpoint = f"/repos/{username}/{repo_name}/contents/{file_path}"
     command = ["gh", "api", api_endpoint]
