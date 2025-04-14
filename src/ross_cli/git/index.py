@@ -1,37 +1,58 @@
 import os
 import subprocess
+from urllib.parse import urlparse
 
 import tomli
 import typer
 
-from .github import get_remote_url_from_git_repo
+from .github import get_remote_url_from_git_repo, is_valid_url, read_github_file
 from ..constants import DEFAULT_ROSS_CONFIG_FILE_PATH
+from ..utils.config import load_config
 
-def get_index_files_from_config(config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH):
-    """Get the index files from the config file."""
-    if not os.path.isfile(config_file_path):
-        typer.echo(f"{config_file_path} is not a file or does not exist.")
-        raise typer.Exit()
+def get_indexes_info_from_config(config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH):
+    """Get the index files' info from the config file."""
+        
+    toml_content = load_config(config_file_path)  
+    if "index" not in toml_content:
+        return None
+    else:
+        return toml_content["index"]
+
+def search_indexes_for_package_info(package_identifier: str, config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH) -> str:
+    """Get the package's information (dict) given an identifier.
+    Identifier can be any of: package name, GitHub `owner/repo` string, or GitHub repository URL.
+    If more than one package is identified, returns all of them.
+    If none are identified, returns None."""
     
-    with open(config_file_path, "rb") as f:
-        toml_content = tomli.load(f)
+    indexes = get_indexes_info_from_config(config_file_path)
+
+    id_type = "package name"
+    if is_valid_url(package_identifier):
+        # Convert to owner/repo to make sure the URL is properly specified.
+        id_type = "owner/repo"
+        parsed_path = urlparse(package_identifier).path[1:].split("/")
+        last_parsed_path = parsed_path[1].split(".")
+        package_identifier = parsed_path[0] + "/" + last_parsed_path[0]
+    elif "/" in package_identifier:
+        id_type = "owner/repo"    
     
-    return toml_content["index"]  # Return the index files from the config file
+    for index in indexes:
+        index_file_url = index["url"][0:-4] + "/" + index["index_path"]
+        index_content = tomli.loads(read_github_file(index_file_url))
 
-def get_package_remote_url(package_name: str, config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH) -> str:
-    """Get the remote URL from the index file."""
-    index_files = get_index_files_from_config(config_file_path)
-    typer.echo(index_files)
-    for index_file in index_files:
-        try:
-            remote_url = get_package_remote_url_from_index_file(package_name, index_file["path"])            
-            if remote_url is not None:
-                return remote_url
-        except:
-            pass
-
-    typer.echo(f"{package_name} not found in any index file.")
-    raise typer.Exit()
+        if "package" not in index_content:
+            continue
+    
+        for package in index_content["package"]:
+            if id_type == "package name":
+                if package["name"] == package_identifier:
+                    return package
+            else:
+                package_url = f"https://github.com/{package_identifier}.git"
+                if package["url"] == package_url:
+                    return package
+    return None
+    
 
 def get_package_remote_url_from_index_file(package_name: str, index_file_path: str):
     """Get the remote URL from the index file."""

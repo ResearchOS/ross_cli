@@ -7,7 +7,7 @@ import typer
 import tomli
 
 from ..constants import *
-from ..git.index import get_package_remote_url
+from ..git.index import search_indexes_for_package_info
 from ..git.github import get_default_branch_name
 
 def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, args: List[str] = []):
@@ -25,7 +25,7 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     if not os.path.exists(install_folder_path):
         os.makedirs(install_folder_path, exist_ok=True)    
 
-    remote_url = get_package_remote_url(package_name)
+    remote_url = search_indexes_for_package_info(package_name)
     url_parts = remote_url.split("/")
     github_user = url_parts[-2]
     github_repo = url_parts[-1]

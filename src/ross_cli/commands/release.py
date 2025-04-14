@@ -7,25 +7,24 @@ import tomli_w
 import typer
 
 from ..constants import *
-from ..git.index import get_package_remote_url
+from ..git.index import search_indexes_for_package_info
 from ..utils.urls import is_valid_url, check_url_exists
+from ..utils.rossproject import load_rossproject
 
 def release(release_type: str = None):
     """Release a new version of the package on GitHub."""
     # Create the pyproject.toml file from the rossproject.toml file.
-    if not os.path.exists(DEFAULT_ROSSPROJECT_TOML_PATH):
-        typer.echo("Missing rossproject.toml file")
-        raise typer.Exit()
-    with open(DEFAULT_ROSSPROJECT_TOML_PATH, "rb") as f:
-        rossproject_toml = tomli.load(f)
+    rossproject_toml = load_rossproject(DEFAULT_ROSSPROJECT_TOML_PATH)
 
     if not re.match(SEMANTIC_VERSIONING_REGEX, rossproject_toml["version"]):
         typer.echo("Version number does not follow semantic versioning! For example, 'v1.0.0'.")
         typer.echo("See https://semver.org for the full semantic versioning specification.")
         raise typer.Exit()
 
-    version = rossproject_toml["version"]    
+    version = rossproject_toml["version"]  
+    v_char = ""  
     if version[0] == "v":
+        v_char = "v"
         version = version[1:]
     dot_indices = [m.start() for m in re.finditer(r"\.", version)]
     if release_type == "patch":
@@ -42,7 +41,7 @@ def release(release_type: str = None):
         chars_after = ".0.0"
     
     if release_type is not None:
-        version = chars_before + new_num + chars_after
+        version = v_char + chars_before + new_num + chars_after
         rossproject_toml["version"] = version
 
     # Get the new pyproject_toml data
@@ -66,8 +65,15 @@ def release(release_type: str = None):
     with open(DEFAULT_ROSSPROJECT_TOML_PATH, 'wb') as f:
         tomli_w.dump(rossproject_toml, f)
 
-    # git push
-    subprocess.run(["git", "add", DEFAULT_PYPROJECT_TOML_PATH, DEFAULT_ROSSPROJECT_TOML_PATH], check=True)
+    # git push    
+    try:
+        subprocess.run(["git", "add", DEFAULT_PYPROJECT_TOML_PATH], check = True)
+    except:
+        pass
+    try:
+        subprocess.run(["git", "add", DEFAULT_ROSSPROJECT_TOML_PATH], check=True)
+    except:
+        pass
     subprocess.run(["git", "commit", "-m", f"Updating version to {rossproject_toml['version']}"])
     try:
         subprocess.run(["git", "push"], check=True)
@@ -82,7 +88,7 @@ def release(release_type: str = None):
     except:
         typer.echo("`gh` CLI not found. Check the official repository for more information: https://github.com/cli/cli")
         raise typer.Exit()
-    tag = "v" + version
+    tag = "v" + version if version[0] != "v" else version
     result = subprocess.run(["gh", "release", "create", tag], check=True, capture_output=True)
     release_url = result.stdout.strip()
     typer.echo(f"Successfully released to {release_url}")
@@ -93,8 +99,7 @@ def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
     pyproject_toml = {}
     pyproject_toml["project"]  = {}
     pyproject_toml["project"]["name"] = rossproject_toml["name"] if "name" in rossproject_toml else None
-    pyproject_toml["project"]["version"] = rossproject_toml["version"] if "version" in rossproject_toml else None
-    pyproject_toml["project"]["description"] = rossproject_toml["description"] if "description" in rossproject_toml else None    
+    pyproject_toml["project"]["version"] = rossproject_toml["version"] if "version" in rossproject_toml else None     
     pyproject_toml["project"]["authors"] = rossproject_toml["authors"] if "authors" in rossproject_toml else None
     pyproject_toml["project"]["readme"] = rossproject_toml["readme"] if "readme" in rossproject_toml else None
 
@@ -125,9 +130,11 @@ def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
             any_missing = True
 
     if any_missing:
+        typer.echo("Failed to update pyproject.toml file from rossproject.toml file.")
         raise typer.Exit()
 
     return pyproject_toml
+
 
 def parse_dependencies(dependencies: list, language: str) -> tuple[list, list]:
     """Parse the dependencies from the rossproject.toml file.
@@ -135,39 +142,69 @@ def parse_dependencies(dependencies: list, language: str) -> tuple[list, list]:
     Returns the tool.ROSS.dependencies list for non-ROSS MATLAB and R packages."""
     deps = []
     tool_deps = []    
+    any_invalid = False # True if any of the dependencies are specified in an invalid manner/are not found.
     for dep in dependencies:
         # All languages: If package name in a ROSS index, put the .git URL in project.dependencies
-        remote_url = get_package_remote_url(dep)
-        if remote_url is not None:
+        pkg_info = search_indexes_for_package_info(dep)
+        if pkg_info is not None:
+            remote_url = pkg_info["url"]
             if not remote_url.endswith(".git"):
                 remote_url = remote_url + ".git"
             deps.append(remote_url)
             continue
 
         if language == "python":        
-            # If package name in PyPi, just put the package name in project.dependencies like standard
+            # Specified PyPi package name
             if check_package_exists_on_pypi(dep):
-                tool_deps.append(dep)
+                deps.append(dep)
+            # Specified GitHub repository URL
+            elif check_url_exists(dep):
+                if not dep.endswith(".git"):
+                    dep = dep + ".git"
+                deps.append(dep)
+            # Specified as GitHub repository owner/repo, not full URL
+            elif not is_valid_url(dep) and "/" in dep:
+                owner_repo = dep.split("/")
+                url = f"https://github.com/{owner_repo[0]}/{owner_repo[1]}.git"
+                deps.append(url)
+            else:
+                typer.echo(f"Invalid dependency specification: {dep}")
+                any_invalid = True
         elif language == "r":
-            if is_valid_url(dep):
-                url = dep
+            # Specified as a GitHub repository or CRAN URL
+            if "github.com" in dep and not dep.endswith(".git"):
+                dep = dep + ".git"
+            if check_url_exists(dep):                
+                url = dep                
+            # Specified as owner/repo
+            elif not is_valid_url(dep) and "/" in dep:
+                owner_repo = dep.split("/")
+                url = f"https://github.com/{owner_repo[0]}/{owner_repo[1]}.git"                
+            # CRAN package name specified
             else:
-                # If package name in CRAN, put package name in tool.ROSS.dependencies.
-                url = f"https://cran.r-project.org/web/packages/{dep}/index.html"
-            if check_url_exists(url):
+                url = f"https://cran.r-project.org/web/packages/{dep}/index.html"            
+            if not check_url_exists(url):
+                any_invalid = True
+            tool_deps.append(url)
+        elif language == "matlab":            
+            if not dep.endswith(".git"):
+                dep = dep + ".git"
+            # GitHub repository URL specified
+            if check_url_exists(dep):                
                 tool_deps.append(dep)
+            # GitHub owner/repo specified
+            elif not is_valid_url(dep) and "/" in dep:
+                owner_repo = dep.split("/")
+                url = f"https://github.com/{owner_repo[0]}/{owner_repo[1]}.git"                
+                tool_deps.append(url)
             else:
-                typer.echo("R package not found in CRAN")
-                raise typer.Exit()
-        elif language == "matlab":
-            # If .git URL exists, put URL in tool.ROSS.dependencies
-            if check_url_exists(dep):
-                tool_deps.append(dep)
-            else:
-                typer.echo(f"URL not found: {dep}")
-                raise typer.Exit()
+                typer.echo(f"Invalid dependency specification: {dep}")
+                any_invalid = True
+
+    if any_invalid:
+        raise typer.Exit()
             
-        return deps, tool_deps
+    return deps, tool_deps
     
 
 def check_package_exists_on_pypi(package_name: str) -> bool:
@@ -180,5 +217,18 @@ def check_package_exists_on_pypi(package_name: str) -> bool:
     Returns:
         bool: True if the package name exists, False otherwise.
     """
-    url = f"https://pypi.org/pypi/{package_name}/json"    
+    POSSIBLE_VERSION_CHARS = "=<>!~["    
+
+    def find_first_version_char(text: str) -> int:
+        first_index = len(text)  # Default to end of string if none found
+        for char in POSSIBLE_VERSION_CHARS:
+            pos = text.find(char)
+            if pos != -1 and pos < first_index:
+                first_index = pos
+        return first_index if first_index < len(text) else -1
+    
+    first_version_char_index = find_first_version_char(package_name)
+    package_name = package_name[0:first_version_char_index]
+    url = f"https://pypi.org/pypi/{package_name}/json"
+    
     return check_url_exists(url)

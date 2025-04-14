@@ -199,7 +199,7 @@ def read_github_file(file_url: str) -> str:
     
     username = parts[0]
     repo_name = parts[1]
-    file_path = parts[2:]
+    file_path = "/".join(parts[2:])
 
     api_endpoint = f"/repos/{username}/{repo_name}/contents/{file_path}"
     command = ["gh", "api", api_endpoint]

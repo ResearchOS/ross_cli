@@ -65,6 +65,7 @@ def add_to_index(index_file_url: str, package_folder_path: str) -> None:
     # Add the package to the index
     index_content["package"].append(
         {
+            "name": package_name,
             "url": remote_url
         }
     )

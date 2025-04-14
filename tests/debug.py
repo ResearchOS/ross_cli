@@ -21,4 +21,6 @@ from ross_cli.cli import *
 
 # Add a project to an index
 index_file_url = 'https://github.com/ResearchOS/test-index/blob/main/index.toml'
-add_to_index_command(index_file_url)
+# add_to_index_command(index_file_url)
+
+release_command("patch")
