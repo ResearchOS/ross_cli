@@ -1,30 +1,18 @@
 [build-system]
-requires = ["hatchling"]
+requires = [
+    "hatchling",
+]
 build-backend = "hatchling.build"
 
-[tool.hatch.build.targets]
+[tool.ross]
+language = "python"
+dependencies = []
 
 [project]
-name = "ross-cli"
-version = "0.1.5"
-description = "A simple, private, GitHub based index system for data science projects."
-dependencies = [
-    "tomli",
-    "tomli-w",
-    "typer"
-]
-authors = [
-    {name = "Mitchell Tillman", email = "mtillman14@gmail.com"}
-]
-maintainers = [
-    {name = "Mitchell Tillman", email = "mtillman14@gmail.com"}
-]
+name = "ross_cli"
+version = "0.1.6"
+authors = []
 readme = "README.md"
-license = {text = "MIT"}
-
-[project.urls]
-Homepage = "https://github.com/ResearchOS/ross_cli"
-Repository = "https://github.com/ResearchOS/ross_cli"
-
-[project.scripts]
-ross = "ross_cli.cli:app"
+dependencies = [
+    "https://github.com/ResearchOS/ross_cli.git",
+]
