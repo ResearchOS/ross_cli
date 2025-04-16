@@ -8,7 +8,7 @@ import tomli
 
 from ..constants import *
 from ..git.index import search_indexes_for_package_info
-from ..git.github import get_default_branch_name
+from ..git.github import get_default_branch_name, read_github_file
 
 def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, args: List[str] = []):
     f"""Install a package.
@@ -25,42 +25,16 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     if not os.path.exists(install_folder_path):
         os.makedirs(install_folder_path, exist_ok=True)    
 
-    remote_url = search_indexes_for_package_info(package_name)
+    pkg_info = search_indexes_for_package_info(package_name)
+    remote_url = pkg_info['url']
     url_parts = remote_url.split("/")
     github_user = url_parts[-2]
-    github_repo = url_parts[-1]
-    main_branch_name = get_default_branch_name(remote_url)
-    pyproject_toml_url = f"https://raw.githubusercontent.com/{github_user}/{github_repo}/{main_branch_name}/pyproject.toml"
+    github_repo = url_parts[-1].replace(".git", "")
+    pyproject_toml_url = f"https://github.com/{github_user}/{github_repo}/pyproject.toml"
     github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
-    try:
-        pip_install = True
-        with urlopen(pyproject_toml_url) as response:
-            pyproject_content = tomli.load(response.read().decode())
-    except:
-        typer.echo("Failed to directly `pip install` the GitHub repository. The repository is likely private.")
-        typer.echo("Switching to `gh clone` method. This requires you to have read access to the private repository.")
-
-        try:
-            subprocess.run(["gh", "--version"], capture_output=True)
-        except:
-            typer.echo("`gh` CLI not found. Check the official repository for more information: https://github.com/cli/cli")
-            raise typer.Exit()
-
-        try:
-            # Get the current directory
-            pip_install = False
-            root_dir = os.getcwd()
-            os.chdir(install_folder_path)
-            subprocess.run(["gh", "repo", "clone", f"{github_user}/{github_repo}"])
-            # Read the pyproject.toml file for the official package name
-            pyproject_toml_path = os.path.join(install_folder_path, github_repo, 'pyproject.toml')
-            with open(pyproject_toml_path, 'rb') as f:
-                pyproject_content = tomli.load(f)
-        except:
-            os.chdir(root_dir)
-            typer.echo(f"Failed to `gh clone` the repository. Check the URL: {remote_url}")
-            typer.echo("Make sure you have authorized the `gh` CLI by running `gh auth login`")
-            raise typer.Exit()    
+    
+    pip_install = True
+    pyproject_content = tomli.loads(read_github_file(pyproject_toml_url))
 
     if "project" in pyproject_content and "name" in pyproject_content["project"]:
         official_package_name = pyproject_content["project"]["name"]
@@ -71,7 +45,7 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     # Set the PIP_SRC environment variable to the install folder path
     os.environ["PIP_SRC"] = install_folder_path
     if pip_install:
-        github_full_url_with_egg = github_full_url + "#" + official_package_name
+        github_full_url_with_egg = github_full_url + "#egg=" + official_package_name
         typer.echo(f"pip installing package {package_name}...")
         subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
     else:

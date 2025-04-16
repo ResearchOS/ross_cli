@@ -176,23 +176,16 @@ def read_github_file(file_url: str) -> str:
 
     file_url = file_url.replace("/blob/main", "")
 
-    GITHUB_COM_STR = "github.com/"
-    HTTPS_GITHUB_COM_STR = "https://github.com/"
-    if GITHUB_COM_STR not in file_url:
-        typer.echo("Invalid GitHub URL")
-        raise typer.Exit()
-
-    # Standardize the URL prefix
-    github_com_index = file_url.index(GITHUB_COM_STR)
-    file_url = file_url.replace(file_url[0:github_com_index + len(GITHUB_COM_STR)], HTTPS_GITHUB_COM_STR)
-
     if not is_valid_url:
         typer.echo(f"Invalid URL {file_url}")
+        typer.Exit()
 
-    path_part = file_url[len(HTTPS_GITHUB_COM_STR):]
+    parsed_url = urlparse(file_url)
+
+    path_part = parsed_url.path[1:]
 
     # Split the remaining path
-    parts = path_part.split('/', 2)  # Split into max 3 parts
+    parts = path_part.split('/')
     if len(parts) < 3:
         typer.echo("URL doesn't have enough components")
         raise typer.Exit()

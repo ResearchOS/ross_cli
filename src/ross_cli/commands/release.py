@@ -8,6 +8,7 @@ import typer
 
 from ..constants import *
 from ..git.index import search_indexes_for_package_info
+from ..git.github import read_github_file
 from ..utils.urls import is_valid_url, check_url_exists
 from ..utils.rossproject import load_rossproject
 
@@ -90,7 +91,9 @@ def release(release_type: str = None):
         raise typer.Exit()
     tag = "v" + version if version[0] != "v" else version
     result = subprocess.run(["gh", "release", "create", tag], check=True, capture_output=True)
-    release_url = result.stdout.strip()
+    release_url = str(result.stdout.strip())
+    if release_url[0] == "b":
+        release_url = release_url[1:]
     typer.echo(f"Successfully released to {release_url}")
 
 
@@ -161,7 +164,18 @@ def parse_dependencies(dependencies: list, language: str) -> tuple[list, list]:
             elif check_url_exists(dep):
                 if not dep.endswith(".git"):
                     dep = dep + ".git"
-                deps.append(dep)
+                # 1. Check if pyproject.toml file exists at URL
+                pyproject_url = dep.replace(".git", "/pyproject.toml")
+                pyproject_toml_exists = check_url_exists(pyproject_url)
+                if not pyproject_toml_exists:
+                    typer.echo(f"Invalid dependency specification: {dep}")
+                    any_invalid = True
+                    continue
+                # 2. Read pyproject.toml file to get package name
+                pyproject = read_github_file(pyproject_url)
+                dep_package_name = pyproject["project"]["name"]
+                full_dep = dep_package_name + " @ git+" + dep
+                deps.append(full_dep)
             # Specified as GitHub repository owner/repo, not full URL
             elif not is_valid_url(dep) and "/" in dep:
                 owner_repo = dep.split("/")
