@@ -70,33 +70,36 @@ It is OK if the index repository is empty - `ross` will create the `index.toml` 
 This is the format of the `index.toml` file that exists in each ROSS indexed GitHub repository.
 ```toml
 [[package]]
-url = "https://github.com/example_user1/example_package1"
+name = "package1_name"
+url = "https://github.com/example_user1/example_package1.git"
 
 [[package]]
-url = "https://github.com/example_user1/example_package2"
+name = "package2_name"
+url = "https://github.com/example_user1/example_package2.git"
 ```
 
 # Install a package
 ```bash
-ross install example_package
+ross install package_name
 ```
-This will search through all of the tapped indexes for the package name, and `pip install --editable git+<url>` the package. Installing a package in editable mode allows you to have just as much control over the packages you install as if you had written it yourself.
+This will search through all of the tapped indexes for the package name, and `pip install --editable git+<url>#egg=package_name` the package. By default, each package is installed into `project_folder/src/site-packages/package_name`. Installing a package in editable mode allows you to have just as much control over the packages you install as if you had written it yourself.
 
 ### Installing MATLAB and R packages
 `pip install` is a native Python command. For MATLAB and R, the appropriate installation commands are executed - `git clone`, and `install.packages()`, respectively.
 
 # Release a package (optional)
 ```bash
-ross release v#.#.#
+ross release patch # Increment v0.0.1
+ross release minor # Increment v0.1.0
+ross release major # Increment v1.0.0
 ```
 This will create a new release of the package using the `gh` CLI. The version number should be in the format `v#.#.#`, e.g. `v0.1.0`. This will use the information from the `rossproject.toml` file to update the `pyproject.toml` file, and create a new release on GitHub.
 
 ## rossproject.toml format for releases
-To release a package, you need to have a `rossproject.toml` file in the root of your package's repository. This file should contain the following information:
+To release a package, you need to have a `rossproject.toml` file in the root of your package's repository (created during `ross init`). This file must contain the following information:
 ```toml
 name = "example_package"
 version = "0.1.0"
-description = "A short description of the package"
 language = "python"
 authors = [
     "Author 1 Name",
@@ -119,12 +122,11 @@ This command adds the specified package in the current folder to the specified `
 
 # ROSS Configuration File Format
 ```toml
-[general]
-log = "info"
-
 [[index]]
-path = "/Users/username/.ross/indexes/ResearchOS/ross_cli/index.toml"
+url = "https://github.com/username/repo.git" # URL of the GitHub repository.
+uuid = "7fef06b1-8c76-44b6-bece-ab1cb37e64a2" # Auto-generated UUID
+index_path = "index.toml" # The location of the index.toml file in the repository.
 ```
 
-## rossproject.toml input & install options
+## possible rossproject.toml input & install options
 ![ROSSProject Specs](docs/images/rossproject%20specs.png)
