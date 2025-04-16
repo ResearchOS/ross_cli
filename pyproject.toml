@@ -14,7 +14,6 @@ version = "0.1.9"
 authors = []
 readme = "README.md"
 dependencies = [
-    "tomli",
-    'tomli_w',
-    'typer'
+    "https://github.com/ResearchOS/ross_cli.git",
+    "numpy==2",
 ]
