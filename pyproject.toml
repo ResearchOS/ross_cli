@@ -10,11 +10,23 @@ dependencies = []
 
 [project]
 name = "ross_cli"
-version = "0.2.1"
-authors = []
+version = "0.2.2"
+authors = [
+    {name = "Mitchell Tillman", email = "mtillman14@gmail.com"}
+]
+maintainers = [
+    {name = "Mitchell Tillman", email = "mtillman14@gmail.com"}
+]
 readme = "README.md"
 dependencies = [
     "tomli",
     "tomli_w",
     "typer"
 ]
+
+[project.urls]
+Homepage = "https://github.com/ResearchOS/ross_cli"
+Repository = "https://github.com/ResearchOS/ross_cli"
+
+[project.scripts]
+ross = "ross_cli.cli:app"
