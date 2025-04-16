@@ -10,7 +10,7 @@ dependencies = []
 
 [project]
 name = "ross_cli"
-version = "0.1.9"
+version = "0.2.1"
 authors = []
 readme = "README.md"
 dependencies = [
