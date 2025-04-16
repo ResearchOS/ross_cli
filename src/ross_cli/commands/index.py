@@ -60,7 +60,7 @@ def add_to_index(index_file_url: str, package_folder_path: str) -> None:
     for package in index_content["package"]:
         if remote_url == package["url"]:    
             typer.echo(f"Package {package_name} already exists in the index.")    
-            raise typer.Exit()    
+            raise typer.Exit(2)    
     
     # Add the package to the index
     index_content["package"].append(

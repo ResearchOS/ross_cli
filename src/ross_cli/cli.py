@@ -58,7 +58,7 @@ def add_to_index_command(index_file_url: str, package_folder_path: str = os.getc
     [package_name]
     url = "https://github.com/username/repo/blob/main/index.toml"
     """
-    index.add_to_index(index_file_url, package_folder_path)
+    index.add_to_index(index_file_url, package_folder_path)    
     
 
 @app.command(name="install")
