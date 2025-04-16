@@ -25,7 +25,7 @@ def check_gh() -> bool:
     if response == "":
         response = "N"
 
-    if response not in ["y", "yes"]:
+    if response.lower() not in ["y", "yes"]:
         return False
 
     if system == "Windows":
