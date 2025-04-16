@@ -8,6 +8,7 @@ import tomli
 import tomli_w
 
 from .commands import index, init, tap, install, release
+from .utils.check_gh import check_gh
 
 app = typer.Typer()
 
@@ -38,6 +39,9 @@ def tap_command(remote_url: str):
     4. If ~/.ross/indices/<username/repo>/index.toml does not exist, create it.
     5. Add the index.toml file path to ~/.ross/ross_config.toml.
     6. Push the changes to the remote repository."""
+    result = check_gh()
+    if not result:
+        raise typer.Exit()
     tap.tap_github_repo_for_ross_index(remote_url)
 
 
@@ -48,6 +52,9 @@ def untap_command(remote_url: str):
     Args:
         remote_url (str): The url of the remote
     """
+    result = check_gh()
+    if not result:
+        raise typer.Exit()
     tap.untap_ross_index(remote_url)
 
 
@@ -58,6 +65,9 @@ def add_to_index_command(index_file_url: str, package_folder_path: str = os.getc
     [package_name]
     url = "https://github.com/username/repo/blob/main/index.toml"
     """
+    result = check_gh()
+    if not result:
+        raise typer.Exit()
     index.add_to_index(index_file_url, package_folder_path)    
     
 
@@ -66,6 +76,9 @@ def install_command(package_name: str, install_folder_path: str = DEFAULT_PIP_SR
     """Install a package.
     1. Get the URL from the .toml file
     2. Install the package using pip""" 
+    result = check_gh()
+    if not result:
+        raise typer.Exit()
     install.install(package_name, install_folder_path, args)
 
 
@@ -79,7 +92,10 @@ def release_command(
     """Release a new version of this package on GitHub.
     Versions follow semantic versioning guidelines.
     "patch" = +0.0.1, "minor" = +0.1.0, "major" = +1.0.0
-    Run without an argument to not increment the version number."""    
+    Run without an argument to not increment the version number."""   
+    result = check_gh()
+    if not result:
+        raise typer.Exit() 
     if release_type is not None and release_type not in RELEASE_TYPES:        
         typer.echo(f"Release type must be one of: {', '.join(RELEASE_TYPES)}, or omitted")
         raise typer.Exit()
