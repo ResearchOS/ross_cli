@@ -6,6 +6,7 @@ from typing import Tuple
 from urllib.parse import urlparse
 import json
 import base64
+from datetime import datetime
 
 import typer
 
@@ -167,13 +168,14 @@ def get_default_branch_name(remote_url: str) -> str:
 
     return default_branch
 
-def read_github_file(file_url: str) -> str:
+def read_github_file(file_url: str, tag: str = None) -> str:
     """Read a file from GitHub. 
     The file URL is of one of the two following forms:
     1. https://github.com/username/repo/path/to/file.ext (mirrors file structure)
     2. https://github.com/username/repo/blob/main/file.ext (directly copied from GitHub site)
     """
 
+    # If a URL was copied & pasted from looking at the file online.
     file_url = file_url.replace("/blob/main", "")
 
     if not is_valid_url:
@@ -194,7 +196,27 @@ def read_github_file(file_url: str) -> str:
     repo_name = parts[1]
     file_path = "/".join(parts[2:])
 
-    api_endpoint = f"/repos/{username}/{repo_name}/contents/{file_path}"
+    # If the tag is not specified, use the latest release.
+    releases_command = ["gh", "api", f"repos/{username}/{repo_name}/releases"]
+    releases = json.loads(subprocess.run(releases_command, check=True, capture_output=True).stdout)    
+
+    # Get the latest release tag if not specified.
+    if len(releases) > 0 and tag is None:
+        # Find the index of the latest release
+        release_dates = []
+        for release in releases:
+            release_date = release['published_at']
+            release_dates.append(datetime.fromisoformat(release_date.replace('Z', '+00:00')))
+        latest_date = max(release_dates)
+
+        # Get the tag of the latest release
+        latest_release = releases[release_dates.index(latest_date)]
+        tag = latest_release['tag_name']
+
+    if len(releases) == 0:
+        api_endpoint = f"/repos/{username}/{repo_name}/contents/{file_path}"
+    else:        
+        api_endpoint = f"/repos/{username}/{repo_name}/contents/{file_path}?ref={tag}"
     command = ["gh", "api", api_endpoint]
     result = subprocess.run(command, check=True, capture_output=True, text=True)
     content_json = json.loads(result.stdout)

@@ -8,7 +8,7 @@ import tomli
 
 from ..constants import *
 from ..git.index import search_indexes_for_package_info
-from ..git.github import get_default_branch_name, read_github_file
+from ..git.github import read_github_file
 
 def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, args: List[str] = []):
     f"""Install a package.
@@ -23,9 +23,16 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     
     # Check that the install folder exists
     if not os.path.exists(install_folder_path):
-        os.makedirs(install_folder_path, exist_ok=True)    
+        os.makedirs(install_folder_path, exist_ok=True)   
+
+    os.environ["PIP_SRC"] = install_folder_path 
 
     pkg_info = search_indexes_for_package_info(package_name)
+    if not pkg_info:
+        # If not found in the ROSS indexes, install it using pip.
+        subprocess.run(["pip", "install", "-e", package_name] + args)
+        raise typer.Exit()
+    
     remote_url = pkg_info['url']
     url_parts = remote_url.split("/")
     github_user = url_parts[-2]
@@ -33,7 +40,6 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     pyproject_toml_url = f"https://github.com/{github_user}/{github_repo}/pyproject.toml"
     github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
     
-    pip_install = True
     pyproject_content = tomli.loads(read_github_file(pyproject_toml_url))
 
     if "project" in pyproject_content and "name" in pyproject_content["project"]:
@@ -41,21 +47,36 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     else:
         typer.echo("pyproject.toml missing [project][name] field")
         raise typer.Exit()    
+        
+    github_full_url_with_egg = github_full_url + "#egg=" + official_package_name
+    typer.echo(f"pip installing package {package_name}...")
+    subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
 
-    # Set the PIP_SRC environment variable to the install folder path
-    os.environ["PIP_SRC"] = install_folder_path
-    if pip_install:
-        github_full_url_with_egg = github_full_url + "#egg=" + official_package_name
-        typer.echo(f"pip installing package {package_name}...")
-        subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
-    else:
-        typer.echo(f"pip installing from `gh clone` package {package_name}...")
-        # Rename the folder
-        cloned_folder = os.path.dirname(pyproject_toml_path)
-        official_name_folder = os.path.join(os.path.dirname(cloned_folder), official_package_name)
-        os.rename(cloned_folder, official_name_folder)
-        # pip install -e from that folder
-        os.chdir(root_dir)
-        subprocess.run(["pip", "install", "-e", official_name_folder] + args, check=True)
+    is_r = False
+    try:
+        if pyproject_content["tool"][CLI_NAME]["language"] == "R":
+            is_r = True
+    except:
+        pass
+
+    if is_r:
+        if "dependencies" not in pyproject_content["tool"][CLI_NAME]:
+            pyproject_content["tool"][CLI_NAME]["dependencies"] = []
+
+        for dep in pyproject_content["tool"][CLI_NAME]["dependencies"]:
+            # Run R's `install.packages()` command                
+            if "/" not in package_name:      
+                print(f"Trying CRAN installation for {package_name}...")
+                command = ["Rscript", "-e", f"install.packages('{dep}')"] 
+                subprocess.run(command, check=True)
+            else:
+                print(f"Installing from GitHub: {package_name}")
+                # Install devtools if needed.
+                devtools_cmd = ["Rscript", "-e", "if(!require('devtools')) install.packages('devtools', repos='https://cloud.r-project.org')"]
+                subprocess.run(devtools_cmd, check=True, capture_output=True)
+
+                # Install from GitHub
+                command = ["Rscript", "-e", f"devtools::install_github('{package_name}')"]
+                subprocess.run(command, check=True)
 
     typer.echo(f"Successfully installed package {package_name}")
