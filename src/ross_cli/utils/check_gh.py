@@ -37,7 +37,11 @@ def check_gh() -> bool:
         print("This script only supports Windows and macOS.")
         sys.exit(1)
 
-    return True
+    print("After installing the gh cli, you will need to completely close and reopen the Terminal/VSCode (if using integrated terminal).")
+    print("You may even need to restart the computer for the gh installation to take effect.")
+    print("After successfully running gh --version, then run gh auth login to connect to your GitHub account.")
+
+    return False
 
 def install_gh_cli_windows():
     """Install GitHub CLI on Windows using winget or by downloading the installer."""
