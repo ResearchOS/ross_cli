@@ -33,12 +33,13 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         subprocess.run(["pip", "install", "-e", package_name] + args)
         raise typer.Exit()
     
-    remote_url = pkg_info['url']
+    auth_token = subprocess.run(["gh", "auth", "token"], capture_output=True, check=True)
+    remote_url_no_token = pkg_info['url']
+    remote_url = remote_url_no_token.replace("https://", f"https://{auth_token}@")
     url_parts = remote_url.split("/")
     github_user = url_parts[-2]
-    github_repo = url_parts[-1].replace(".git", "")
-    pyproject_toml_url = f"https://github.com/{github_user}/{github_repo}/pyproject.toml"
-    github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
+    github_repo = url_parts[-1].replace(".git", "")    
+    pyproject_toml_url = f"https://{auth_token}@github.com/{github_user}/{github_repo}/pyproject.toml"    
     
     pyproject_content = tomli.loads(read_github_file(pyproject_toml_url))
 
@@ -48,6 +49,7 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         typer.echo("pyproject.toml missing [project][name] field")
         raise typer.Exit()    
         
+    github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
     github_full_url_with_egg = github_full_url + "#egg=" + official_package_name
     typer.echo(f"pip installing package {package_name}...")
     subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
