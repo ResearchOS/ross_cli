@@ -43,7 +43,7 @@ def release(release_type: str = None):
     
     if release_type is not None:
         version = v_char + chars_before + new_num + chars_after
-        rossproject_toml["version"] = version
+        rossproject_toml["version"] = version    
 
     # Get the new pyproject_toml data
     pyproject_toml_new = build_pyproject_from_rossproject(rossproject_toml)
@@ -98,13 +98,31 @@ def release(release_type: str = None):
 
 
 def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
-    """Build the pyproject.toml file from the rossproject.toml file."""
+    """Build the pyproject.toml file from the rossproject.toml file."""   
+
+    if "name" not in rossproject_toml:
+        typer.echo("'name' field missing from rossproject.toml file!")
+        raise typer.Exit()
+    
+    # Check the name field
+    if "-" in rossproject_toml["name"]:
+        name = rossproject_toml['name']
+        typer.echo(f"Package name {name} contains a '-'.")
+        result = input("Replace '-' with '_'?(y/N)")
+        if result.lower() in ["y", "yes"]:
+            name = name.replace("-", "_")
+            rossproject_toml['name'] = name
+            with open(DEFAULT_ROSSPROJECT_TOML_PATH, 'wb') as f:
+                tomli_w.dump(rossproject_toml, f)
+        else:
+            raise typer.Exit() 
+    
     pyproject_toml = {}
     pyproject_toml["project"]  = {}
     pyproject_toml["project"]["name"] = rossproject_toml["name"] if "name" in rossproject_toml else None
     pyproject_toml["project"]["version"] = rossproject_toml["version"] if "version" in rossproject_toml else None     
     pyproject_toml["project"]["authors"] = rossproject_toml["authors"] if "authors" in rossproject_toml else None
-    pyproject_toml["project"]["readme"] = rossproject_toml["readme"] if "readme" in rossproject_toml else None
+    pyproject_toml["project"]["readme"] = rossproject_toml["readme"] if "readme" in rossproject_toml else None    
 
     # Validate language    
     if rossproject_toml["language"].lower() not in SUPPORTED_LANGUAGES:
