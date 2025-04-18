@@ -37,8 +37,7 @@ def tap_github_repo_for_ross_index(remote_url: str, index_relative_path = "index
     # Check if the index file path already exists in the config file        
     for index in ross_config["index"]:
         if remote_url == index["url"]:
-            typer.echo(f"Aborting. Index file already exists in ROSS config at:")
-            typer.echo(f"{index['path']}")
+            typer.echo(f"Aborting. Index file already exists in ROSS config file")
             raise typer.Exit()
         
     # Create the dict for this index
