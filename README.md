@@ -121,6 +121,7 @@ ross add-to-index https://github.com/username/repo/index.toml
 This command adds the specified package in the current folder to the specified `index.toml` file in the GitHub repository. You must have write access to that index repository to do this.
 
 # ROSS Configuration File Format
+`~/.ross/ross_config.toml`
 ```toml
 [[index]]
 url = "https://github.com/username/repo.git" # URL of the GitHub repository.
