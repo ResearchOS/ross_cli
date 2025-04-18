@@ -33,7 +33,8 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         subprocess.run(["pip", "install", "-e", package_name] + args)
         raise typer.Exit()
     
-    auth_token = subprocess.run(["gh", "auth", "token"], capture_output=True, check=True).stdout
+    auth_token = subprocess.run(["gh", "auth", "token"], capture_output=True, check=True).stdout.decode().strip()
+    auth_token = str(auth_token).replace('\\\\n')
     remote_url_no_token = pkg_info['url']
     remote_url = remote_url_no_token.replace("https://", f"https://{auth_token}@")
     url_parts = remote_url.split("/")
