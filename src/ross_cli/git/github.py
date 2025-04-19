@@ -7,10 +7,12 @@ from urllib.parse import urlparse
 import json
 import base64
 from datetime import datetime
+import tempfile
+import zipfile
 
 import typer
 
-from ..utils.urls import is_valid_url, check_url_exists
+from ..utils.urls import is_valid_url
 
 def get_remote_url_from_git_repo(directory="."):
     """
@@ -275,3 +277,63 @@ def create_empty_file_in_repo(repo_git_url, file_path, commit_message="Add empty
         if e.stderr:
             print(f"Error output: {e.stderr}")
         raise
+
+def download_github_release(owner, repository, tag=None, output_dir=None):
+    """
+    Download a GitHub repository release using GitHub CLI.
+    
+    Args:
+        owner (str): The owner/organization of the repository
+        repository (str): The name of the repository
+        tag (str, optional): The release tag to download (default: latest release)
+        output_dir (str, optional): Directory to extract the repository to
+    
+    Returns:
+        str: Path to the extracted repository
+    """
+    # Create a temporary directory for the zip file
+    with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
+        temp_zip_path = temp_file.name
+    
+    try:
+        # If no tag is specified, get the latest release tag
+        if not tag:
+            print(f"No tag specified, getting latest release for {owner}/{repository}...")
+            result = subprocess.run([
+                "gh", "api", 
+                f"repos/{owner}/{repository}/releases/latest"
+            ], capture_output=True, text=True, check=True)
+            
+            release_info = json.loads(result.stdout)
+            tag = release_info['tag_name']
+            print(f"Latest release tag: {tag}")
+        
+        # Use gh cli to download the release zipball
+        print(f"Downloading release {tag} from {owner}/{repository}...")
+        subprocess.run([
+            "gh", "api", 
+            f"repos/{owner}/{repository}/zipball/{tag}", 
+            "--output", temp_zip_path
+        ], check=True)
+        
+        # Determine the output directory
+        if not output_dir:
+            output_dir = os.getcwd()
+        else:
+            os.makedirs(output_dir, exist_ok=True)
+        
+        # Extract the zip file
+        print(f"Extracting to {output_dir}...")
+        with zipfile.ZipFile(temp_zip_path) as z:
+            # Get the name of the top directory in the zip
+            top_dir = z.namelist()[0].split('/')[0]
+            z.extractall(output_dir)
+        
+        extracted_dir = os.path.join(output_dir, top_dir)
+        print(f"Release {tag} downloaded to {extracted_dir}")
+        return extracted_dir
+    
+    finally:
+        # Clean up the temporary zip file
+        if os.path.exists(temp_zip_path):
+            os.unlink(temp_zip_path)
