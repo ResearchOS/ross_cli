@@ -8,7 +8,7 @@ import tomli
 
 from ..constants import *
 from ..git.index import search_indexes_for_package_info
-from ..git.github import read_github_file, download_github_release, get_default_branch_name
+from ..git.github import read_github_file, download_github_release, get_latest_release_tag
 
 def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, args: List[str] = []):
     f"""Install a package.
@@ -34,11 +34,15 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         raise typer.Exit()
     
     auth_token = subprocess.run(["gh", "auth", "token"], capture_output=True, check=True).stdout.decode().strip()    
-    remote_url_no_token = pkg_info['url']
-    remote_url = remote_url_no_token.replace("https://", f"https://{auth_token}@")
-    split_url = dep.split('/releases/tag/')
+    remote_url_no_token = pkg_info['url'].replace(".git", "")
+    remote_url_no_token_split = remote_url_no_token.split("/")
+    owner = remote_url_no_token_split[-2]
+    repo = remote_url_no_token_split[-1]
+    tag = get_latest_release_tag(owner, repo)
+    remote_url_no_token_with_tag = f"{remote_url_no_token}/releases/tag/{tag}"
+    remote_url = remote_url_no_token_with_tag.replace("https://", f"https://{auth_token}@")
+    split_url = remote_url.split('/releases/tag/')
     repo_url = split_url[0]
-    tag = split_url[1]
     pyproject_toml_url = f"{repo_url}/blob/{tag}/pyproject.toml"    
     
     pyproject_content = tomli.loads(read_github_file(pyproject_toml_url))

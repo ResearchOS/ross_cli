@@ -337,3 +337,37 @@ def download_github_release(owner, repository, tag=None, output_dir=None):
         # Clean up the temporary zip file
         if os.path.exists(temp_zip_path):
             os.unlink(temp_zip_path)
+
+def get_latest_release_tag(owner, repository):
+    """
+    Get the latest release tag by release date (not by GitHub's 'latest' endpoint).
+    
+    Args:
+        owner (str): The owner/organization of the repository
+        repository (str): The name of the repository
+    
+    Returns:
+        str: The tag name of the latest release
+    """
+    print(f"Finding latest release by date for {owner}/{repository}...")
+    
+    # Get all releases
+    result = subprocess.run([
+        "gh", "api", 
+        f"repos/{owner}/{repository}/releases"
+    ], capture_output=True, text=True, check=True)
+    
+    releases = json.loads(result.stdout)
+    
+    if not releases:
+        raise Exception(f"No releases found for {owner}/{repository}")
+    
+    # Sort releases by published_at date (newest first)
+    sorted_releases = sorted(
+        releases, 
+        key=lambda r: datetime.strptime(r['published_at'], '%Y-%m-%dT%H:%M:%SZ'),
+        reverse=True
+    )
+    
+    latest_release = sorted_releases[0]
+    return latest_release['tag_name']
