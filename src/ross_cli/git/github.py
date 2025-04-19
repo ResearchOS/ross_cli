@@ -178,7 +178,8 @@ def read_github_file(file_url: str, tag: str = None) -> str:
     """
 
     # If a URL was copied & pasted from looking at the file online.
-    file_url = file_url.replace("/blob/main", "")
+    BLOB_REGEX = r'/blob/[^/]+'
+    file_url = re.sub(BLOB_REGEX, '', file_url)
 
     if not is_valid_url:
         typer.echo(f"Invalid URL {file_url}")

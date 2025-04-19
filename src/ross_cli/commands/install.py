@@ -45,7 +45,7 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     repo_url = split_url[0]
     pyproject_toml_url = f"{repo_url}/blob/{tag}/pyproject.toml"    
     
-    pyproject_content = tomli.loads(read_github_file(pyproject_toml_url))
+    pyproject_content = tomli.loads(read_github_file(pyproject_toml_url, tag=tag))
 
     if "project" in pyproject_content and "name" in pyproject_content["project"]:
         official_package_name = pyproject_content["project"]["name"]
