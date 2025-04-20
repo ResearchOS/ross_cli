@@ -37,7 +37,7 @@ def init_ross_project(package_name: str):
         typer.echo("rossproject.toml file already exists in current directory.")
     else:
         # Remove the .git suffix from the URL
-        repository_url_no_git = repository_url[:-4]
+        repository_url_no_git = repository_url.replace(".git", "")
         # Write a new rossproject.toml file        
         toml_str_content = DEFAULT_ROSSPROJECT_TOML_STR.format(repository_url=repository_url_no_git, DEFAULT_PACKAGE_NAME=package_name)
         with open(DEFAULT_ROSSPROJECT_TOML_PATH, "wb") as f:
@@ -63,5 +63,10 @@ def init_ross_project(package_name: str):
     init_py_file = os.path.join(project_name_subfolder, '__init__.py')
     with open(init_py_file, 'w') as f:
         f.write("")
+
+    # Initialize the content of the .gitignore
+    gitignore_content = f"src/{package_name}/site-packages/*\n"
+    with open(INIT_PATHS[".gitignore"], 'w') as f:
+        f.write(gitignore_content)
 
     typer.echo("\nROSS project initialized successfully.")

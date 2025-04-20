@@ -2,3 +2,4 @@
 !manifests/
 *.pyc
 rossproject.toml
+/src/site-packages

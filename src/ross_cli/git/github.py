@@ -9,6 +9,7 @@ import base64
 from datetime import datetime
 import tempfile
 import zipfile
+import shutil
 
 import typer
 
@@ -293,8 +294,8 @@ def download_github_release(owner, repository, tag=None, output_dir=None):
         str: Path to the extracted repository
     """
     # Create a temporary directory for the zip file
-    with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
-        temp_zip_path = temp_file.name
+    with tempfile.TemporaryDirectory(delete=False) as temp_dir:
+        temp_zip_path = os.path.join(temp_dir, f"{repository}-{tag}.zip")
     
     try:
         # If no tag is specified, get the latest release tag
@@ -311,11 +312,12 @@ def download_github_release(owner, repository, tag=None, output_dir=None):
         
         # Use gh cli to download the release zipball
         print(f"Downloading release {tag} from {owner}/{repository}...")
-        subprocess.run([
-            "gh", "api", 
-            f"repos/{owner}/{repository}/zipball/{tag}", 
-            "--output", temp_zip_path
-        ], check=True)
+        result = subprocess.run([
+            "gh", "release", "download",
+            tag, "--repo", f"{owner}/{repository}",
+            "--dir", temp_dir, "--clobber",
+            "--archive=zip"
+        ], check=True, capture_output=True)
         
         # Determine the output directory
         if not output_dir:
@@ -323,21 +325,19 @@ def download_github_release(owner, repository, tag=None, output_dir=None):
         else:
             os.makedirs(output_dir, exist_ok=True)
         
-        # Extract the zip file
-        print(f"Extracting to {output_dir}...")
-        with zipfile.ZipFile(temp_zip_path) as z:
-            # Get the name of the top directory in the zip
-            top_dir = z.namelist()[0].split('/')[0]
+        # Extract the zip file        
+        for root, dirs, files in os.walk(temp_dir):
+            assert(len(files) == 1)
+            file = files[0]
+            tmp_zip_file_path = os.path.abspath(os.path.join(root, file))
+
+        with zipfile.ZipFile(tmp_zip_file_path, 'r') as z:
+            # Get the name of the top directory in the zip            
             z.extractall(output_dir)
-        
-        extracted_dir = os.path.join(output_dir, top_dir)
-        print(f"Release {tag} downloaded to {extracted_dir}")
-        return extracted_dir
     
     finally:
-        # Clean up the temporary zip file
-        if os.path.exists(temp_zip_path):
-            os.unlink(temp_zip_path)
+        # Clean up the temporary folder
+        shutil.rmtree(temp_dir)
 
 def get_latest_release_tag(owner, repository):
     """
