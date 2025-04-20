@@ -65,7 +65,7 @@ def init_ross_project(package_name: str):
         f.write("")
 
     # Initialize the content of the .gitignore
-    gitignore_content = f"src/{package_name}/site-packages/*\n"
+    gitignore_content = f"src/site-packages/*\n"
     with open(INIT_PATHS[".gitignore"], 'w') as f:
         f.write(gitignore_content)
 
