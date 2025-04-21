@@ -9,14 +9,20 @@ import typer
 
 from ..constants import *
 from ..git.index import search_indexes_for_package_info
-from ..git.github import read_github_file_from_release, get_default_branch_name
+from ..git.github import read_github_file_from_release
 from ..utils.urls import is_valid_url, check_url_exists, convert_owner_repo_format_to_url, is_owner_repo_format
 from ..utils.rossproject import load_rossproject
 
-def release(release_type: str = None):
-    """Release a new version of the package on GitHub."""
+def release(release_type: str = None, package_folder_path: str = os.getcwd()):
+    """Release a new version of the package on GitHub.""" 
+    # Switch to the package folder
+    os.chdir(package_folder_path)   
+    if not os.path.exists(package_folder_path):
+        typer.echo(f"Folder {package_folder_path} does not exist.")
+        raise typer.Exit()
     # Create the pyproject.toml file from the rossproject.toml file.
-    rossproject_toml = load_rossproject(DEFAULT_ROSSPROJECT_TOML_PATH)
+    rossproject_toml_path = os.path.join(package_folder_path, "rossproject.toml")
+    rossproject_toml = load_rossproject(rossproject_toml_path)
 
     if not re.match(SEMANTIC_VERSIONING_REGEX, rossproject_toml["version"]):
         typer.echo("Version number does not follow semantic versioning! For example, 'v1.0.0'.")
@@ -64,16 +70,16 @@ def release(release_type: str = None):
         tomli_w.dump(pyproject_toml_content, f)
 
     # Write the updated version number back to the rossproject.toml file.
-    with open(DEFAULT_ROSSPROJECT_TOML_PATH, 'wb') as f:
+    with open(rossproject_toml_path, 'wb') as f:
         tomli_w.dump(rossproject_toml, f)
-
+        
     # git push    
-    try:
+    try:        
         subprocess.run(["git", "add", DEFAULT_PYPROJECT_TOML_PATH], check = True)
     except:
         pass
     try:
-        subprocess.run(["git", "add", DEFAULT_ROSSPROJECT_TOML_PATH], check=True)
+        subprocess.run(["git", "add", rossproject_toml_path], check=True)
     except:
         pass
     subprocess.run(["git", "commit", "-m", f"Updating version to {rossproject_toml['version']}"])

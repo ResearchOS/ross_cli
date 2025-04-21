@@ -1,6 +1,5 @@
 import os
 from typing import List
-from urllib.request import urlopen
 
 import subprocess
 import typer
