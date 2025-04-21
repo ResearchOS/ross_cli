@@ -18,7 +18,7 @@ app.add_typer(index_app, name="index") # Add the index app to the main app
 from .constants import *
 
 @app.command(name="init")
-def init_command(name: str = None):
+def init_command(name: str = None, package_path: str = os.getcwd()):
     """Initialize a new ROSS project in the current directory.
     1. Create a new rossproject.toml file in the current directory.
     2. Create the package files and folders if they don't exist (default: current working directory). Don't create each file/folder if it already exists.
@@ -27,7 +27,7 @@ def init_command(name: str = None):
         - tests/
         - docs/
         .gitignore"""
-    init.init_ross_project(name)
+    init.init_ross_project(name, package_folder_path=package_path)
 
 
 @app.command(name="tap")
@@ -75,7 +75,8 @@ def release_command(
     release_type: str = typer.Argument(
         None,
         help="Version increment type: 'patch' (+0.0.1), 'minor' (+0.1.0), or 'major' (+1.0.0)"
-    )
+    ),
+    package_folder_path: str = os.getcwd()
 ):
     """Release a new version of this package on GitHub.
     Versions follow semantic versioning guidelines.
@@ -84,7 +85,7 @@ def release_command(
     if release_type is not None and release_type not in RELEASE_TYPES:        
         typer.echo(f"Release type must be one of: {', '.join(RELEASE_TYPES)}, or omitted")
         raise typer.Exit()
-    release.release(release_type)
+    release.release(release_type, package_folder_path)
 
 
 @app.command(name="config")

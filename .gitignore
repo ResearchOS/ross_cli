@@ -1,6 +1,6 @@
-# Winget manifests
-!manifests/
-*.pyc
-rossproject.toml
+.DS_Store
+    src/site-packages/*
+    .venv/    
+    
 /src/site-packages
-rossproject_options.xlsx
+*.pyc
