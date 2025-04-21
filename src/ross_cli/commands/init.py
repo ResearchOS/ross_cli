@@ -5,13 +5,16 @@ import typer
 from ..constants import *
 from ..git.github import get_remote_url_from_git_repo
 
-def init_ross_project(package_name: str):
-    """Initialize a new ROSS project in the current directory.
-    1. Create a new rossproject.toml file in the current directory.
-    2. Create the package files and folders if they don't exist."""
+def init_ross_project(package_name: str, package_folder_path: str = os.getcwd()):
+    """Initialize a new ROSS project in the specified directory.
+    1. Create a new rossproject.toml file in the specified directory.
+    2. Create the package files and folders if they don't exist.
+    NOTE: This function is intended to be run with one argument (package name) with CLI.
+    But the second argument is included for flexibility, and for testing purposes."""
     # Ensure there is a .git file in this folder
-    folder_name = os.path.dirname(DEFAULT_ROSSPROJECT_TOML_PATH)
-    git_file_path = os.path.join(folder_name, '.git')
+    rossproject_toml_path = os.path.join(package_folder_path, "rossproject.toml")
+    package_folder_path = os.path.dirname(rossproject_toml_path)
+    git_file_path = os.path.join(package_folder_path, '.git')
     if not os.path.exists(git_file_path):
         typer.echo("This folder does not contain a git repo! Please create one first.")
         raise typer.Exit()
@@ -64,8 +67,11 @@ def init_ross_project(package_name: str):
     with open(init_py_file, 'w') as f:
         f.write("")
 
-    # Initialize the content of the .gitignore
-    gitignore_content = f"src/site-packages/*\n"
+    # Initialize the content of the .gitignore, one per line
+    gitignore_content = f""".DS_Store
+    src/site-packages/*
+    .venv/    
+    """
     with open(INIT_PATHS[".gitignore"], 'w') as f:
         f.write(gitignore_content)
 
