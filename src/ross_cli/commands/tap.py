@@ -1,13 +1,12 @@
 import uuid
 
-import tomli
 import tomli_w
 import typer
 
 from ..constants import *
 from ..utils.config import load_config, validate_index_entries
 from .release import is_valid_url
-from ..git.github import get_default_branch_name, create_empty_file_in_repo
+from ..git.github import get_default_branch_name, create_empty_file_in_repo, parse_github_url
 from ..utils.urls import check_url_exists
 
 def tap_github_repo_for_ross_index(remote_url: str, index_relative_path = "index.toml"):
@@ -24,10 +23,9 @@ def tap_github_repo_for_ross_index(remote_url: str, index_relative_path = "index
         ross_config["index"] = []
 
     validate_index_entries(ross_config["index"])
-            
-    # Make sure the remote URL ends in .git
-    if not remote_url.endswith('.git'):
-        remote_url = remote_url + ".git"
+
+    owner, repo, file_path = parse_github_url(remote_url)
+    remote_url = f"https://github.com/{owner}/{repo}.git"
 
     # Check that this URL exists.
     if not is_valid_url(remote_url):
@@ -52,15 +50,16 @@ def tap_github_repo_for_ross_index(remote_url: str, index_relative_path = "index
     # 1. Query GitHub to see if the index.toml file exists.
     # 2. If so, do nothing.
     # 3. If not, create it.
-    remote_url_no_git = remote_url[:-4]
-    default_branch_name = get_default_branch_name(remote_url)
-    index_toml_url = remote_url_no_git + f"/blob/{default_branch_name}/index.toml"
+    remote_url_no_git = remote_url.replace(".git", "")
+    branch_name = get_default_branch_name(remote_url)    
+    index_toml_url = remote_url_no_git + f"/blob/{branch_name}/index.toml"
     if not check_url_exists(index_toml_url):
         typer.echo(f"index file not found, attempting to create index file at: {index_toml_url}")
         try:
             create_empty_file_in_repo(remote_url, index_relative_path)
         except:
             typer.echo(f"Failed to create index.toml file. Please create the file manually at: {remote_url_no_git}")
+            raise typer.Exit()
 
     # Write the ross config file    
     with open(DEFAULT_ROSS_CONFIG_FILE_PATH, "wb") as f:
@@ -81,8 +80,8 @@ def untap_ross_index(remote_url: str):
         typer.echo("No indexes present in the config file. Aborting untap...")
         raise typer.Exit()
     
-    if not remote_url.endswith(".git"):
-        remote_url = remote_url + ".git"
+    owner, repo, file_path = parse_github_url(remote_url)
+    remote_url = f"https://github.com/{owner}/{repo}.git"
 
     validate_index_entries(ross_config_toml["index"])
 
