@@ -20,8 +20,9 @@ from ross_cli.cli import *
 # tap_command(index_repo_url)
 
 # Add a project to an index
-# index_file_url = 'https://github.com/ResearchOS/test-index/blob/main/index.toml'
-# add_to_index_command(index_file_url)
+index_file_url = 'https://github.com/ResearchOS/test-index/blob/main/index.toml'
+# index_file_url = 'ResearchOS/test-index'
+add_to_index_command(index_file_url)
 
 # release_command(None)
-install_command("load-gaitrite")
+# install_command("load-gaitrite")

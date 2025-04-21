@@ -3,3 +3,4 @@
 *.pyc
 rossproject.toml
 /src/site-packages
+rossproject_options.xlsx

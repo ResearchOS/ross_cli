@@ -13,7 +13,7 @@ import shutil
 
 import typer
 
-from ..utils.urls import is_valid_url
+from ..utils.urls import is_valid_url, remove_blob_and_branch_from_url
 
 def get_remote_url_from_git_repo(directory="."):
     """
@@ -82,44 +82,12 @@ def get_remote_url_from_git_repo(directory="."):
         typer.echo(f"Error: {str(e)}")
         raise typer.Exit()
 
-def git_push_to_remote(directory="."):
-    """
-    Pushes changes in the specified directory to the remote.
-    
-    Args:
-        directory (str): Path to the git repository directory
-    """
-    try:
-        # Change to the specified directory
-        original_dir = os.getcwd()
-        os.chdir(directory)
-        
-        # Check if the directory is a git repository
-        if not os.path.isdir('.git'):
-            typer.echo("The specified directory is not a git repository.")
-            raise typer.Exit()
-        
-        # Run git push command
-        subprocess.run(
-            ["git", "push", "origin"],
-            check=True
-        )
-        
-        # Return to the original directory
-        os.chdir(original_dir)
-        
-    except subprocess.CalledProcessError as e:
-        typer.echo(f"Git command failed: {e.stderr.strip()}")
-        raise typer.Exit()
-    except typer.echo as e:        
-        typer.echo(f"Error: {str(e)}")
-        raise typer.Exit()
 
-def parse_github_url(url: str) -> Tuple[str, str]:
+def parse_github_url(url: str) -> Tuple[str, str, str]:
     """Parse GitHub username and repository name from URL.
     
     Args:
-        url: GitHub repository URL (HTTPS or SSH format)
+        url: GitHub repository URL (HTTPS or SSH format). Ending with repo name, .git, or file name.
         
     Returns:
         Tuple of (username, repository_name)
@@ -130,10 +98,13 @@ def parse_github_url(url: str) -> Tuple[str, str]:
     # Handle HTTPS URLs (https://github.com/username/repo.git)
     if url.startswith('https://'):
         parts = urlparse(url).path.strip('/').split('/')
-        if len(parts) != 2:
+        if len(parts) < 2:
             typer.echo(f"Invalid GitHub URL format: {url}")
             raise typer.Exit()
-        return parts[0], parts[1].replace('.git', '')
+        owner = parts[0]
+        repo = parts[1].replace('.git', '')
+        file_path = "/".join(parts[2:]) if len(parts) > 2 else None
+        return owner, repo, file_path
         
     # Handle SSH URLs (git@github.com:username/repo.git)
     elif url.startswith('git@'):
@@ -151,12 +122,11 @@ def parse_github_url(url: str) -> Tuple[str, str]:
 def get_default_branch_name(remote_url: str) -> str:
     """Get the name of the default branch from the GitHub repository URL"""
     # Get the default branch name
+    remote_url = remote_url.replace(".git", "")
     try:
         # Extract owner/repo from remote_url
-        url_parts = remote_url.split("/")
-        repo_path = f"{url_parts[-2]}/{url_parts[-1]}"
-        if repo_path.endswith(".git"):
-            repo_path = repo_path[:-4]
+        owner, repo, file_path = parse_github_url(remote_url)        
+        repo_path = f"{owner}/{repo}"
             
         result = subprocess.run(
             ["gh", "api", f"repos/{repo_path}"], 
@@ -171,37 +141,24 @@ def get_default_branch_name(remote_url: str) -> str:
 
     return default_branch
 
-def read_github_file(file_url: str, tag: str = None) -> str:
+def read_github_file_from_release(file_url: str, tag: str = None) -> str:
     """Read a file from GitHub. 
     The file URL is of one of the two following forms:
     1. https://github.com/username/repo/path/to/file.ext (mirrors file structure)
     2. https://github.com/username/repo/blob/main/file.ext (directly copied from GitHub site)
     """
 
-    # If a URL was copied & pasted from looking at the file online.
-    BLOB_REGEX = r'/blob/[^/]+'
-    file_url = re.sub(BLOB_REGEX, '', file_url)
+    # If a URL was copied & pasted from looking at the file online.    
+    file_url = remove_blob_and_branch_from_url(file_url)
 
     if not is_valid_url:
         typer.echo(f"Invalid URL {file_url}")
         typer.Exit()
 
-    parsed_url = urlparse(file_url)
-
-    path_part = parsed_url.path[1:]
-
-    # Split the remaining path
-    parts = path_part.split('/')
-    if len(parts) < 3:
-        typer.echo("URL doesn't have enough components")
-        raise typer.Exit()
-    
-    username = parts[0]
-    repo_name = parts[1]
-    file_path = "/".join(parts[2:])
+    owner, repo, file_path = parse_github_url(file_url)
 
     # If the tag is not specified, use the latest release.
-    releases_command = ["gh", "api", f"repos/{username}/{repo_name}/releases"]
+    releases_command = ["gh", "api", f"repos/{owner}/{repo}/releases"]
     releases = json.loads(subprocess.run(releases_command, check=True, capture_output=True).stdout)    
 
     # Get the latest release tag if not specified.
@@ -218,16 +175,16 @@ def read_github_file(file_url: str, tag: str = None) -> str:
         tag = latest_release['tag_name']
 
     if len(releases) == 0:
-        api_endpoint = f"/repos/{username}/{repo_name}/contents/{file_path}"
+        api_endpoint = f"/repos/{owner}/{repo}/contents/{file_path}"
     else:        
-        api_endpoint = f"/repos/{username}/{repo_name}/contents/{file_path}?ref={tag}"
+        api_endpoint = f"/repos/{owner}/{repo}/contents/{file_path}?ref={tag}"
     command = ["gh", "api", api_endpoint]
     result = subprocess.run(command, check=True, capture_output=True, text=True)
     content_json = json.loads(result.stdout)
     content = base64.b64decode(content_json["content"]).decode("utf-8")
     return content
 
-def create_empty_file_in_repo(repo_git_url, file_path, commit_message="Add empty file"):
+def create_empty_file_in_repo(repo_git_url: str, file_path: str, commit_message: str = "Add empty file"):
     """
     Create an empty file in a GitHub repository using the GitHub CLI.
     
@@ -240,12 +197,7 @@ def create_empty_file_in_repo(repo_git_url, file_path, commit_message="Add empty
         dict: GitHub API response data
     """
     # Extract owner and repo name from git URL
-    path_parts = urlparse(repo_git_url).path.strip('/').split('/')
-    if path_parts[-1].endswith('.git'):
-        path_parts[-1] = path_parts[-1][:-4]  # Remove .git suffix
-    
-    owner = path_parts[-2]
-    repo = path_parts[-1]
+    owner, repo = parse_github_url(repo_git_url.replace('.git', ''))
     
     # Base64 encode empty content (required by GitHub API)
     empty_content = ""
@@ -294,8 +246,7 @@ def download_github_release(owner, repository, tag=None, output_dir=None):
         str: Path to the extracted repository
     """
     # Create a temporary directory for the zip file
-    with tempfile.TemporaryDirectory(delete=False) as temp_dir:
-        temp_zip_path = os.path.join(temp_dir, f"{repository}-{tag}.zip")
+    temp_dir = tempfile.TemporaryDirectory(delete=False)
     
     try:
         # If no tag is specified, get the latest release tag

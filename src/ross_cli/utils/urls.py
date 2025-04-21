@@ -4,6 +4,8 @@ import urllib.error
 
 import typer
 
+from ..constants import BLOB_BRANCH_REGEX
+
 def is_valid_url(url: str) -> bool:
     """Check if a string is a valid URL"""
     url_pattern = r'''
@@ -48,6 +50,20 @@ def check_url_exists(url: str) -> bool:
         raise typer.Exit()
     
 
+def remove_blob_and_branch_from_url(url: str) -> str:
+    """Remove the 'blob' and branch name from a GitHub URL.
+    e.g. removes "/blob/main", or "/blob/master" from the URL.
+
+    Args:
+        url (str): The URL to modify.
+
+    Returns:
+        str: The modified URL.
+    """
+    url = re.sub(BLOB_BRANCH_REGEX, '', url)
+    return url
+    
+
 def is_owner_repo_format(owner_repo_string: str) -> bool:
     """Check if a string specifies a GitHub repository using owner/repo format."""
     if not ("/" in owner_repo_string and not is_valid_url(owner_repo_string)):
@@ -56,10 +72,6 @@ def is_owner_repo_format(owner_repo_string: str) -> bool:
     split_str = owner_repo_string.split("/")
     if len(split_str) != 2:
         return False
-    
-    # Has file name
-    # if "." in split_str[1]:
-    #     return False
     
     return True
 

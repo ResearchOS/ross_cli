@@ -19,7 +19,7 @@ def load_rossproject(rossproject_toml_path: str) -> dict:
     fields_ok = True
     for field in ROSSPROJECT_REQUIRED_FIELDS:
         if field not in rossproject:
-            typer.echo(f"Missing field '{field}' from rossproject.toml")
+            typer.echo(f"Missing field '{field}' from {rossproject_toml_path}")
             fields_ok = False
 
     if not fields_ok:

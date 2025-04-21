@@ -9,7 +9,7 @@ import typer
 
 from ..constants import *
 from ..git.index import search_indexes_for_package_info
-from ..git.github import read_github_file, get_default_branch_name
+from ..git.github import read_github_file_from_release, get_default_branch_name
 from ..utils.urls import is_valid_url, check_url_exists, convert_owner_repo_format_to_url, is_owner_repo_format
 from ..utils.rossproject import load_rossproject
 
@@ -200,7 +200,7 @@ def parse_dependencies(dependencies: list, language: str) -> tuple[list, list]:
                     any_invalid = True
                     continue
                 # 2. Read pyproject.toml file to get package name
-                pyproject = read_github_file(pyproject_url, tag = tag)
+                pyproject = read_github_file_from_release(pyproject_url, tag = tag)
                 dep_package_name = pyproject["project"]["name"]
                 full_dep = dep_package_name + " @ git+" + dep
                 deps.append(full_dep)

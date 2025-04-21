@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 import tomli
 import typer
 
-from .github import get_remote_url_from_git_repo, is_valid_url, read_github_file
+from .github import get_remote_url_from_git_repo, is_valid_url, read_github_file_from_release
 from ..constants import DEFAULT_ROSS_CONFIG_FILE_PATH
 from ..utils.config import load_config
 
@@ -38,7 +38,7 @@ def search_indexes_for_package_info(package_identifier: str, config_file_path: s
     
     for index in indexes:
         index_file_url = index["url"][0:-4] + "/" + index["index_path"]
-        index_content = tomli.loads(read_github_file(index_file_url))
+        index_content = tomli.loads(read_github_file_from_release(index_file_url))
 
         if "package" not in index_content:
             continue
