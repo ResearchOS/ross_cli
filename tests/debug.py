@@ -6,6 +6,12 @@ p = '/Users/mitchelltillman/Desktop/Not_Work/Code/Python_Projects/ross_cli/src'
 sys.path.append(p)
 
 from ross_cli.cli import *
+from ross_cli.commands.tap import tap_github_repo_for_ross_index, untap_ross_index
+
+REMOTE_URL = "https://github.com/ResearchOS/test-index/"
+temp_config_path = os.path.expanduser("~/Downloads/test_config.toml")
+tap_github_repo_for_ross_index(REMOTE_URL, _config_file_path=temp_config_path)
+untap_ross_index(REMOTE_URL, _config_file_path=temp_config_path)
 
 # Initialize the CLI config
 # cli_init_command()

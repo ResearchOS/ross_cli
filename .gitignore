@@ -2,5 +2,5 @@
     src/site-packages/*
     .venv/    
     
-/src/site-packages
 *.pyc
+/src/site-packages

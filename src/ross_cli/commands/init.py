@@ -30,7 +30,7 @@ def init_ross_project(package_name: str, package_folder_path: str = os.getcwd())
     repository_url = get_remote_url_from_git_repo(".")
     
     # If no package name provided, automatically set it.
-    if package_name is None:        
+    if package_name is None or package_name == "":        
         url_parts = repository_url.split("/")
         repo_name = url_parts[-1]
         package_name = repo_name[:-4] # Remove the '.git' suffix
