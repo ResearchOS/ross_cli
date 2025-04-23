@@ -1,6 +1,6 @@
 import pytest
 
-from ross_cli.cli import *
+from src.ross_cli.cli import *
 
 REMOTE_URL = "https://github.com/ResearchOS/test-index/"
 

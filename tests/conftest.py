@@ -18,6 +18,13 @@ dependencies = [
 readme = "README.md"
 """
 
+# @pytest.fixture(scope="function")
+def temp_config_path_no_delete():
+    # Temporary config file
+    with tempfile.NamedTemporaryFile(suffix=".toml", delete=False) as temp_file:
+        path = temp_file.name        
+        yield path
+
 @pytest.fixture(scope="function")
 def temp_config_path():
     # Temporary config file

@@ -1,5 +1,5 @@
-from ross_cli.cli import *
+from src.ross_cli.cli import *
 
-def test_release(temp_project_root_directory):
+def test_release(temp_dir_ross_project):
     release_type = "patch"
-    release_command(release_type, temp_project_root_directory)
+    release_command(release_type, temp_dir_ross_project)

@@ -1,4 +1,4 @@
-from ross_cli.cli import *
+from src.ross_cli.cli import *
 
 def test_install(temp_project_root_directory):
     package_name = "ross_cli"

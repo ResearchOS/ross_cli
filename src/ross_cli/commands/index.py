@@ -22,7 +22,7 @@ def print(index_file_path: str) -> None:
     with open(index_file_path, "rb") as f:
         pprint(tomli.load(f))  # Use pprint to print the loaded TOML file
     
-def add_to_index(index_file_url: str, package_folder_path: str) -> None:
+def add_to_index(index_file_url: str, package_folder_path: str, _config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH) -> None:
     """Add the specified package to the specified index.
     The index file URL should manipulated to be of the form: https://github.com/owner/repo/blob/default_branch/index.toml
     It can be specified as any of:
@@ -82,7 +82,7 @@ def add_to_index(index_file_url: str, package_folder_path: str) -> None:
         raise typer.Exit()
     
     ####### Check that the config has the specified index in it #######
-    config = load_config()
+    config = load_config(_config_file_path)
     if "index" not in config or len(config["index"]) == 0:
         typer.echo(f"No indexes found in the config file.")
         raise typer.Exit()

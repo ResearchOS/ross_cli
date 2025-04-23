@@ -1,5 +1,6 @@
 import pytest
-from ross_cli.cli import *
+
+from src.ross_cli.cli import *
 
 def test_01_init(temp_dir):
     name = "test_package_no_git"
