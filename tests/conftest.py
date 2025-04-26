@@ -18,6 +18,11 @@ dependencies = [
 readme = "README.md"
 """
 
+INDEX_REPO_NAME = "test-index"
+INDEX_REPO_OWNER = "mtillman14"
+INDEX_REPO_URL = f"https://github.com/{INDEX_REPO_OWNER}/{INDEX_REPO_NAME}/.git"
+INDEX_TOML_REPO_URL = f"https://github.com/{INDEX_REPO_OWNER}/{INDEX_REPO_NAME}/index.toml"
+
 # @pytest.fixture(scope="function")
 def temp_config_path_no_delete():
     # Temporary config file
@@ -45,8 +50,43 @@ def temp_dir_with_git_repo():
     # Folder and git repository    
     with tempfile.TemporaryDirectory() as temp_dir:
         # Initialize a git repository in the temporary directory
-        subprocess.run(["git", "init", temp_dir])
+        subprocess.run(["git", "init", temp_dir])        
         yield temp_dir
+
+
+@pytest.fixture(scope="function")
+def temp_dir_with_github_repo():
+    # Folder and git repository    
+    repo_name = "test-repo"
+    owner = 'mtillman14'
+    temp_dir = tempfile.mkdtemp()  # Create temporary directory
+    original_dir = os.getcwd()  # Store original directory
+    
+    try:
+        os.chdir(temp_dir)
+        # Initialize git and configure basic settings
+        subprocess.run(["git", "init"], check=True)
+        subprocess.run(["git", "config", "init.defaultBranch", "main"], check=True)
+        
+        # Create and configure GitHub repository
+        subprocess.run(["gh", "repo", "create", repo_name, "--private"], check=True)
+        subprocess.run(["git", "remote", "add", "origin", 
+                      f"https://github.com/{owner}/{repo_name}.git"], 
+                      check=True)
+        
+        # Create initial commit and push
+        subprocess.run(["git", "commit", "--allow-empty", "-m", "Initial commit"], check=True)
+        subprocess.run(["git", "push"], check=True)
+        
+        yield temp_dir
+        
+    finally:
+        os.chdir(original_dir)  # Always return to original directory
+        try:
+            # print("Deleting the GitHub repository...")
+            subprocess.run(["gh", "repo", "delete", repo_name, "--yes"], check=True)
+        finally:
+            pass
 
 
 @pytest.fixture(scope="function")
@@ -65,3 +105,57 @@ def temp_dir_ross_project():
         with open(os.path.join(temp_dir, "rossproject.toml"), 'w') as f:
             f.write(ROSSPROJECT_TOML_CONTENT_TEST)
         yield temp_dir
+
+
+@pytest.fixture(scope="function")
+def temp_dir_ross_project_github_repo():
+    # Folder and git repository    
+    repo_name = "test-repo"
+    owner = 'mtillman14'
+    temp_dir = tempfile.mkdtemp()  # Create temporary directory
+    original_dir = os.getcwd()  # Store original directory
+    # Initialized ross project.
+    with tempfile.TemporaryDirectory() as temp_dir:
+        try:
+            os.chdir(temp_dir)
+            # Initialize a git repository in the temporary directory
+            subprocess.run(["git", "init", temp_dir])
+            subprocess.run(["git", "config", "init.defaultBranch", "main"], check=True)
+            
+            # Create and configure GitHub repository
+            subprocess.run(["gh", "repo", "create", repo_name, "--private"], check=True)
+            subprocess.run(["git", "remote", "add", "origin", 
+                        f"https://github.com/{owner}/{repo_name}.git"], 
+                        check=True)
+            
+            # Create initial commit and push
+            subprocess.run(["git", "commit", "--allow-empty", "-m", "Initial commit"], check=True)
+            subprocess.run(["git", "push"], check=True)
+            # Create a sample ross project structure
+            src_folder = os.path.join(temp_dir, "src")
+            os.makedirs(src_folder, exist_ok=True)
+
+            # Create empty files using Python's open()
+            with open(os.path.join(src_folder, "__init__.py"), 'w') as f:
+                f.write("")
+            with open(os.path.join(temp_dir, "rossproject.toml"), 'w') as f:
+                f.write(ROSSPROJECT_TOML_CONTENT_TEST)
+            yield temp_dir
+
+        finally:
+            os.chdir(original_dir)  # Always return to original directory
+            try:
+                # print("Deleting the GitHub repository...")
+                subprocess.run(["gh", "repo", "delete", repo_name, "--yes"], check=True)
+            finally:
+                pass
+
+@pytest.fixture(scope="function")
+def temp_index_github_repo_url_only():
+    yield INDEX_TOML_REPO_URL
+
+@pytest.fixture(scope="function")
+def temp_index_github_repo():
+    subprocess.run(["gh", "repo", "create", "test-index", "--private"], check=True)
+    yield INDEX_TOML_REPO_URL
+    subprocess.run(["gh", "repo", "delete", "test-index", "--yes"], check=True)
