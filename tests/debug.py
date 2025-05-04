@@ -6,7 +6,7 @@ from pathlib import Path
 # sys.path.append(p)
 
 import pytest
-pytest.main(["-v", "-s", "tests/test_02_init.py::test_03_init_with_git_and_github"])
+pytest.main(["-v", "-s", "tests/test_06_install.py::test_install"])
 
 # from ross_cli.cli import *
 # from ross_cli.commands.tap import tap_github_repo_for_ross_index, untap_ross_index
