@@ -5,7 +5,7 @@ import subprocess
 import pytest
 
 ROSSPROJECT_TOML_CONTENT_TEST = """# ROSS project configuration file
-name = "test-package"
+name = "test_package"
 version = "0.1.0"
 repository_url = "https://github.com/test-owner/test-package"
 language = "python"
@@ -23,15 +23,9 @@ INDEX_REPO_OWNER = "mtillman14"
 INDEX_REPO_URL = f"https://github.com/{INDEX_REPO_OWNER}/{INDEX_REPO_NAME}/.git"
 INDEX_TOML_REPO_URL = f"https://github.com/{INDEX_REPO_OWNER}/{INDEX_REPO_NAME}/index.toml"
 
-# @pytest.fixture(scope="function")
-def temp_config_path_no_delete():
-    # Temporary config file
-    with tempfile.NamedTemporaryFile(suffix=".toml", delete=False) as temp_file:
-        path = temp_file.name        
-        yield path
-
 @pytest.fixture(scope="function")
 def temp_config_path():
+    """ROSS configuration file path"""
     # Temporary config file
     with tempfile.NamedTemporaryFile(suffix=".toml") as temp_file:
         path = temp_file.name        
@@ -40,6 +34,7 @@ def temp_config_path():
 
 @pytest.fixture(scope="function")
 def temp_dir():
+    """Temporary directory"""
     # Folder only
     with tempfile.TemporaryDirectory() as temp_dir:
         yield temp_dir
@@ -47,6 +42,7 @@ def temp_dir():
 
 @pytest.fixture(scope="function")
 def temp_dir_with_git_repo():
+    """Temporary directory with git repository"""
     # Folder and git repository    
     with tempfile.TemporaryDirectory() as temp_dir:
         # Initialize a git repository in the temporary directory
@@ -56,6 +52,7 @@ def temp_dir_with_git_repo():
 
 @pytest.fixture(scope="function")
 def temp_dir_with_github_repo():
+    """Temporary directory with github repository"""
     # Folder and git repository    
     repo_name = "test-repo"
     owner = 'mtillman14'
@@ -83,7 +80,6 @@ def temp_dir_with_github_repo():
     finally:
         os.chdir(original_dir)  # Always return to original directory
         try:
-            # print("Deleting the GitHub repository...")
             subprocess.run(["gh", "repo", "delete", repo_name, "--yes"], check=True)
         finally:
             pass
@@ -91,6 +87,8 @@ def temp_dir_with_github_repo():
 
 @pytest.fixture(scope="function")
 def temp_dir_ross_project():
+    """Temporary directory with git repository and ross project structure, but no GitHub repo.
+    NOTE: `ross init` requires a GitHub repository to be created first, so this fixture is only helpful so as to not need to create a GitHub repo."""
     # Initialized ross project.
     with tempfile.TemporaryDirectory() as temp_dir:
         # Initialize a git repository in the temporary directory
@@ -109,6 +107,7 @@ def temp_dir_ross_project():
 
 @pytest.fixture(scope="function")
 def temp_dir_ross_project_github_repo():
+    """Temporary directory with git repository and ross project structure, including a GitHub repo"""
     # Folder and git repository    
     repo_name = "test-repo"
     owner = 'mtillman14'
@@ -152,10 +151,15 @@ def temp_dir_ross_project_github_repo():
 
 @pytest.fixture(scope="function")
 def temp_index_github_repo_url_only():
+    """URL for the index GitHub repository, but no actual repository"""
     yield INDEX_TOML_REPO_URL
 
 @pytest.fixture(scope="function")
 def temp_index_github_repo():
-    subprocess.run(["gh", "repo", "create", "test-index", "--private"], check=True)
+    """URL for the index GitHub repository, and create the actual repository"""
+    try:
+        subprocess.run(["gh", "repo", "create", "test-index", "--private"], check=True)
+    except:
+        pass
     yield INDEX_TOML_REPO_URL
     subprocess.run(["gh", "repo", "delete", "test-index", "--yes"], check=True)

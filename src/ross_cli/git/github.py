@@ -197,7 +197,7 @@ def create_empty_file_in_repo(repo_git_url: str, file_path: str, commit_message:
         dict: GitHub API response data
     """
     # Extract owner and repo name from git URL
-    owner, repo = parse_github_url(repo_git_url.replace('.git', ''))
+    owner, repo, file_path_tmp = parse_github_url(repo_git_url.replace('.git', ''))
     
     # Base64 encode empty content (required by GitHub API)
     empty_content = ""

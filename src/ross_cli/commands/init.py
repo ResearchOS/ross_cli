@@ -52,19 +52,20 @@ def init_ross_project(package_name: str, package_folder_path: str = os.getcwd())
 
     # Create the package structure. Only if the files/folders don't already exist
     for field, path in INIT_PATHS.items():
-        if not os.path.exists(path):
+        full_path = os.path.join(package_folder_path, path)
+        if not os.path.exists(full_path):
             if field.endswith("/"):
-                os.makedirs(path, exist_ok=True)
+                os.makedirs(full_path, exist_ok=True)
                 typer.echo(f"Created folder: {field}")
             else:
                 # Create a blank file
-                with open(path, "w") as f:
+                with open(full_path, "w") as f:
                     f.write("")
                 typer.echo(f"Created file: {field}")
 
     # Continue initializing the project structure.
     # Create the project name subfolder, and the __init__.py file.
-    project_name_subfolder = os.path.join(INIT_PATHS["src/"], package_name)
+    project_name_subfolder = os.path.join(package_folder_path, INIT_PATHS["src/"], package_name)
     os.makedirs(project_name_subfolder, exist_ok=True)
     init_py_file = os.path.join(project_name_subfolder, '__init__.py')
     with open(init_py_file, 'w') as f:
@@ -75,7 +76,7 @@ def init_ross_project(package_name: str, package_folder_path: str = os.getcwd())
     src/site-packages/*
     .venv/    
     """
-    with open(INIT_PATHS[".gitignore"], 'w') as f:
+    with open(os.path.join(package_folder_path, INIT_PATHS[".gitignore"]), 'w') as f:
         f.write(gitignore_content)
 
     typer.echo("\nROSS project initialized successfully.")

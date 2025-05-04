@@ -9,7 +9,7 @@ import typer
 
 from ..constants import *
 from ..git.index import search_indexes_for_package_info
-from ..git.github import read_github_file_from_release
+from ..git.github import read_github_file_from_release, get_latest_release_tag, parse_github_url
 from ..utils.urls import is_valid_url, check_url_exists, convert_owner_repo_format_to_url, is_owner_repo_format
 from ..utils.rossproject import load_rossproject
 
@@ -22,6 +22,7 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd()):
         raise typer.Exit()
     # Create the pyproject.toml file from the rossproject.toml file.
     rossproject_toml_path = os.path.join(package_folder_path, "rossproject.toml")
+    pyproject_toml_path = os.path.join(package_folder_path, "pyproject.toml")
     rossproject_toml = load_rossproject(rossproject_toml_path)
 
     if not re.match(SEMANTIC_VERSIONING_REGEX, rossproject_toml["version"]):
@@ -54,10 +55,10 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd()):
 
     # Get the new pyproject_toml data
     pyproject_toml_new = build_pyproject_from_rossproject(rossproject_toml)
-    if not os.path.exists(DEFAULT_PYPROJECT_TOML_PATH):
+    if not os.path.exists(pyproject_toml_path):
         pyproject_toml_content_orig = {}
     else:
-        with open(DEFAULT_PYPROJECT_TOML_PATH, 'rb') as f:
+        with open(pyproject_toml_path, 'rb') as f:
             pyproject_toml_content_orig = tomli.load(f)
 
     # Overwrite the original data, preserving other fields that may have been added.
@@ -66,7 +67,7 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd()):
         pyproject_toml_content[fld] = pyproject_toml_new[fld]
 
     # Write the pyproject.toml file
-    with open(DEFAULT_PYPROJECT_TOML_PATH, "wb") as f:
+    with open(pyproject_toml_path, "wb") as f:
         tomli_w.dump(pyproject_toml_content, f)
 
     # Write the updated version number back to the rossproject.toml file.
@@ -75,7 +76,7 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd()):
         
     # git push    
     try:        
-        subprocess.run(["git", "add", DEFAULT_PYPROJECT_TOML_PATH], check = True)
+        subprocess.run(["git", "add", pyproject_toml_path], check = True)
     except:
         pass
     try:
@@ -281,15 +282,20 @@ def add_version_number_to_dep(dep: str) -> str:
         version_after_at = None
         if "@" in dep:
             version_after_at = dep[dep.index("@")+1:]
+            url = dep
             dep = dep[0:dep.index("@")] # Remove the substring after "@"
         else:
-            typer.echo("Version for URL-based packages must be specified in this format:")
-            typer.echo("https://github.com/owner/repo.git@v1.0.0")
-            raise typer.Exit()
-        dep = dep.replace(".git", "")
-        url = dep + f"/releases/tag/{version_after_at}"      
+            owner, repo, file_path = parse_github_url(dep)
+            version_after_at = get_latest_release_tag(owner, repo)
+            url = f"https://github.com/{owner}/{repo}/releases/tag/{version_after_at}"
+            # typer.echo("Version for URL-based packages must be specified in this format:")
+            # typer.echo("https://github.com/owner/repo.git@v1.0.0")
+            # raise typer.Exit()
+                 
         url_exists = True             
-        if not check_url_exists(url):
+        if check_url_exists(url):
+            dep = f"https://github.com/{owner}/{repo}.git@{version_after_at}"
+        else:
             url_exists = False
             if not version_after_at.startswith('v'):
                 version_after_at_with_v = "v" + version_after_at
@@ -298,9 +304,8 @@ def add_version_number_to_dep(dep: str) -> str:
                 if not check_url_exists(url_with_v):
                     url_exists = False
                 else:
-                    dep = url_with_v
-        else:
-            dep = url
+                    dep = url_with_v        
+            
         if url_exists is False:
             typer.echo(f"URL does not exist: {url}")
             raise typer.Exit()

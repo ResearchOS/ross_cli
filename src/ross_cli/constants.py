@@ -8,7 +8,7 @@ CLI_NAME = "ross" # The name of this package
 
 SUPPORTED_LANGUAGES = ['python', 'r', 'matlab']
 
-BLOB_BRANCH_REGEX = r'/blob/[^/]+' # Matches "/blob/branch_name" in a URL
+BLOB_BRANCH_REGEX = r'/?blob/[^/]+' # Matches "/blob/branch_name" or "blob/branch_name" (if no leading "/") in a URL
 SEMANTIC_VERSIONING_REGEX = r"^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
 
 RELEASE_TYPES = ["patch", "minor", "major"]
@@ -61,10 +61,10 @@ DEFAULT_ROSSPROJECT_TOML_PATH = os.path.join(PROJECT_FOLDER, "rossproject.toml")
 # Paths to initialize the ROSS project
 # Don't include the pyproject.toml or rossproject.toml files here
 INIT_PATHS = {
-    "README.md": os.path.join(PROJECT_FOLDER, "README.md"),
-    "src/": os.path.join(PROJECT_FOLDER, "src"),
-    "src/installed/": DEFAULT_PIP_SRC_FOLDER_PATH,
-    "tests/": os.path.join(PROJECT_FOLDER, "tests"),
-    "docs/": os.path.join(PROJECT_FOLDER, "docs"),
-    ".gitignore": os.path.join(PROJECT_FOLDER, ".gitignore")    
+    "README.md": "README.md",
+    "src/": "src",
+    "src/installed/": "src/site-packages",
+    "tests/": "tests",
+    "docs/": "docs",
+    ".gitignore": ".gitignore"    
 }
