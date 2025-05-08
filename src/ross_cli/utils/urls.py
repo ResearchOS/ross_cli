@@ -36,6 +36,8 @@ def check_url_exists(url: str) -> bool:
     """
     from ..git.github import parse_github_url
     exists = True
+    if not is_valid_url(url):
+        return None
     try:
         # Make HTTP request to PyPI API
         with urllib.request.urlopen(url) as response:

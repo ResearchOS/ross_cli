@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 import tomli
 import typer
 
-from .github import get_remote_url_from_git_repo, is_valid_url, read_github_file_from_release
+from .github import get_remote_url_from_git_repo, is_valid_url, read_github_file_from_release, parse_github_url
 from ..constants import DEFAULT_ROSS_CONFIG_FILE_PATH
 from ..utils.config import load_config
 
@@ -29,10 +29,9 @@ def search_indexes_for_package_info(package_identifier: str, config_file_path: s
     id_type = "package name"
     if is_valid_url(package_identifier):
         # Convert to owner/repo to make sure the URL is properly specified.
+        owner, repo, _ = parse_github_url(package_identifier)
         id_type = "owner/repo"
-        parsed_path = urlparse(package_identifier).path[1:].split("/")
-        last_parsed_path = parsed_path[1].split(".")
-        package_identifier = parsed_path[0] + "/" + last_parsed_path[0]
+        package_identifier = f"{owner}/{repo}"
     elif "/" in package_identifier:
         id_type = "owner/repo"    
     

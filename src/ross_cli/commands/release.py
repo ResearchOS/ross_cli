@@ -2,6 +2,9 @@ import os
 import subprocess
 import re
 from importlib.metadata import version
+import json
+import urllib.request
+from urllib.error import URLError, HTTPError
 
 import tomli
 import tomli_w
@@ -174,66 +177,87 @@ def parse_dependencies(dependencies: list, language: str) -> tuple[list, list]:
     tool_deps = []
     any_invalid = False # True if any of the dependencies are specified in an invalid manner/are not found.
     for dep in dependencies:
-        # All languages: If package name in a ROSS index, put the .git URL in project.dependencies
-        ross_pkg_info = search_indexes_for_package_info(dep)
-        if ross_pkg_info is not None:
-            dep = ross_pkg_info["url"]
-
-        # Convert owner/repo format to URL, and add version number
-        if is_owner_repo_format(dep):
-            dep = convert_owner_repo_format_to_url(dep)
-        if is_valid_url(dep):
-            dep = add_version_number_to_dep(dep)
-
-        # Put the ROSS package's URL into the project.dependencies table.
-        if ross_pkg_info is not None:
-            deps.append(dep)
+        processed_dep, processed_tool_dep = parse_dependency(dep, language)
+        if processed_dep is None and processed_tool_dep is None:
+            any_invalid = True
             continue
-
-        if language == "python":        
-            # Specified PyPi package name
-            if check_package_exists_on_pypi(dep):
-                deps.append(dep)
-            # Specified GitHub repository URL
-            elif check_url_exists(dep):
-                # 1. Check if pyproject.toml file exists at URL
-                split_url = dep.split('/releases/tag/')
-                repo_url = split_url[0]
-                tag = split_url[1]
-                pyproject_url = f"{repo_url}/blob/{tag}/pyproject.toml"                
-                pyproject_toml_exists = check_url_exists(pyproject_url)
-                if not pyproject_toml_exists:
-                    typer.echo(f"Invalid dependency specification, missing pyproject.toml file in Python package: {dep}")
-                    any_invalid = True
-                    continue
-                # 2. Read pyproject.toml file to get package name
-                pyproject = read_github_file_from_release(pyproject_url, tag = tag)
-                dep_package_name = pyproject["project"]["name"]
-                full_dep = dep_package_name + " @ git+" + dep
-                deps.append(full_dep)
-        elif language == "r":
-            # Specified as a GitHub repository or CRAN URL
-            if check_url_exists(dep):                
-                url = dep                            
-            # CRAN package name specified
-            else:
-                url = f"https://cran.r-project.org/web/packages/{dep}/index.html"            
-            if not check_url_exists(url):
-                typer.echo(f"Invalid dependency specification, R package not found on GitHub or CRAN: {dep}")
-                any_invalid = True
-            tool_deps.append(url)
-        elif language == "matlab":
-            # GitHub repository URL specified
-            if check_url_exists(dep):
-                tool_deps.append(dep)
-            else:
-                typer.echo(f"Invalid dependency specification. Invalid MATLAB package GitHub repository URL: {dep}")
-                any_invalid = True
+        deps.extend(processed_dep)
+        tool_deps.extend(processed_tool_dep)                
 
     if any_invalid:
         raise typer.Exit()
             
     return deps, tool_deps
+
+def parse_dependency(dep: str, language: str) -> tuple[list, list]:
+    """Parse a single dependency from the rossproject.toml file."""
+    processed_dep = []
+    processed_tool_dep = []
+    # All languages: If package is in a ROSS index, put the .git URL in project.dependencies    
+    ross_pkg_info = search_indexes_for_package_info(dep)
+    is_ross_pkg = False
+    if ross_pkg_info is not None:
+        is_ross_pkg = True
+
+    # ROSS package specified (name or URL). Put the ROSS package's URL into the project.dependencies table.
+    if is_ross_pkg:
+        processed_dep = ross_pkg_info["url"]
+        return processed_dep, processed_tool_dep
+
+    # Non-ROSS package specified (name, owner/repo, or URL).
+    processed_dep, processed_tool_dep = process_non_ross_dependency(dep, language)
+    return processed_dep, processed_tool_dep
+
+def process_non_ross_dependency(dep: str, language: str) -> tuple[list, list]:
+    """Process a non-ROSS dependency from the simpler form in the rossproject.toml file to the more complex form in the pyproject.toml file."""
+    processed_dep = []
+    processed_tool_dep = []
+    # Convert owner/repo format to URL
+    if is_owner_repo_format(dep):
+        dep = convert_owner_repo_format_to_url(dep)
+    # Add version number to the dependency
+    dep_with_version = add_version_number_to_dep(dep)
+    dep_without_version = strip_package_version_from_name(dep_with_version)
+    version = get_version_from_dep(dep_with_version)
+
+    if language == "python":        
+        # Specified PyPi package name
+        if check_package_exists_on_pypi(dep_with_version):
+            processed_dep = dep_with_version
+        # Specified GitHub repository URL
+        elif check_url_exists(dep_without_version):
+            # 1. Check if pyproject.toml file exists at URL
+            repo_url = dep_without_version
+            tag = version
+            pyproject_url = f"{repo_url}/blob/{tag}/pyproject.toml"                
+            pyproject_toml_exists = check_url_exists(pyproject_url)
+            if not pyproject_toml_exists:
+                typer.echo(f"Invalid dependency specification, missing pyproject.toml file in Python package: {dep}")
+                return None, None
+            # 2. Read pyproject.toml file to get package name
+            pyproject = read_github_file_from_release(pyproject_url, tag = tag)
+            dep_package_name = pyproject["project"]["name"]
+            processed_dep = dep_package_name + " @ git+" + dep
+    elif language == "r":
+        # Specified as a GitHub repository or CRAN URL
+        if check_url_exists(dep_with_version):                
+            url = dep                            
+        # CRAN package name specified
+        else:
+            url = f"https://cran.r-project.org/web/packages/{dep_with_version}/index.html"            
+        if not check_url_exists(url):
+            typer.echo(f"Invalid dependency specification, R package not found on GitHub or CRAN: {dep}")
+            return None, None
+        processed_tool_dep = url
+    elif language == "matlab":
+        # GitHub repository URL specified
+        if check_url_exists(dep_without_version):
+            processed_tool_dep = dep
+        else:
+            typer.echo(f"Invalid dependency specification. Invalid MATLAB package GitHub repository URL: {dep}")
+            return None, None
+
+    return processed_dep, processed_tool_dep
     
 
 def check_package_exists_on_pypi(package_name: str) -> bool:
@@ -247,10 +271,24 @@ def check_package_exists_on_pypi(package_name: str) -> bool:
         bool: True if the package name exists, False otherwise.
     """      
 
-    package_name = strip_package_version_from_name(package_name)
-    url = f"https://pypi.org/pypi/{package_name}/json"
+    version = get_version_from_dep(package_name)
+    if version is None:
+        version = ""
+    package_name_no_version = strip_package_version_from_name(package_name)
+    url = f"https://pypi.org/pypi/{package_name_no_version}/{version}"
     
     return check_url_exists(url)
+
+
+def find_first_version_char(text: str) -> int:
+    """Find the first occurrence of a version character in the text."""
+    first_index = len(text)  # Default to end of string if none found
+    for char in POSSIBLE_VERSION_CHARS:
+        pos = text.find(char)
+        if pos != -1 and pos < first_index:
+            first_index = pos
+    return first_index
+
 
 def strip_package_version_from_name(package_name_with_version: str) -> str:
     """Return the package name without the version
@@ -260,22 +298,49 @@ def strip_package_version_from_name(package_name_with_version: str) -> str:
 
     Returns:
         str: _description_
-    """
-
-    def find_first_version_char(text: str) -> int:
-        first_index = len(text)  # Default to end of string if none found
-        for char in POSSIBLE_VERSION_CHARS:
-            pos = text.find(char)
-            if pos != -1 and pos < first_index:
-                first_index = pos
-        return first_index if first_index < len(text) else -1
+    """    
     
     first_version_char_index = find_first_version_char(package_name_with_version)
     return package_name_with_version[0:first_version_char_index]
 
-def add_version_number_to_dep(dep: str) -> str:
-    """Make sure that the dependency has a version number associated with it."""
 
+def get_version_from_dep(dep: str) -> str:
+    """Return the version number from the dependency string."""
+    if "@" in dep:
+        # If the dependency is a GitHub repository URL, the version number is after the "@"
+        version = dep[dep.index("@")+1:]
+    else:
+        # If the dependency is a PyPI package, the version number is after the first version character
+        first_version_char_index = find_first_version_char(dep)
+        if first_version_char_index == len(dep):
+            # If no version character is found, return None
+            return None
+        dep = dep[first_version_char_index:]
+        # Find the first numeric character in the dependency string
+        first_numeric_char_index = re.search(r"\d", dep)
+        if first_numeric_char_index is None:
+            # If no numeric character is found, return None
+            return None
+        # Extract the version number from the dependency string
+        version = dep[first_numeric_char_index.start():]
+
+    return version
+
+
+def add_version_number_to_dep(dep: str) -> str:
+    """Return the dependency formatted with the version number.
+    If the dependency is a GitHub repository, it will be formatted as:
+    'https://github.com/owner/repo/.git@<version>'.
+    If the dependency is a PyPI package, it will be formatted as:
+    '<package_name>==<version>'
+    """
+
+    version_num = get_version_from_dep(dep)
+    if version_num is not None:
+        # If the version number is already specified, return the dependency as is
+        return dep
+
+    github_url_string = "https://github.com/{owner}/{repo}/releases/tag/{version}"
     # Prep the dependency with the proper version number
     if is_valid_url(dep):
         # If specified as URL, it's because it's not in a packaging index.
@@ -285,12 +350,9 @@ def add_version_number_to_dep(dep: str) -> str:
             url = dep
             dep = dep[0:dep.index("@")] # Remove the substring after "@"
         else:
-            owner, repo, file_path = parse_github_url(dep)
+            owner, repo, _ = parse_github_url(dep)
             version_after_at = get_latest_release_tag(owner, repo)
-            url = f"https://github.com/{owner}/{repo}/releases/tag/{version_after_at}"
-            # typer.echo("Version for URL-based packages must be specified in this format:")
-            # typer.echo("https://github.com/owner/repo.git@v1.0.0")
-            # raise typer.Exit()
+            url = github_url_string.format(owner=owner, repo=repo, version=version_after_at)
                  
         url_exists = True             
         if check_url_exists(url):
@@ -304,18 +366,84 @@ def add_version_number_to_dep(dep: str) -> str:
                 if not check_url_exists(url_with_v):
                     url_exists = False
                 else:
-                    dep = url_with_v        
+                    url = github_url_string.format(owner=owner, repo=repo, version=version_after_at_with_v)
             
         if url_exists is False:
             typer.echo(f"URL does not exist: {url}")
             raise typer.Exit()
-    elif re.match(SEMANTIC_VERSIONING_REGEX, dep) is None:
-        # In PyPI         
-        package_version = version(dep)
+    else:
+        # In PyPI
+        try:
+            # If the package is installed, get the version from the installed package
+            package_version = version(dep)
+        except ModuleNotFoundError or ImportError:
+            # If the package is not installed, get the version from PyPI
+            package_version = get_version_from_pypi(dep)
+        except:
+            # If the package is not found, raise an error
+            typer.echo(f"Package {dep} not installed or found on PyPI. Aborting release.")
+            raise typer.Exit()
         package_name = strip_package_version_from_name(dep)
         dep = package_name + "==" + package_version
-    else:
-        typer.echo("Invalid dependency specification. Must either be a valid GitHub repository URL, or a package name in PyPI")
-        raise typer.Exit()
     
     return dep
+
+def get_version_from_pypi(package_name: str) -> str:
+    """Get the version number from PyPI for a given package name."""
+    try:
+        versions = list_package_versions(package_name)
+        if not versions:
+            raise ValueError("No versions found")
+        # Get the latest version
+        version = versions[-1]
+    except:
+        # If the package is not found, raise an error
+        version = None
+    
+    return version
+
+def list_package_versions(package_name):
+    """
+    List all available versions of a package on PyPI using only standard library.
+    
+    Args:
+        package_name (str): The name of the package
+        
+    Returns:
+        list: Sorted list of available versions
+    """
+    url = f"https://pypi.org/pypi/{package_name}/json"
+    
+    try:
+        # Open connection to PyPI
+        with urllib.request.urlopen(url) as response:
+            # Read and decode the response
+            data = response.read().decode('utf-8')
+            
+            # Parse JSON response
+            package_data = json.loads(data)
+            
+            # Extract and sort versions
+            versions = list(package_data.get("releases", {}).keys())
+            
+            # Sort versions numerically (e.g., 1.10.0 comes after 1.2.0)
+            def version_key(v):
+                try:
+                    return [int(x) for x in v.split('.')]
+                except ValueError:
+                    # Handle non-numeric version parts
+                    return [0]
+                    
+            versions.sort(key=version_key)
+            
+            return versions
+            
+    except HTTPError as e:
+        print(f"HTTP Error: {e.code} - {e.reason}")
+        return []
+    except URLError as e:
+        print(f"URL Error: {e.reason}")
+        return []
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return []
