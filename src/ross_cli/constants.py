@@ -9,7 +9,7 @@ CLI_NAME = "ross" # The name of this package
 SUPPORTED_LANGUAGES = ['python', 'r', 'matlab']
 
 BLOB_BRANCH_REGEX = r'/?blob/[^/]+' # Matches "/blob/branch_name" or "blob/branch_name" (if no leading "/") in a URL
-SEMANTIC_VERSIONING_REGEX = r".*?v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$"
+SEMANTIC_VERSIONING_REGEX = r".*?v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
 
 RELEASE_TYPES = ["patch", "minor", "major"]
 

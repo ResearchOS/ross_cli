@@ -6,7 +6,7 @@ from pathlib import Path
 # sys.path.append(p)
 
 import pytest
-pytest.main(["-v", f"{os.path.join(os.path.dirname(__file__),"test_05_release.py")}::test_04_parse_dependency_wrong_language"])
+pytest.main(["-v", f"{os.path.join(os.path.dirname(__file__),"test_05_release.py")}::test_01_release"])
 
 # from ross_cli.cli import *
 # from ross_cli.commands.tap import tap_github_repo_for_ross_index, untap_ross_index

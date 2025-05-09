@@ -312,7 +312,8 @@ def get_latest_release_tag(owner, repository):
     releases = json.loads(result.stdout)
     
     if not releases:
-        raise Exception(f"No releases found for {owner}/{repository}")
+        typer.echo(f"No releases found for {owner}/{repository}.")
+        raise typer.Exit(code=4)
     
     # Sort releases by published_at date (newest first)
     sorted_releases = sorted(

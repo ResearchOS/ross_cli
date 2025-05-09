@@ -181,13 +181,16 @@ def parse_dependencies(dependencies: list, language: str) -> tuple[list, list]:
         if processed_dep is None and processed_tool_dep is None:
             any_invalid = True
             continue
-        deps.extend(processed_dep)
-        tool_deps.extend(processed_tool_dep)                
+        if processed_dep:
+            deps.extend([processed_dep])
+        if processed_tool_dep:
+            tool_deps.extend([processed_tool_dep])                
 
     if any_invalid:
         raise typer.Exit()
             
     return deps, tool_deps
+
 
 def parse_dependency(dep: str, language: str) -> tuple[list, list]:
     """Parse a single dependency from the rossproject.toml file."""
@@ -201,8 +204,7 @@ def parse_dependency(dep: str, language: str) -> tuple[list, list]:
 
     # ROSS package specified (name or URL). Put the ROSS package's URL into the project.dependencies table.
     if is_ross_pkg:
-        processed_dep = ross_pkg_info["url"]
-        return processed_dep, processed_tool_dep
+        dep = ross_pkg_info["url"].replace(".git", "")        
 
     # Non-ROSS package specified (name, owner/repo, or URL).
     processed_dep, processed_tool_dep = process_non_ross_dependency(dep, language)
@@ -215,49 +217,53 @@ def process_non_ross_dependency(dep: str, language: str) -> tuple[list, list]:
     # Convert owner/repo format to URL
     if is_owner_repo_format(dep):
         dep = convert_owner_repo_format_to_url(dep)
-    # Add version number to the dependency
+    # Add version number to the dependency    
     dep_with_version = add_version_number_to_dep(dep)
     dep_without_version = strip_package_version_from_name(dep_with_version)
     version = get_version_from_dep(dep_with_version)
 
+    if check_url_exists(dep_without_version):
+        formatted_dep = format_dep_with_version(dep_without_version, version)
+        if language == "r":
+            processed_tool_dep = formatted_dep
+        else:
+            processed_dep = formatted_dep
+        return processed_dep, processed_tool_dep
+
     if language == "python":        
         # Specified PyPi package name
         if check_package_exists_on_pypi(dep_with_version):
-            processed_dep = dep_with_version
-        # Specified GitHub repository URL
-        elif check_url_exists(dep_without_version):
-            # 1. Check if pyproject.toml file exists at URL
-            repo_url = dep_without_version
-            tag = version
-            pyproject_url = f"{repo_url}/blob/{tag}/pyproject.toml"                
-            pyproject_toml_exists = check_url_exists(pyproject_url)
-            if not pyproject_toml_exists:
-                typer.echo(f"Invalid dependency specification, missing pyproject.toml file in Python package: {dep}")
-                return None, None
-            # 2. Read pyproject.toml file to get package name
-            pyproject = read_github_file_from_release(pyproject_url, tag = tag)
-            dep_package_name = pyproject["project"]["name"]
-            processed_dep = dep_package_name + " @ git+" + dep
-    elif language == "r":
-        # Specified as a GitHub repository or CRAN URL
-        if check_url_exists(dep_with_version):                
-            url = dep                            
+            processed_dep = dep_with_version        
+    elif language == "r":                   
         # CRAN package name specified
-        else:
-            url = f"https://cran.r-project.org/web/packages/{dep_with_version}/index.html"            
+        url = f"https://cran.r-project.org/web/packages/{dep_with_version}/index.html"            
         if not check_url_exists(url):
             typer.echo(f"Invalid dependency specification, R package not found on GitHub or CRAN: {dep}")
             return None, None
         processed_tool_dep = url
     elif language == "matlab":
-        # GitHub repository URL specified
-        if check_url_exists(dep_without_version):
-            processed_tool_dep = dep
-        else:
-            typer.echo(f"Invalid dependency specification. Invalid MATLAB package GitHub repository URL: {dep}")
-            return None, None
+        # Package name specified
+        typer.echo(f"Invalid dependency specification. Invalid MATLAB package GitHub repository URL: {dep}")
+        return None, None
 
     return processed_dep, processed_tool_dep
+
+
+def format_dep_with_version(dep_without_version: str, version: str) -> str:
+    # 1. Check if pyproject.toml file exists at URL
+    repo_url = dep_without_version
+    tag = version
+    pyproject_url = f"{repo_url}/blob/{tag}/pyproject.toml"                
+    pyproject_toml_exists = check_url_exists(pyproject_url)
+    if not pyproject_toml_exists:
+        typer.echo(f"Invalid dependency specification, missing pyproject.toml file in package: {dep_without_version}")
+        return None, None
+    # 2. Read pyproject.toml file to get package name
+    pyproject_str = read_github_file_from_release(pyproject_url, tag = tag)
+    pyproject = tomli.loads(pyproject_str)
+    dep_package_name = pyproject["project"]["name"]
+    processed_dep = dep_package_name + " @ git+" + dep_without_version + "@" + tag
+    return processed_dep
     
 
 def check_package_exists_on_pypi(package_name: str) -> bool:
@@ -356,7 +362,7 @@ def add_version_number_to_dep(dep: str) -> str:
                  
         url_exists = True             
         if check_url_exists(url):
-            dep = f"https://github.com/{owner}/{repo}.git@{version_after_at}"
+            dep = f"https://github.com/{owner}/{repo}@{version_after_at}"
         else:
             url_exists = False
             if not version_after_at.startswith('v'):
@@ -379,10 +385,12 @@ def add_version_number_to_dep(dep: str) -> str:
         except ModuleNotFoundError or ImportError:
             # If the package is not installed, get the version from PyPI
             package_version = get_version_from_pypi(dep)
-        except:
+        
+        if package_version is None:
             # If the package is not found, raise an error
             typer.echo(f"Package {dep} not installed or found on PyPI. Aborting release.")
-            raise typer.Exit()
+            raise typer.Exit(code = 3)
+        
         package_name = strip_package_version_from_name(dep)
         dep = package_name + "==" + package_version
     
