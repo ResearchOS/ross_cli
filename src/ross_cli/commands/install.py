@@ -13,7 +13,8 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     f"""Install a package.
     1. Get the URL from the .toml file (default: {DEFAULT_ROSS_INDICES_FOLDER})
     2. Install the package using pip""" 
-
+    
+    full_install_folder_path = os.path.join(install_package_root_folder, install_folder_path)
     rossproject_toml_path = os.path.join(install_package_root_folder, "rossproject.toml")
     # Check that this folder contains a rossproject.toml file
     if not os.path.exists(rossproject_toml_path):
@@ -22,16 +23,20 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         return
     
     # Check that the install folder exists
-    if not os.path.exists(install_folder_path):
-        os.makedirs(install_folder_path, exist_ok=True)   
+    if not os.path.exists(full_install_folder_path):
+        os.makedirs(full_install_folder_path, exist_ok=True)   
 
-    os.environ["PIP_SRC"] = os.path.join(install_package_root_folder, install_folder_path)
+    os.environ["PIP_SRC"] = full_install_folder_path
 
     pkg_info = search_indexes_for_package_info(package_name)
     # If a package is not in the ROSS index, then treat it exactly the same as if the user ran "pip install".
     if not pkg_info:
-        subprocess.run(["pip", "install", "-e", package_name] + args, check=True)
-        raise typer.Exit()
+        try:
+            subprocess.run(["pip", "install", "-e", package_name] + args, check=True)
+        except subprocess.CalledProcessError as e:
+            typer.echo(f"Failed to install package {package_name} using pip.")
+            raise typer.Exit()
+        return None
     
     # Get the pyproject.toml file from the package's GitHub repository
     auth_token = subprocess.run(["gh", "auth", "token"], capture_output=True, check=True).stdout.decode().strip()    
