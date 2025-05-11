@@ -1,5 +1,4 @@
 import os
-from pprint import pprint
 import subprocess
 import base64
 import re
@@ -9,10 +8,10 @@ import tomli_w
 import typer
 
 from ..constants import *
-from ..git.github import get_remote_url_from_git_repo, read_github_file_from_release, get_default_branch_name, parse_github_url
+from ..git.github import get_remote_url_from_git_repo, read_github_file_from_release, get_default_branch_name, parse_github_url, create_empty_file_in_repo
 from ..utils.config import load_config
 from ..utils.rossproject import load_rossproject
-from ..utils.urls import check_url_exists, is_owner_repo_format, is_valid_url
+from ..utils.urls import check_url_exists, is_owner_repo_format, is_valid_url, remove_blob_and_branch_from_url
     
 def add_to_index(index_file_url: str, package_folder_path: str, _config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH) -> None:
     """Add the specified package to the specified index.
@@ -70,8 +69,16 @@ def add_to_index(index_file_url: str, package_folder_path: str, _config_file_pat
 
     # Check if the index file URL exists
     if not check_url_exists(index_file_url):
-        typer.echo(f"Index file URL {index_file_url} does not exist.")
-        raise typer.Exit()
+        typer.echo(f"Index file URL {index_file_url} does not exist. Creating a new index file.")
+        index_file_url_no_branch = remove_blob_and_branch_from_url(index_file_url)
+        owner, repo, file_path = parse_github_url(index_file_url_no_branch)
+        index_remote_url = f"https://github.com/{owner}/{repo}.git"
+        index_relative_path = file_path
+        try:
+            create_empty_file_in_repo(index_remote_url, index_relative_path)
+        except subprocess.CalledProcessError as e:
+            typer.echo(f"Failed to create index file: {e}")
+            raise typer.Exit()
     
     ####### Check that the config has the specified index in it #######
     config = load_config(_config_file_path)
@@ -86,7 +93,7 @@ def add_to_index(index_file_url: str, package_folder_path: str, _config_file_pat
     if not index_file_url_in_config:
         typer.echo(f"Index file URL {index_file_url} is not tapped!")
         typer.echo(f"Please tap the index using the command: `ross tap {index_file_url}`")
-        raise typer.Exit()
+        raise typer.Exit(code=5)
 
     # Get the package name from the rossproject.toml file    
     rossproject_content = load_rossproject(rossproject_toml_path)

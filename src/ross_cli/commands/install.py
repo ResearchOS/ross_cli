@@ -59,11 +59,12 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         typer.echo("pyproject.toml missing [project][name] field")
         raise typer.Exit()    
         
+    os.chdir(install_package_root_folder)
     github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
     github_full_url_with_egg = github_full_url + "#egg=" + official_package_name
     typer.echo(f"pip installing package {package_name}...")
     github_full_url_with_egg = github_full_url_with_egg.replace("/releases/tag/", "@")
-    subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
+    result = subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
 
     language = pyproject_content["tool"][CLI_NAME]["language"]
 

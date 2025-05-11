@@ -5,7 +5,7 @@ import subprocess
 import pytest
 
 ROSSPROJECT_TOML_CONTENT_TEST = """# ROSS project configuration file
-name = "test-package"
+name = "test_package"
 version = "0.1.0"
 repository_url = "https://github.com/test-owner/test-package"
 language = "python"

@@ -67,11 +67,17 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd()):
     # Overwrite the original data, preserving other fields that may have been added.
     pyproject_toml_content = pyproject_toml_content_orig
     for fld in pyproject_toml_new:
-        pyproject_toml_content[fld] = pyproject_toml_new[fld]
+        pyproject_toml_content[fld] = pyproject_toml_new[fld]        
 
     # Write the pyproject.toml file
     with open(pyproject_toml_path, "wb") as f:
         tomli_w.dump(pyproject_toml_content, f)
+
+    # Create README if it doesn't already exist.
+    readme_path = pyproject_toml_content["project"]["readme"]
+    if readme_path and not os.path.exists(readme_path):
+        with open(readme_path, 'w') as f:
+            f.write(f"# {pyproject_toml_content["project"]["name"]}")
 
     # Write the updated version number back to the rossproject.toml file.
     with open(rossproject_toml_path, 'wb') as f:
@@ -133,7 +139,7 @@ def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
     pyproject_toml["project"]["name"] = rossproject_toml["name"] if "name" in rossproject_toml else None
     pyproject_toml["project"]["version"] = rossproject_toml["version"] if "version" in rossproject_toml else None     
     pyproject_toml["project"]["authors"] = rossproject_toml["authors"] if "authors" in rossproject_toml else None
-    pyproject_toml["project"]["readme"] = rossproject_toml["readme"] if "readme" in rossproject_toml else None    
+    pyproject_toml["project"]["readme"] = rossproject_toml["readme"] if "readme" in rossproject_toml else None      
 
     # Validate language    
     if rossproject_toml["language"].lower() not in SUPPORTED_LANGUAGES:
@@ -154,6 +160,11 @@ def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
     pyproject_toml["build-system"] = {}
     pyproject_toml["build-system"]["requires"] = ["hatchling"]
     pyproject_toml["build-system"]["build-backend"] = "hatchling.build"
+
+    # hatch settings
+    pyproject_toml["tool"]["hatch"] = {}
+    pyproject_toml["tool"]["hatch"]["metadata"] = {}
+    pyproject_toml["tool"]["hatch"]["metadata"]["allow-direct-references"] = True
 
     any_missing = False
     for fld in pyproject_toml["project"]:
