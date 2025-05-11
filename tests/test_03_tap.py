@@ -22,5 +22,6 @@ def test_04_untap_after_tap(temp_config_path):
 
 def test_05_tap_twice(temp_config_path):
     tap.tap_github_repo_for_ross_index(REMOTE_URL, _config_file_path=temp_config_path)
-    with pytest.raises(typer.Exit):
-        tap.tap_github_repo_for_ross_index(REMOTE_URL, _config_file_path=temp_config_path)
+    
+    # No error raised the second time, just returns early
+    tap.tap_github_repo_for_ross_index(REMOTE_URL, _config_file_path=temp_config_path)

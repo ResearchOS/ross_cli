@@ -1,5 +1,6 @@
 import os
 from typing import List
+import shutil
 
 import subprocess
 import typer
@@ -65,7 +66,7 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     typer.echo(f"pip installing package {package_name}...")
     github_full_url_with_egg = github_full_url_with_egg.replace("/releases/tag/", "@")
     result = subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
-
+ 
     language = pyproject_content["tool"][CLI_NAME]["language"]
 
     if "dependencies" not in pyproject_content["tool"][CLI_NAME]:
@@ -76,6 +77,21 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
             install_dep_r(dep)            
         elif language.lower() == "matlab":
             install_dep_matlab(dep)
+
+    # Remove the .git folders from the installed packages.
+    for package_name in os.listdir(full_install_folder_path):
+        package_dir = os.path.join(full_install_folder_path, package_name)
+
+        if not os.path.isdir(package_dir):
+            continue
+
+        git_dir = os.path.join(package_dir, ".git")
+
+        if os.path.exists(git_dir) and os.path.isdir(git_dir):
+            try:
+                shutil.rmtree(git_dir)
+            except Exception as e:
+                typer.echo(f"Failed to remove .git folder from: {git_dir}")
 
     typer.echo(f"Successfully installed package {package_name}")
 

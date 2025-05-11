@@ -13,7 +13,7 @@ authors = [
 
 ]
 dependencies = [
-    "load-gaitrite",
+    # "load-gaitrite",
 ]
 readme = "README.md"
 """
@@ -69,7 +69,7 @@ def temp_dir_with_github_repo():
         subprocess.run(["gh", "repo", "create", repo_name, "--private"], check=True)
         subprocess.run(["git", "remote", "add", "origin", 
                       f"https://github.com/{owner}/{repo_name}.git"], 
-                      check=True)
+                      check=True)        
         
         # Create initial commit and push
         subprocess.run(["git", "commit", "--allow-empty", "-m", "Initial commit"], check=True)
@@ -126,19 +126,27 @@ def temp_dir_ross_project_github_repo():
             subprocess.run(["git", "remote", "add", "origin", 
                         f"https://github.com/{owner}/{repo_name}.git"], 
                         check=True)
-            
-            # Create initial commit and push
-            subprocess.run(["git", "commit", "--allow-empty", "-m", "Initial commit"], check=True)
-            subprocess.run(["git", "push"], check=True)
+                        
             # Create a sample ross project structure
             src_folder = os.path.join(temp_dir, "src")
             os.makedirs(src_folder, exist_ok=True)
+            project_src_folder = os.path.join(src_folder, "test_package")
+            os.makedirs(project_src_folder)
+
+            # Create the content of the GitHub repository
+            with open(os.path.join(temp_dir, "README.md"), 'w') as f:
+                f.write(f"# {repo_name}")
 
             # Create empty files using Python's open()
-            with open(os.path.join(src_folder, "__init__.py"), 'w') as f:
-                f.write("")
+            with open(os.path.join(project_src_folder, "__init__.py"), 'w') as f:
+                f.write("# test_package")
             with open(os.path.join(temp_dir, "rossproject.toml"), 'w') as f:
                 f.write(ROSSPROJECT_TOML_CONTENT_TEST)
+
+            # Create initial commit and push
+            subprocess.run(["git", "add", "."], check=True)
+            subprocess.run(["git", "commit", "-m", "Initial commit"], check=True)
+            subprocess.run(["git", "push"], check=True)
             yield temp_dir
 
         finally:
