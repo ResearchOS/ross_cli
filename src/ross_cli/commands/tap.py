@@ -1,4 +1,3 @@
-import uuid
 import subprocess
 
 import tomli_w
@@ -13,9 +12,8 @@ def tap_github_repo_for_ross_index(index_remote_url: str, index_relative_path = 
                                    _config_file_path = DEFAULT_ROSS_CONFIG_FILE_PATH):
     f"""Add a GitHub repository as a ROSS index.
     Puts the repository following information into {DEFAULT_ROSS_CONFIG_FILE_PATH}
-    1. "url": Repository URL (ending with .git)
-    2. "uuid": Tapped index UUID
-    3. "index_path": Relative path to the index.toml file within the repository (default: index.toml)
+    1. "url": Repository URL (ending with .git)    
+    2. "index_path": Relative path to the index.toml file within the repository (default: index.toml)
     """
     ross_config = load_config(_config_file_path)
 
@@ -42,7 +40,6 @@ def tap_github_repo_for_ross_index(index_remote_url: str, index_relative_path = 
     # Create the dict for this index
     index_dict = {
         "url": index_remote_url,
-        "uuid": str(uuid.uuid4()),
         "index_path": index_relative_path
     }
     ross_config["index"].append(index_dict)
