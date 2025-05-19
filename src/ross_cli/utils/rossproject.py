@@ -26,3 +26,9 @@ def load_rossproject(rossproject_toml_path: str) -> dict:
         raise typer.Exit()
     
     return rossproject
+
+
+def convert_hyphen_in_name_to_underscore(name: str) -> str:
+    """Convert hyphen in package name to underscore"""
+    corrected_name = name.replace("-", "_")
+    return corrected_name

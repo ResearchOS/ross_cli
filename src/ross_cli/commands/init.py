@@ -4,6 +4,7 @@ import typer
 
 from ..constants import *
 from ..git.github import get_remote_url_from_git_repo
+from ..utils.rossproject import convert_hyphen_in_name_to_underscore
 
 def init_ross_project(package_name: str, package_folder_path: str = os.getcwd()):
     """Initialize a new ROSS project in the specified directory.
@@ -24,19 +25,14 @@ def init_ross_project(package_name: str, package_folder_path: str = os.getcwd())
         typer.echo("This folder does not contain a remote GitHub repository! Please create one first.")
         raise typer.Exit()
     
-    # Create the README.md file so there's something to commit
-    readme_key = "README.md"
-    if readme_key in INIT_PATHS:
-        if not os.path.exists(INIT_PATHS[readme_key]):
-            with open(INIT_PATHS[readme_key], "w") as f:
-                f.write("")
-        del INIT_PATHS[readme_key] # So the README isn't overwritten.    
-    
     # If no package name provided, automatically set it.
     if package_name is None or package_name == "":        
         url_parts = repository_url.split("/")
         repo_name = url_parts[-1]
-        package_name = repo_name[:-4] # Remove the '.git' suffix
+        package_name = repo_name.replace(".git", "") # Remove the '.git' suffix
+
+    # Replace hyphens with underscores in the package name
+    package_name = convert_hyphen_in_name_to_underscore(package_name)  
     
     # Create the rossproject.toml file
     if os.path.exists(rossproject_toml_path):

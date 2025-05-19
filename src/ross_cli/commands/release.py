@@ -14,7 +14,7 @@ from ..constants import *
 from ..git.index import search_indexes_for_package_info
 from ..git.github import read_github_file_from_release, get_latest_release_tag, parse_github_url
 from ..utils.urls import is_valid_url, check_url_exists, convert_owner_repo_format_to_url, is_owner_repo_format
-from ..utils.rossproject import load_rossproject
+from ..utils.rossproject import load_rossproject, convert_hyphen_in_name_to_underscore
 
 def release(release_type: str = None, package_folder_path: str = os.getcwd()):
     """Release a new version of the package on GitHub.""" 
@@ -121,18 +121,9 @@ def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
         typer.echo("'name' field missing from rossproject.toml file!")
         raise typer.Exit()
     
-    # Check the name field
-    if "-" in rossproject_toml["name"]:
-        name = rossproject_toml['name']
-        typer.echo(f"Package name {name} contains a '-'.")
-        result = input("Replace '-' with '_'?(y/N)")
-        if result.lower() in ["y", "yes"]:
-            name = name.replace("-", "_")
-            rossproject_toml['name'] = name
-            with open(DEFAULT_ROSSPROJECT_TOML_PATH, 'wb') as f:
-                tomli_w.dump(rossproject_toml, f)
-        else:
-            raise typer.Exit() 
+    # Check the name field    
+    converted_name = convert_hyphen_in_name_to_underscore(rossproject_toml["name"])            
+    rossproject_toml["name"] = converted_name
     
     pyproject_toml = {}
     pyproject_toml["project"]  = {}
