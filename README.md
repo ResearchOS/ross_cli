@@ -125,7 +125,6 @@ This command adds the specified package in the current folder to the specified `
 ```toml
 [[index]]
 url = "https://github.com/username/repo.git" # URL of the GitHub repository.
-uuid = "7fef06b1-8c76-44b6-bece-ab1cb37e64a2" # Auto-generated UUID
 index_path = "index.toml" # The location of the index.toml file in the repository.
 ```
 
