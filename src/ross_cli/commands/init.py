@@ -41,11 +41,9 @@ def init_ross_project(package_name: str, package_folder_path: str = os.getcwd())
     # Create the rossproject.toml file
     if os.path.exists(rossproject_toml_path):
         typer.echo("rossproject.toml file already exists in current directory.")
-    else:
-        # Remove the .git suffix from the URL
-        repository_url_no_git = repository_url.replace(".git", "")
+    else:    
         # Write a new rossproject.toml file        
-        toml_str_content = DEFAULT_ROSSPROJECT_TOML_STR.format(repository_url=repository_url_no_git, DEFAULT_PACKAGE_NAME=package_name)
+        toml_str_content = DEFAULT_ROSSPROJECT_TOML_STR.format(DEFAULT_PACKAGE_NAME=package_name)
         with open(rossproject_toml_path, "wb") as f:
             f.write(toml_str_content.encode("utf-8"))
         typer.echo(f"rossproject.toml file created at {rossproject_toml_path}.")
@@ -73,8 +71,8 @@ def init_ross_project(package_name: str, package_folder_path: str = os.getcwd())
 
     # Initialize the content of the .gitignore, one per line
     gitignore_content = f""".DS_Store
-    src/site-packages/*
-    .venv/    
+src/site-packages/*
+.venv/    
     """
     with open(os.path.join(package_folder_path, INIT_PATHS[".gitignore"]), 'w') as f:
         f.write(gitignore_content)

@@ -30,7 +30,6 @@ DEFAULT_ROSSPROJECT_TOML_STR = """
 # ROSS project configuration file
 name = "{DEFAULT_PACKAGE_NAME}"
 version = "0.1.0"
-repository_url = "{repository_url}"
 language = "python"
 authors = [
 

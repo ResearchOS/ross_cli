@@ -6,5 +6,6 @@ from pathlib import Path
 # sys.path.append(p)
 
 import pytest
-pytest.main(["-v", f"{os.path.join(os.path.dirname(__file__),"test_06_install.py")}::test_02_install"])
+pytest.main(["-v", f"{os.path.join(os.path.dirname(__file__),"test_02_init.py")}::test_03_init_with_git_and_github"])
+# pytest.main(["-v", f"{os.path.join(os.path.dirname(__file__),"test_06_install.py")}::test_02_install"])
 # pytest.main(["-v", f"{os.path.join(os.path.dirname(__file__),"test_04_add_to_index.py")}::test_02_add_to_index_after_tap"])
