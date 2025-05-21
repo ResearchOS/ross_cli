@@ -32,10 +32,11 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     pkg_info = search_indexes_for_package_info(package_name)
     # If a package is not in the ROSS index, then treat it exactly the same as if the user ran "pip install".
     if not pkg_info:
+        typer.echo(f"Package {package_name} not found in ROSS index. Attempting to editable install using pip...")        
         try:
             subprocess.run(["pip", "install", "-e", package_name] + args, check=True)
         except subprocess.CalledProcessError as e:
-            typer.echo(f"Failed to install package {package_name} using pip.")
+            typer.echo(f"Package {package_name} not found in ROSS index, and failed to install it using pip. Aborting.")
             raise typer.Exit()
         return None
     
@@ -94,6 +95,7 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
                 typer.echo(f"Failed to remove .git folder from: {git_dir}")
 
     typer.echo(f"Successfully installed package {package_name}")
+
 
 def install_dep_r(dep: str):
     # Run R's `install.packages()` command                
