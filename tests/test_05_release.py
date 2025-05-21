@@ -77,3 +77,12 @@ def test_10_process_non_ross_dependency_github_url_matlab_no_github_release():
     with pytest.raises(typer.Exit) as e:
         processed_dep, processed_tool_dep = process_non_ross_dependency(url, langauge)
     assert e.value.exit_code == 4
+
+def test_11_release_twice(temp_dir_ross_project_github_repo):
+    release_type = None
+    # First release
+    release_command(release_type, temp_dir_ross_project_github_repo)
+    # Second release
+    with pytest.raises(typer.Exit) as e:
+        release_command(release_type, temp_dir_ross_project_github_repo)
+    assert e.value.exit_code == 6

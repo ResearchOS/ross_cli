@@ -12,7 +12,7 @@ import typer
 
 from ..constants import *
 from ..git.index import search_indexes_for_package_info
-from ..git.github import read_github_file_from_release, get_latest_release_tag, parse_github_url
+from ..git.github import read_github_file_from_release, get_latest_release_tag, parse_github_url, get_remote_url_from_git_repo
 from ..utils.urls import is_valid_url, check_url_exists, convert_owner_repo_format_to_url, is_owner_repo_format
 from ..utils.rossproject import load_rossproject, convert_hyphen_in_name_to_underscore
 
@@ -33,28 +33,9 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd()):
         typer.echo("See https://semver.org for the full semantic versioning specification.")
         raise typer.Exit()
 
-    version = rossproject_toml["version"]  
-    v_char = ""  
-    if version[0] == "v":
-        v_char = "v"
-        version = version[1:]
-    dot_indices = [m.start() for m in re.finditer(r"\.", version)]
-    if release_type == "patch":
-        chars_before = version[0:dot_indices[1]+1]
-        new_num = str(int(version[dot_indices[1]+1:]) + 1)
-        chars_after = ""
-    elif release_type == "minor":
-        chars_before = version[0:dot_indices[0]+1]
-        new_num = str(int(version[dot_indices[0]+1:dot_indices[1]]) + 1)
-        chars_after = ".0"
-    elif release_type == "major":
-        chars_before = ""
-        new_num = str(int(version[0:dot_indices[0]]) + 1)
-        chars_after = ".0.0"
-    
-    if release_type is not None:
-        version = v_char + chars_before + new_num + chars_after
-        rossproject_toml["version"] = version    
+    previous_version = rossproject_toml["version"]  
+    version = increment_version(previous_version, release_type)    
+    rossproject_toml["version"] = version    
 
     # Get the new pyproject_toml data
     pyproject_toml_new = build_pyproject_from_rossproject(rossproject_toml)
@@ -73,12 +54,6 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd()):
     with open(pyproject_toml_path, "wb") as f:
         tomli_w.dump(pyproject_toml_content, f)
 
-    # Create README if it doesn't already exist.
-    readme_path = pyproject_toml_content["project"]["readme"]
-    if readme_path and not os.path.exists(readme_path):
-        with open(readme_path, 'w') as f:
-            f.write(f"# {pyproject_toml_content["project"]["name"]}")
-
     # Write the updated version number back to the rossproject.toml file.
     with open(rossproject_toml_path, 'wb') as f:
         tomli_w.dump(rossproject_toml, f)
@@ -92,7 +67,7 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd()):
         subprocess.run(["git", "add", rossproject_toml_path], check=True)
     except:
         pass
-    subprocess.run(["git", "commit", "-m", f"Updating version to {rossproject_toml['version']}"])
+    subprocess.run(["git", "commit", "-m", f"Update version to {rossproject_toml['version']}"])
     try:
         subprocess.run(["git", "push"], check=True)
     except:
@@ -107,6 +82,12 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd()):
         typer.echo("`gh` CLI not found. Check the official repository for more information: https://github.com/cli/cli")
         raise typer.Exit()
     tag = "v" + version if version[0] != "v" else version
+    repo_url = get_remote_url_from_git_repo(package_folder_path)
+    owner, repo, _ = parse_github_url(repo_url)
+    release_url_to_check = f"https://github.com/{owner}/{repo}/releases/tag/{tag}"
+    if check_url_exists(release_url_to_check):
+        typer.echo(f"Aborting release. Release {tag} already exists at: {release_url_to_check}")
+        raise typer.Exit(code=6)
     result = subprocess.run(["gh", "release", "create", tag], check=True, capture_output=True)
     release_url = str(result.stdout.strip())
     if release_url[0] == "b":
@@ -457,3 +438,45 @@ def list_package_versions(package_name):
     except Exception as e:
         print(f"Unexpected error: {e}")
         return []
+    
+
+def increment_version(version: str, release_type: str) -> str:
+    """Increment the version number based on the release type.
+    The version number is expected to be in the format 'vX.Y.Z' or 'X.Y.Z'.
+    The release type can be 'major', 'minor', or 'patch'.
+
+    Args:
+        version (str): Semantic versioning string
+        release_type (str): "major", "minor", or "patch"
+
+    Returns:
+        str: The incremented version number
+    """
+    if release_type is None:
+        return version
+    
+    v_char = ""  
+    if version[0] == "v":
+        v_char = "v"
+        version = version[1:]
+
+    dot_indices = [m.start() for m in re.finditer(r"\.", version)]
+
+    if release_type == "patch":
+        chars_before = version[0:dot_indices[1]+1]
+        new_num = str(int(version[dot_indices[1]+1:]) + 1)
+        chars_after = ""
+
+    elif release_type == "minor":
+        chars_before = version[0:dot_indices[0]+1]
+        new_num = str(int(version[dot_indices[0]+1:dot_indices[1]]) + 1)
+        chars_after = ".0"
+
+    elif release_type == "major":
+        chars_before = ""
+        new_num = str(int(version[0:dot_indices[0]]) + 1)
+        chars_after = ".0.0"
+    
+    version = v_char + chars_before + new_num + chars_after
+
+    return version
