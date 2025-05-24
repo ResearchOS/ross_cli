@@ -246,9 +246,8 @@ def download_github_release(owner, repository, tag=None, output_dir=None):
         str: Path to the extracted repository
     """
     # Create a temporary directory for the zip file
-    temp_dir = tempfile.TemporaryDirectory(delete=False)
-    
-    try:
+    with tempfile.TemporaryDirectory(delete=True) as temp_dir:
+
         # If no tag is specified, get the latest release tag
         if not tag:
             print(f"No tag specified, getting latest release for {owner}/{repository}...")
@@ -260,35 +259,25 @@ def download_github_release(owner, repository, tag=None, output_dir=None):
             release_info = json.loads(result.stdout)
             tag = release_info['tag_name']
             print(f"Latest release tag: {tag}")
-        
-        # Use gh cli to download the release zipball
-        print(f"Downloading release {tag} from {owner}/{repository}...")
-        result = subprocess.run([
-            "gh", "release", "download",
-            tag, "--repo", f"{owner}/{repository}",
-            "--dir", temp_dir, "--clobber",
-            "--archive=zip"
-        ], check=True, capture_output=True)
-        
+
         # Determine the output directory
         if not output_dir:
             output_dir = os.getcwd()
         else:
             os.makedirs(output_dir, exist_ok=True)
         
-        # Extract the zip file        
-        for root, dirs, files in os.walk(temp_dir):
-            assert(len(files) == 1)
-            file = files[0]
-            tmp_zip_file_path = os.path.abspath(os.path.join(root, file))
-
-        with zipfile.ZipFile(tmp_zip_file_path, 'r') as z:
-            # Get the name of the top directory in the zip            
-            z.extractall(output_dir)
-    
-    finally:
-        # Clean up the temporary folder
-        shutil.rmtree(temp_dir)
+        # Use gh cli to download the release zipball
+        print(f"Downloading release {tag} from {owner}/{repository} to {output_dir}")
+        repo_url = f"https://github.com/{owner}/{repository}.git"
+        result = subprocess.run([
+            "git", "clone",
+            "--depth=1",
+            f"--branch={tag}",
+            f"--separate-git-dir={temp_dir}",
+            repo_url,
+            output_dir
+        ], check=True, capture_output=True)
+        
 
 def get_latest_release_tag(owner, repository):
     """
