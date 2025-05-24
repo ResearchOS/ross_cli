@@ -73,9 +73,9 @@ def test_09_process_non_ross_dependency_owner_repo_python_with_version():
 
 def test_10_process_non_ross_dependency_github_url_matlab_no_github_release():
     url = "https://github.com/chadagreene/rgb"
-    langauge = "matlab"
+    language = "matlab"
     with pytest.raises(typer.Exit) as e:
-        processed_dep, processed_tool_dep = process_non_ross_dependency(url, langauge)
+        processed_dep, processed_tool_dep = process_non_ross_dependency(url, language)
     assert e.value.exit_code == 4
 
 def test_11_release_twice(temp_dir_ross_project_github_repo):

@@ -16,7 +16,7 @@ from ..git.github import read_github_file_from_release, get_latest_release_tag, 
 from ..utils.urls import is_valid_url, check_url_exists, convert_owner_repo_format_to_url, is_owner_repo_format
 from ..utils.rossproject import load_rossproject, convert_hyphen_in_name_to_underscore
 
-def release(release_type: str = None, package_folder_path: str = os.getcwd()):
+def release(release_type: str = None, package_folder_path: str = os.getcwd(), message: str = None):
     """Release a new version of the package on GitHub.""" 
     # Switch to the package folder
     os.chdir(package_folder_path)   
@@ -74,6 +74,9 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd()):
         typer.echo("Failed to `git push`, likely because you do not have permission to push to this repository.")
         typer.echo("Try opening a pull request instead, or contact the repository's maintainer(s) to change your permissions.")
         raise typer.Exit()
+    
+    if message is None:
+        message = f"Release {rossproject_toml['version']}"
 
     # GitHub release
     try:
@@ -88,7 +91,7 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd()):
     if check_url_exists(release_url_to_check):
         typer.echo(f"Aborting release. Release {tag} already exists at: {release_url_to_check}")
         raise typer.Exit(code=6)
-    result = subprocess.run(["gh", "release", "create", tag], check=True, capture_output=True)
+    result = subprocess.run(["gh", "release", "create", tag, "-n", message], check=True, capture_output=True)
     release_url = str(result.stdout.strip())
     if release_url[0] == "b":
         release_url = release_url[1:]

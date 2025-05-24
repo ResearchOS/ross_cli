@@ -76,7 +76,12 @@ def release_command(
         None,
         help="Version increment type: 'patch' (+0.0.1), 'minor' (+0.1.0), or 'major' (+1.0.0)"
     ),
-    package_folder_path: str = os.getcwd()
+    package_folder_path: str = os.getcwd(),
+    message: str = typer.Option(
+        None,
+        "-m", "--message",
+        help="Release message to use in the GitHub release. If not provided, a default message will be used."
+    )
 ):
     """Release a new version of this package on GitHub.
     Versions follow semantic versioning guidelines.
@@ -85,7 +90,9 @@ def release_command(
     if release_type is not None and release_type not in RELEASE_TYPES:        
         typer.echo(f"Release type must be one of: {', '.join(RELEASE_TYPES)}, or omitted")
         raise typer.Exit()
-    release.release(release_type, package_folder_path)
+    if not isinstance(message, (str, type(None))):
+        message = None
+    release.release(release_type, package_folder_path, message)
 
 
 @app.command(name="config")
