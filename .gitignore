@@ -4,3 +4,4 @@
     
 *.pyc
 /src/site-packages
+/site

@@ -1,4 +1,4 @@
-# Overview
+# Research Open Source Software CLI
 `ross` (Research Open Source Software) is a command-line interface (CLI) for installing and sharing data science projects written in any programming language. `ross` is built on top of `pip`, `git`, and `github`, and is designed to be easy to use and flexible.
 
 Each project/package's metadata is stored in a `rossproject.toml` text file, which is a stripped-down version of the `pyproject.toml` file used by `pip`. This file contains information about the project, such as its name, version, author, and dependencies.
