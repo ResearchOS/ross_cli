@@ -7,7 +7,7 @@ Each project/package's metadata is stored in a `rossproject.toml` text file, whi
 - Python
 - Git CLI
 - GitHub account
-- `gh` CLI (optional, for releasing packages)
+- `gh` CLI
 
 # Installation
 ## Cross-platform
