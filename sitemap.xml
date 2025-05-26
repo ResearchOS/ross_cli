@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://researchos.github.io/ross_cli/</loc>
+         <lastmod>2025-05-26</lastmod>
+    </url>
+    <url>
+         <loc>https://researchos.github.io/ross_cli/Overview/</loc>
+         <lastmod>2025-05-26</lastmod>
+    </url>
+    <url>
+         <loc>https://researchos.github.io/ross_cli/Overview/add_to_index/</loc>
+         <lastmod>2025-05-26</lastmod>
+    </url>
+    <url>
+         <loc>https://researchos.github.io/ross_cli/Overview/index_repo/</loc>
+         <lastmod>2025-05-26</lastmod>
+    </url>
+    <url>
+         <loc>https://researchos.github.io/ross_cli/Overview/install/</loc>
+         <lastmod>2025-05-26</lastmod>
+    </url>
+    <url>
+         <loc>https://researchos.github.io/ross_cli/Overview/release/</loc>
+         <lastmod>2025-05-26</lastmod>
+    </url>
+</urlset>
