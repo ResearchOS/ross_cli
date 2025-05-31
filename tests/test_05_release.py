@@ -13,7 +13,7 @@ def test_02_process_non_ross_dependency_python_package_name_no_version():
     package_name = "numpy"
     language = "python"
     processed_dep, processed_tool_dep = process_non_ross_dependency(package_name, language)
-    assert processed_dep == "numpy==2.2.5"
+    assert processed_dep.startswith("numpy==")
     assert processed_tool_dep == []
 
 

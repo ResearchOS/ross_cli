@@ -50,7 +50,7 @@ def install_gh_cli_windows():
         print("Attempting to install GitHub CLI using winget...")        
         subprocess.run(["winget", "install", "--id", "GitHub.cli"], check=True)
         print("GitHub CLI installed successfully using winget!")
-        return
+        return None
     except (subprocess.SubprocessError, FileNotFoundError):
         print("winget not available, falling back to manual installation...")
 
@@ -82,7 +82,7 @@ def install_gh_cli_windows():
         
         if not gh_dir:
             print("Could not find GitHub CLI directory in the extracted files.")
-            return
+            return None
         
         # Install to Program Files
         install_dir = os.path.join(os.environ.get("ProgramFiles", "C:\\Program Files"), "GitHub CLI")
@@ -121,7 +121,7 @@ def install_gh_cli_mac():
         print("Attempting to install GitHub CLI using Homebrew...")
         subprocess.run(["brew", "install", "gh"], check=True)
         print("GitHub CLI installed successfully using Homebrew!")
-        return
+        return None
     except (subprocess.SubprocessError, FileNotFoundError):
         print("Homebrew not available, falling back to manual installation...")
 
@@ -154,7 +154,7 @@ def install_gh_cli_mac():
         
         if not gh_dir:
             print("Could not find GitHub CLI directory in the extracted files.")
-            return
+            return None
         
         # Install to /usr/local
         install_dir = "/usr/local/share/gh"
@@ -165,7 +165,7 @@ def install_gh_cli_mac():
             os.makedirs(bin_dir, exist_ok=True)
         except PermissionError:
             print("Permission denied. Try running this script with sudo.")
-            return
+            return None
         
         # Copy files
         for item in os.listdir(gh_dir):

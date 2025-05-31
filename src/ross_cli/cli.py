@@ -140,7 +140,7 @@ def version_callback(value: bool):
     if not value:
         # If gh CLI is installed, proceed.
         if result:
-            return
+            return None
         # If gh CLI is not installed, then exits.
         else:
             raise typer.Exit()
@@ -161,7 +161,7 @@ def main(
     version: bool = typer.Option(None, "--version", callback=version_callback, is_eager=True),
 ):
     """ROSS command line interface (CLI)"""
-    return
+    return None
 
 if __name__=="__main__":
     cli_init_command()
