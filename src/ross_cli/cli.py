@@ -52,6 +52,13 @@ def untap_command(remote_url: str):
     tap.untap_ross_index(remote_url)
 
 
+@app.command(name="remove-from-index")
+def remove_from_index_command(index_file_url: str, package_folder_path: str = os.getcwd()):
+    """Remove a package from the index.
+    """
+    index.remove_from_index(index_file_url, package_folder_path)
+
+
 @app.command(name="add-to-index")
 def add_to_index_command(index_file_url: str, package_folder_path: str = os.getcwd()):
     """Add a package to the index.
