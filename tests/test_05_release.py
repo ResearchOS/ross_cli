@@ -99,7 +99,7 @@ def test_13_process_non_ross_dependency_github_url_matlab_with_github_release_ok
     language = "matlab"
     processed_dep, processed_tool_dep = process_non_ross_dependency(url, language)
     assert processed_dep == []
-    assert processed_tool_dep.startswith("https://github.com/g-s-k/matlab-toml")
+    assert processed_tool_dep == "https://github.com/g-s-k/matlab-toml/releases/tag/v1.0.3"
 
 
 def test_14_release_twice(temp_dir_ross_project_github_repo):
