@@ -213,6 +213,10 @@ def process_non_ross_dependency(dep: str, language: str) -> tuple[list, list]:
         formatted_dep = format_dep_pyproject_with_version(dep_without_version, version)
         if formatted_dep is None:
             formatted_dep = f"{dep_without_version}/releases/tag/{version}"
+
+        if not check_url_exists(formatted_dep):
+            typer.echo(f"Invalid dependency specification, URL does not exist: {formatted_dep}")
+            return None, None
         if language == "r" or language == "matlab":
             processed_tool_dep = formatted_dep
         else:
