@@ -78,7 +78,15 @@ def test_10_process_non_ross_dependency_github_url_matlab_no_github_release():
         processed_dep, processed_tool_dep = process_non_ross_dependency(url, language)
     assert e.value.exit_code == 4
 
-def test_11_release_twice(temp_dir_ross_project_github_repo):
+
+def test_11_process_non_ross_dependency_github_url_matlab_with_github_release():
+    url = "https://github.com/g-s-k/matlab-toml"
+    language = "matlab"
+    processed_dep, processed_tool_dep = process_non_ross_dependency(url, language)
+    assert processed_tool_dep.startswith("https://github.com/g-s-k/matlab-toml/releases/tag")
+
+
+def test_12_release_twice(temp_dir_ross_project_github_repo):
     release_type = None
     # First release
     release_command(release_type, temp_dir_ross_project_github_repo)

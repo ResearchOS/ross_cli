@@ -208,9 +208,12 @@ def process_non_ross_dependency(dep: str, language: str) -> tuple[list, list]:
     dep_without_version = strip_package_version_from_name(dep_with_version)
     version = get_version_from_dep(dep_with_version)
 
+    # Dependencies specified as URLs
     if check_url_exists(dep_without_version):
-        formatted_dep = format_dep_with_version(dep_without_version, version)
-        if language == "r":
+        formatted_dep = format_dep_pyproject_with_version(dep_without_version, version)
+        if formatted_dep is None:
+            formatted_dep = f"{dep_without_version}/releases/tag/{version}"
+        if language == "r" or language == "matlab":
             processed_tool_dep = formatted_dep
         else:
             processed_dep = formatted_dep
@@ -235,7 +238,7 @@ def process_non_ross_dependency(dep: str, language: str) -> tuple[list, list]:
     return processed_dep, processed_tool_dep
 
 
-def format_dep_with_version(dep_without_version: str, version: str) -> str:
+def format_dep_pyproject_with_version(dep_without_version: str, version: str) -> str:
     # 1. Check if pyproject.toml file exists at URL
     repo_url = dep_without_version
     tag = version
@@ -243,7 +246,7 @@ def format_dep_with_version(dep_without_version: str, version: str) -> str:
     pyproject_toml_exists = check_url_exists(pyproject_url)
     if not pyproject_toml_exists:
         typer.echo(f"Invalid dependency specification, missing pyproject.toml file in package: {dep_without_version}")
-        return None, None
+        return None
     # 2. Read pyproject.toml file to get package name
     pyproject_str = read_github_file_from_release(pyproject_url, tag = tag)
     pyproject = tomli.loads(pyproject_str)
