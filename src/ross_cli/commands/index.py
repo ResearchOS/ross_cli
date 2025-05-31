@@ -91,8 +91,10 @@ def add_to_index(index_file_url: str, package_folder_path: str, _config_file_pat
             index_file_url_in_config = True
             break
     if not index_file_url_in_config:
-        typer.echo(f"Index file URL {index_file_url} is not tapped!")
-        typer.echo(f"Please tap the index using the command: `ross tap {index_file_url}`")
+        owner, repo, _ = parse_github_url(index_file_url)
+        url = f"https://github.com/{owner}/{repo}"
+        typer.echo(f"Index file URL {url} is not tapped!")
+        typer.echo(f"Please tap the index using the command: `ross tap {url}`")
         raise typer.Exit(code=5)
 
     # Get the package name from the rossproject.toml file    
