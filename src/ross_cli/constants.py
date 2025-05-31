@@ -2,7 +2,7 @@ import os
 
 POSSIBLE_VERSION_CHARS = "=<>!~[@"  
 
-REQUIRED_INDEX_KEYS = ["url", "uuid", "index_path"] # The keys in the config file for each index.
+REQUIRED_INDEX_KEYS = ["url", "index_path"] # The keys in the config file for each index.
 
 CLI_NAME = "ross" # The name of this package
 
