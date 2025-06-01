@@ -23,6 +23,9 @@ INDEX_REPO_OWNER = "mtillman14"
 INDEX_REPO_URL = f"https://github.com/{INDEX_REPO_OWNER}/{INDEX_REPO_NAME}/.git"
 INDEX_TOML_REPO_URL = f"https://github.com/{INDEX_REPO_OWNER}/{INDEX_REPO_NAME}/index.toml"
 
+PACKAGE_REPO_NAME = "test-repo"
+PACKAGE_REPO_OWNER = "mtillman14"
+
 @pytest.fixture(scope="function")
 def temp_config_path():
     """ROSS configuration file path"""
@@ -53,9 +56,7 @@ def temp_dir_with_git_repo():
 @pytest.fixture(scope="function")
 def temp_dir_with_github_repo():
     """Temporary directory with github repository"""
-    # Folder and git repository    
-    repo_name = "test-repo"
-    owner = 'mtillman14'
+    # Folder and git repository
     temp_dir = tempfile.mkdtemp()  # Create temporary directory
     original_dir = os.getcwd()  # Store original directory
     
@@ -66,9 +67,9 @@ def temp_dir_with_github_repo():
         subprocess.run(["git", "config", "init.defaultBranch", "main"], check=True)
         
         # Create and configure GitHub repository
-        subprocess.run(["gh", "repo", "create", repo_name, "--private"], check=True)
+        subprocess.run(["gh", "repo", "create", PACKAGE_REPO_NAME, "--private"], check=True)
         subprocess.run(["git", "remote", "add", "origin", 
-                      f"https://github.com/{owner}/{repo_name}.git"], 
+                      f"https://github.com/{PACKAGE_REPO_OWNER}/{PACKAGE_REPO_NAME}.git"], 
                       check=True)        
         
         # Create initial commit and push
@@ -80,7 +81,7 @@ def temp_dir_with_github_repo():
     finally:
         os.chdir(original_dir)  # Always return to original directory
         try:
-            subprocess.run(["gh", "repo", "delete", repo_name, "--yes"], check=True)
+            subprocess.run(["gh", "repo", "delete", PACKAGE_REPO_NAME, "--yes"], check=True)
         finally:
             pass
 
@@ -108,9 +109,7 @@ def temp_dir_ross_project():
 @pytest.fixture(scope="function")
 def temp_dir_ross_project_github_repo():
     """Temporary directory with git repository and ross project structure, including a GitHub repo"""
-    # Folder and git repository    
-    repo_name = "test-repo"
-    owner = 'mtillman14'
+    # Folder and git repository
     temp_dir = tempfile.mkdtemp()  # Create temporary directory
     original_dir = os.getcwd()  # Store original directory
     # Initialized ross project.
@@ -122,9 +121,9 @@ def temp_dir_ross_project_github_repo():
             subprocess.run(["git", "config", "init.defaultBranch", "main"], check=True)
             
             # Create and configure GitHub repository
-            subprocess.run(["gh", "repo", "create", repo_name, "--private"], check=True)
+            subprocess.run(["gh", "repo", "create", PACKAGE_REPO_NAME, "--private"], check=True)
             subprocess.run(["git", "remote", "add", "origin", 
-                        f"https://github.com/{owner}/{repo_name}.git"], 
+                        f"https://github.com/{PACKAGE_REPO_OWNER}/{PACKAGE_REPO_NAME}.git"], 
                         check=True)
                         
             # Create a sample ross project structure
@@ -135,7 +134,7 @@ def temp_dir_ross_project_github_repo():
 
             # Create the content of the GitHub repository
             with open(os.path.join(temp_dir, "README.md"), 'w') as f:
-                f.write(f"# {repo_name}")
+                f.write(f"# {PACKAGE_REPO_NAME}")
 
             # Create empty files using Python's open()
             with open(os.path.join(project_src_folder, "__init__.py"), 'w') as f:
@@ -153,7 +152,7 @@ def temp_dir_ross_project_github_repo():
             os.chdir(original_dir)  # Always return to original directory
             try:
                 # print("Deleting the GitHub repository...")
-                subprocess.run(["gh", "repo", "delete", repo_name, "--yes"], check=True)
+                subprocess.run(["gh", "repo", "delete", PACKAGE_REPO_NAME, "--yes"], check=True)
             finally:
                 pass
 

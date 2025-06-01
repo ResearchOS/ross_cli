@@ -87,7 +87,7 @@ This will search through all of the tapped indexes for the package name, and `pi
 ### Installing MATLAB and R packages
 `pip install` is a native Python command. For MATLAB and R, the appropriate installation commands are executed - `git clone`, and `install.packages()`, respectively.
 
-# Release a package (optional)
+# Release a package (for code authors)
 ```bash
 ross release patch # Increment v0.0.1
 ross release minor # Increment v0.1.0
@@ -113,6 +113,9 @@ dependencies = [
 ```
 This gets converted to [a standard `pyproject.toml` file](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#a-full-example) when you `ross release` the package.
 
+## Possible `rossproject.toml` Dependency Input & Install Options
+![ROSSProject Specs](docs/images/rossproject%20specs.png)
+
 # Add your package to an index
 After your package's repository has at least one release, you can add it to an index of your choice. This will allow other users to `ross install` your package.
 ```bash
@@ -127,6 +130,3 @@ This command adds the specified package in the current folder to the specified `
 url = "https://github.com/username/repo.git" # URL of the GitHub repository.
 index_path = "index.toml" # The location of the index.toml file in the repository.
 ```
-
-## possible rossproject.toml input & install options
-![ROSSProject Specs](docs/images/rossproject%20specs.png)
