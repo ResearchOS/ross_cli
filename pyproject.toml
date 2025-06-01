@@ -4,13 +4,12 @@ requires = [
 ]
 build-backend = "hatchling.build"
 
-[tool.ross]
-language = "python"
-dependencies = []
-
 [project]
-name = "ross_cli"
-version = "0.3.1"
+name = "ross-cli"
+version = "0.3.2"
+description = "CLI for data analysis code reuse in MATLAB, Python, and R."
+requires-python = ">=3.9"
+license = "MIT"
 authors = [
     {name = "Mitchell Tillman", email = "mtillman14@gmail.com"}
 ]
@@ -22,6 +21,14 @@ dependencies = [
     "tomli",
     "tomli_w",
     "typer"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development",
+    "Topic :: System :: Software Distribution",
 ]
 
 [project.urls]

@@ -5,3 +5,4 @@
 *.pyc
 /src/site-packages
 /site
+/dist
