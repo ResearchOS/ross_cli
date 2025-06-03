@@ -9,7 +9,7 @@ from .github import get_remote_url_from_git_repo, is_valid_url, read_github_file
 from ..constants import DEFAULT_ROSS_CONFIG_FILE_PATH
 from ..utils.config import load_config
 
-def get_indexes_info_from_config(config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH):
+def get_indexes_info_from_config(config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH) -> list:
     """Get the index files' info from the config file."""
         
     toml_content = load_config(config_file_path)  
@@ -53,7 +53,7 @@ def search_indexes_for_package_info(package_identifier: str, config_file_path: s
     return None
     
 
-def get_package_remote_url_from_index_file(package_name: str, index_file_path: str):
+def get_package_remote_url_from_index_file(package_name: str, index_file_path: str) -> str:
     """Get the remote URL from the index file."""
     if not os.path.isfile(index_file_path):
         typer.echo(f"{index_file_path} is not a file or does not exist.")

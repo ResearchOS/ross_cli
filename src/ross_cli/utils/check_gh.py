@@ -5,6 +5,10 @@ import sys
 import tempfile
 import shutil
 
+import typer
+
+from ..git.github import get_remote_url_from_git_repo
+
 def check_gh() -> bool:
     """Verify that the gh CLI is installed.
     Return True if already installed, or was just installed.
@@ -43,7 +47,7 @@ def check_gh() -> bool:
 
     return False
 
-def install_gh_cli_windows():
+def install_gh_cli_windows() -> None:
     """Install GitHub CLI on Windows using winget or by downloading the installer."""
     try:
         # First try using winget which is the easiest method
@@ -114,7 +118,7 @@ def install_gh_cli_windows():
         # Clean up temporary directory
         shutil.rmtree(temp_dir)
 
-def install_gh_cli_mac():
+def install_gh_cli_mac() -> None:
     """Install GitHub CLI on macOS using Homebrew or by downloading the installer."""
     try:
         # First try using Homebrew which is the recommended method
@@ -194,3 +198,25 @@ def install_gh_cli_mac():
     finally:
         # Clean up temporary directory
         shutil.rmtree(temp_dir)
+
+
+def check_local_and_remote_git_repo_exist(folder_path: str) -> bool:
+    """Verify the existence of the local and remote repositories, and the rossproject.toml file."""
+
+    # Check if the package folder is a git repository
+    if not os.path.exists(os.path.join(folder_path, ".git")):
+        typer.echo(f"Folder {folder_path} is not a git repository.")
+        raise typer.Exit()
+    
+    remote_url = get_remote_url_from_git_repo(folder_path)
+    if remote_url is None:
+        typer.echo(f"Missing remote GitHub repository for the local git repository at: {folder_path}")
+        raise typer.Exit()
+    
+    # Check for the rossproject.toml file
+    rossproject_toml_path = os.path.join(folder_path, "rossproject.toml")
+    if not os.path.exists(rossproject_toml_path):
+        typer.echo(f"Folder {folder_path} is missing a rossproject.toml file")
+        raise typer.Exit()  
+    
+    return True

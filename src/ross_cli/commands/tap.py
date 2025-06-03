@@ -23,7 +23,7 @@ def tap_github_repo_for_ross_index(index_remote_url: str, index_relative_path = 
 
     validate_index_entries(ross_config["index"])
 
-    owner, repo, file_path = parse_github_url(index_remote_url)
+    owner, repo, _ = parse_github_url(index_remote_url)
     index_remote_url = f"https://github.com/{owner}/{repo}.git"
 
     if not check_url_exists(index_remote_url):
@@ -65,6 +65,7 @@ def tap_github_repo_for_ross_index(index_remote_url: str, index_relative_path = 
     
     typer.echo(f"Successfully tapped GitHub repository: {index_remote_url}")
 
+
 def untap_ross_index(index_remote_url: str, _config_file_path = DEFAULT_ROSS_CONFIG_FILE_PATH):
     """Remove the GitHub repository from the ROSS index. Also remove the index folder from the .ross/indexes folder"""
     ross_config_toml = load_config(_config_file_path)
@@ -81,7 +82,7 @@ def untap_ross_index(index_remote_url: str, _config_file_path = DEFAULT_ROSS_CON
         typer.echo("No indexes present in the config file. Aborting untap...")
         raise typer.Exit()
     
-    owner, repo, file_path = parse_github_url(index_remote_url)
+    owner, repo, _ = parse_github_url(index_remote_url)
     index_remote_url = f"https://github.com/{owner}/{repo}.git"
 
     validate_index_entries(ross_config_toml["index"])

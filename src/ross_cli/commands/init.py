@@ -3,7 +3,6 @@ import os
 import typer
 
 from ..constants import *
-from ..git.github import get_remote_url_from_git_repo
 from ..utils.rossproject import convert_hyphen_in_name_to_underscore
 
 def init_ross_project(package_name: str, package_folder_path: str = os.getcwd()):
@@ -15,21 +14,10 @@ def init_ross_project(package_name: str, package_folder_path: str = os.getcwd())
     # Ensure there is a .git file in this folder
     rossproject_toml_path = os.path.join(package_folder_path, "rossproject.toml")
     package_folder_path = os.path.dirname(rossproject_toml_path)
-    git_file_path = os.path.join(package_folder_path, '.git')
-    if not os.path.exists(git_file_path):
-        typer.echo("This folder does not contain a git repo! Please create one first.")
-        raise typer.Exit()
     
-    repository_url = get_remote_url_from_git_repo(package_folder_path)
-    if repository_url is None:
-        typer.echo("This folder does not contain a remote GitHub repository! Please create one first.")
-        raise typer.Exit()
-    
-    # If no package name provided, automatically set it.
-    if package_name is None or package_name == "":        
-        url_parts = repository_url.split("/")
-        repo_name = url_parts[-1]
-        package_name = repo_name.replace(".git", "") # Remove the '.git' suffix
+    # If no package name provided, automatically set it based on the folder name.
+    if package_name is None or package_name == "":  
+        package_name = os.path.basename(package_folder_path)
 
     # Replace hyphens with underscores in the package name
     package_name = convert_hyphen_in_name_to_underscore(package_name)  

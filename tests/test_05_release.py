@@ -47,28 +47,28 @@ def test_06_process_non_ross_dependency_github_url_python_no_version():
     url = "https://github.com/networkx/networkx"
     language = "python"
     processed_dep, processed_tool_dep = process_non_ross_dependency(url, language)
-    print(processed_dep)
+    assert processed_dep.startswith("networkx==")
 
 
 def test_07_process_non_ross_dependency_owner_repo_python_no_version():
     url = "networkx/networkx"
     language = "python"
     processed_dep, processed_tool_dep = process_non_ross_dependency(url, language)
-    print(processed_dep)
+    assert processed_dep.startswith("networkx==")
 
 
 def test_08_process_non_ross_dependency_github_url_python_with_version():
     url = "https://github.com/networkx/networkx@networkx-3.4.2"
     language = "python"
     processed_dep, processed_tool_dep = process_non_ross_dependency(url, language)
-    print(processed_dep)
+    assert processed_dep.startswith("networkx==")
 
 
 def test_09_process_non_ross_dependency_owner_repo_python_with_version():
     url = "networkx/networkx@networkx-3.4.2"
     language = "python"
     processed_dep, processed_tool_dep = process_non_ross_dependency(url, language)
-    print(processed_dep)
+    assert processed_dep.startswith("networkx==")
 
 
 def test_10_process_non_ross_dependency_github_url_matlab_no_github_release():

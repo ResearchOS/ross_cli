@@ -12,6 +12,7 @@ from ..git.github import get_remote_url_from_git_repo, read_github_file_from_rel
 from ..utils.config import load_config
 from ..utils.rossproject import load_rossproject
 from ..utils.urls import check_url_exists, is_owner_repo_format, is_valid_url, remove_blob_and_branch_from_url
+from ..utils.check_gh import check_local_and_remote_git_repo_exist
     
 def add_to_index(index_file_url: str, package_folder_path: str, _config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH) -> None:
     """Add the specified package to the specified index.
@@ -33,16 +34,7 @@ def add_to_index(index_file_url: str, package_folder_path: str, _config_file_pat
         typer.echo(f"Path {package_folder_path} is not a directory.")
         raise typer.Exit()
 
-    # Check if the package folder is a git repository
-    if not os.path.exists(os.path.join(package_folder_path, ".git")):
-        typer.echo(f"Folder {package_folder_path} is not a git repository.")
-        raise typer.Exit()
-    
-    # Check for the rossproject.toml file
-    rossproject_toml_path = os.path.join(package_folder_path, "rossproject.toml")
-    if not os.path.exists(rossproject_toml_path):
-        typer.echo(f"Folder {package_folder_path} is missing a rossproject.toml file")
-        raise typer.Exit()    
+    check_local_and_remote_git_repo_exist(package_folder_path)
     
     ########### Check if the index file URL is valid ######################
     # Make sure the index_file_url is a properly formatted URL to the index.toml file.    
@@ -97,7 +89,8 @@ def add_to_index(index_file_url: str, package_folder_path: str, _config_file_pat
         typer.echo(f"Please tap the index using the command: `ross tap {url}`")
         raise typer.Exit(code=5)
 
-    # Get the package name from the rossproject.toml file    
+    # Get the package name from the rossproject.toml file   
+    rossproject_toml_path = os.path.join(package_folder_path, "rossproject.toml") 
     rossproject_content = load_rossproject(rossproject_toml_path)
     package_name = rossproject_content["name"]
     

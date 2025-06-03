@@ -11,6 +11,6 @@ def test_version():
     with pytest.raises(typer.Exit):
         version_callback(value=True)
     try:
-        subprocess.run(["pip", "uninstall", "ross_cli", "-y"])
+        subprocess.run(["pip", "uninstall", "ross-cli", "-y"])
     except:
         pass

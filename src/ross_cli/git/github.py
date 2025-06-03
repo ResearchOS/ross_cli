@@ -8,14 +8,12 @@ import json
 import base64
 from datetime import datetime
 import tempfile
-import zipfile
-import shutil
 
 import typer
 
 from ..utils.urls import is_valid_url, remove_blob_and_branch_from_url
 
-def get_remote_url_from_git_repo(directory="."):
+def get_remote_url_from_git_repo(directory: str = ".") -> str:
     """
     Extracts all remote URLs from a git repository in the specified directory.
     
@@ -184,7 +182,7 @@ def read_github_file_from_release(file_url: str, tag: str = None) -> str:
     content = base64.b64decode(content_json["content"]).decode("utf-8")
     return content
 
-def create_empty_file_in_repo(repo_git_url: str, file_path: str, commit_message: str = "Add empty file"):
+def create_empty_file_in_repo(repo_git_url: str, file_path: str, commit_message: str = "Add empty file") -> dict:
     """
     Create an empty file in a GitHub repository using the GitHub CLI.
     
@@ -230,9 +228,9 @@ def create_empty_file_in_repo(repo_git_url: str, file_path: str, commit_message:
         print(f"Error executing GitHub CLI command: {e}")
         if e.stderr:
             print(f"Error output: {e.stderr}")
-        raise
+        raise typer.Exit()
 
-def download_github_release(owner, repository, tag=None, output_dir=None):
+def download_github_release(owner: str, repository: str, tag: str = None, output_dir: str = None) -> None:
     """
     Download a GitHub repository release using GitHub CLI.
     
@@ -279,7 +277,7 @@ def download_github_release(owner, repository, tag=None, output_dir=None):
         ], check=True, capture_output=True)
         
 
-def get_latest_release_tag(owner, repository):
+def get_latest_release_tag(owner: str, repository: str) -> str:
     """
     Get the latest release tag by release date (not by GitHub's 'latest' endpoint).
     

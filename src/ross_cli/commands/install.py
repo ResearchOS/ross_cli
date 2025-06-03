@@ -23,9 +23,8 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         typer.echo("Run `ross init` to create a rossproject.toml in this folder.")
         return
     
-    # Check that the install folder exists
-    if not os.path.exists(full_install_folder_path):
-        os.makedirs(full_install_folder_path, exist_ok=True)   
+    # Create the install folder if it does not exist
+    os.makedirs(full_install_folder_path, exist_ok=True)   
 
     os.environ["PIP_SRC"] = full_install_folder_path
 

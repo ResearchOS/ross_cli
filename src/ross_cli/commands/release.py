@@ -15,14 +15,18 @@ from ..git.index import search_indexes_for_package_info
 from ..git.github import read_github_file_from_release, get_latest_release_tag, parse_github_url, get_remote_url_from_git_repo
 from ..utils.urls import is_valid_url, check_url_exists, convert_owner_repo_format_to_url, is_owner_repo_format
 from ..utils.rossproject import load_rossproject, convert_hyphen_in_name_to_underscore
+from ..utils.check_gh import check_local_and_remote_git_repo_exist
 
 def release(release_type: str = None, package_folder_path: str = os.getcwd(), message: str = None):
     """Release a new version of the package on GitHub.""" 
-    # Switch to the package folder
-    os.chdir(package_folder_path)   
+    # Switch to the package folder    
     if not os.path.exists(package_folder_path):
         typer.echo(f"Folder {package_folder_path} does not exist.")
         raise typer.Exit()
+    os.chdir(package_folder_path)   
+
+    check_local_and_remote_git_repo_exist(package_folder_path)
+    
     # Create the pyproject.toml file from the rossproject.toml file.
     rossproject_toml_path = os.path.join(package_folder_path, "rossproject.toml")
     pyproject_toml_path = os.path.join(package_folder_path, "pyproject.toml")
