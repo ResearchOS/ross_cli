@@ -101,6 +101,7 @@ dependencies = [
 This gets converted to [a standard `pyproject.toml` file](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#a-full-example) when you `ross release` the package.
 
 ## Possible `rossproject.toml` Dependency Input & Install Options
+Dependencies in the `pyproject.toml` `project.dependencies` field are of the format "package-name @ git+URL@tag". Dependencies in the `project.tool.ross.dependencies` field are of the format "https://github.com/{owner}/{repo}/blob/{tag}".
 ![ROSSProject Specs](docs/images/rossproject%20specs.png)
 
 # Add your package to an index

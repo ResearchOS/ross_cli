@@ -12,7 +12,7 @@ import typer
 
 from ..constants import *
 from ..git.index import search_indexes_for_package_info
-from ..git.github import read_github_file_from_release, get_latest_release_tag, parse_github_url, get_remote_url_from_git_repo
+from ..git.github import read_github_file_from_release, get_latest_release_tag, parse_github_url, get_remote_url_from_git_repo, get_default_branch_name
 from ..utils.urls import is_valid_url, check_url_exists, convert_owner_repo_format_to_url, is_owner_repo_format
 from ..utils.rossproject import load_rossproject, convert_hyphen_in_name_to_underscore
 from ..utils.check_gh import check_local_and_remote_git_repo_exist
@@ -207,20 +207,31 @@ def process_non_ross_dependency(dep: str, language: str) -> tuple[list, list]:
     # Convert owner/repo format to URL
     if is_owner_repo_format(dep):
         dep = convert_owner_repo_format_to_url(dep)
-    # Add version number to the dependency    
-    dep_with_version = add_version_number_to_dep(dep)
+    # Add version number to the dependency
+    dep_with_version = add_version_number_to_dep(dep)    
     dep_without_version = strip_package_version_from_name(dep_with_version)
     version = get_version_from_dep(dep_with_version)
 
     # Dependencies specified as URLs
     if check_url_exists(dep_without_version):
-        formatted_dep = format_dep_pyproject_with_version(dep_without_version, version)
+        formatted_dep = format_dep_with_version(dep_without_version, version)
         if formatted_dep is None:
-            formatted_dep = f"{dep_without_version}/releases/tag/{version}"
+            formatted_dep = dep_without_version
+            owner, repo, _ = parse_github_url(dep_without_version)
+            # Wrong tag specified
+            if get_latest_release_tag(owner, repo) is not None:
+                raise typer.Exit(code=7)
+            # No tag specified, and no releases exist.
+            elif version is None:
+                default_branch = get_default_branch_name(dep_without_version)
+                formatted_dep = f"{dep_without_version}/blob/{default_branch}"
+            # Tag specified, but no releases exist.
+            else:
+                raise typer.Exit(code=7)
 
-        if not check_url_exists(formatted_dep):
-            typer.echo(f"Invalid dependency specification, URL does not exist: {formatted_dep}")
-            return None, None
+        # if not check_url_exists(formatted_dep):
+        #     typer.echo(f"Invalid dependency specification, URL does not exist: {formatted_dep}")
+        #     return None, None
         if language == "r" or language == "matlab":
             processed_tool_dep = formatted_dep
         else:
@@ -246,21 +257,39 @@ def process_non_ross_dependency(dep: str, language: str) -> tuple[list, list]:
     return processed_dep, processed_tool_dep
 
 
-def format_dep_pyproject_with_version(dep_without_version: str, version: str) -> str:
-    # 1. Check if pyproject.toml file exists at URL
-    repo_url = dep_without_version
-    tag = version
-    pyproject_url = f"{repo_url}/blob/{tag}/pyproject.toml"                
-    pyproject_toml_exists = check_url_exists(pyproject_url)
-    if not pyproject_toml_exists:
-        typer.echo(f"Invalid dependency specification, missing pyproject.toml file in package: {dep_without_version}")
-        return None
+def format_dep_pyproject_with_version(dep_without_version: str, pyproject_url: str, branch: str) -> str: 
+    """Format a URL for a dependency that has a pyproject.toml from a specific branch (i.e. tag)."""       
     # 2. Read pyproject.toml file to get package name
-    pyproject_str = read_github_file_from_release(pyproject_url, tag = tag)
+    pyproject_str = read_github_file_from_release(pyproject_url, tag = branch)
     pyproject = tomli.loads(pyproject_str)
     dep_package_name = pyproject["project"]["name"]
-    processed_dep = dep_package_name + " @ git+" + dep_without_version + "@" + tag
+    processed_dep = dep_package_name + " @ git+" + dep_without_version + "@" + branch
     return processed_dep
+
+
+def format_dep_with_version(dep_without_version: str, version: str) -> str:
+    """Format any dependency with a release"""
+    repo_url = dep_without_version
+    tag = version
+    branch = tag
+    # Handle GitHub repositories that don't have any releases
+    if tag is None:
+        branch = get_default_branch_name(repo_url)  
+    branch_url = f"{repo_url}/blob/{branch}"
+    pyproject_url = f"{repo_url}/blob/{branch}/pyproject.toml"   
+
+    branch_url_exists = check_url_exists(branch_url, ignore_file_path=True)
+    if not branch_url_exists:
+        typer.echo(f"Release {tag} not found in dependency GitHub repository: {dep_without_version}")        
+        return None
+    pyproject_toml_exists = check_url_exists(pyproject_url)
+    if not pyproject_toml_exists and tag is not None:
+        typer.echo(f"No pyproject.toml found in branch {branch} of dependency GitHub repository: {dep_without_version}")
+        return f"{dep_without_version}/blob/{version}"
+    elif not pyproject_toml_exists:
+        return None
+    
+    return format_dep_pyproject_with_version(dep_without_version, pyproject_url, branch)
     
 
 def check_package_exists_on_pypi(package_name: str) -> bool:
@@ -326,7 +355,7 @@ def get_version_from_dep(dep: str) -> str:
             return None
         # Extract the version number from the dependency string
         version = dep[first_numeric_char_index.start():]
-
+    
     return version
 
 
@@ -355,7 +384,9 @@ def add_version_number_to_dep(dep: str) -> str:
         else:
             owner, repo, _ = parse_github_url(dep)
             version_after_at = get_latest_release_tag(owner, repo)
-            url = github_url_string.format(owner=owner, repo=repo, version=version_after_at)
+            if version_after_at is None:
+                return dep
+            url = github_url_string.format(owner=owner, repo=repo, version=version_after_at)            
                  
         url_exists = True             
         if check_url_exists(url):

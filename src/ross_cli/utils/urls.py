@@ -21,7 +21,7 @@ def is_valid_url(url: str) -> bool:
     return bool(pattern.match(url))
 
 
-def check_url_exists(url: str) -> bool:
+def check_url_exists(url: str, ignore_file_path: bool = False) -> bool:
     """Check that the provided URL exists.
     If the URL is a GitHub URL, check if the file exists in the repository.
 
@@ -53,6 +53,9 @@ def check_url_exists(url: str) -> bool:
     except Exception as e:
         typer.echo(f"Error: {e}")
         raise typer.Exit()
+    
+    if ignore_file_path:
+        return exists
 
     if not exists and "github.com" in url:
         try:

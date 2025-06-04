@@ -258,6 +258,11 @@ def download_github_release(owner: str, repository: str, tag: str = None, output
             tag = release_info['tag_name']
             print(f"Latest release tag: {tag}")
 
+        repo_url = f"https://github.com/{owner}/{repository}.git"
+        if not tag:
+            print(f"No release found, getting default branch for {owner}/{repository}...")
+            tag = get_default_branch_name(repo_url)
+
         # Determine the output directory
         if not output_dir:
             output_dir = os.getcwd()
@@ -265,8 +270,7 @@ def download_github_release(owner: str, repository: str, tag: str = None, output
             os.makedirs(output_dir, exist_ok=True)
         
         # Use gh cli to download the release zipball
-        print(f"Downloading release {tag} from {owner}/{repository} to {output_dir}")
-        repo_url = f"https://github.com/{owner}/{repository}.git"
+        print(f"Downloading {tag} from {owner}/{repository} to {output_dir}")        
         result = subprocess.run([
             "git", "clone",
             "--depth=1",
@@ -300,7 +304,7 @@ def get_latest_release_tag(owner: str, repository: str) -> str:
     
     if not releases:
         typer.echo(f"No releases found for {owner}/{repository}.")
-        raise typer.Exit(code=4)
+        return None
     
     # Sort releases by published_at date (newest first)
     sorted_releases = sorted(
