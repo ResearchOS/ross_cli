@@ -16,12 +16,6 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     2. Install the package using pip""" 
     
     full_install_folder_path = os.path.join(install_package_root_folder, install_folder_path)
-    rossproject_toml_path = os.path.join(install_package_root_folder, "rossproject.toml")
-    # Check that this folder contains a rossproject.toml file
-    if not os.path.exists(rossproject_toml_path):
-        typer.echo(f"Current directory is not a ROSS project, missing rossproject.toml file.")
-        typer.echo("Run `ross init` to create a rossproject.toml in this folder.")
-        return
     
     # Create the install folder if it does not exist
     os.makedirs(full_install_folder_path, exist_ok=True)   
@@ -46,9 +40,9 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     owner = remote_url_no_token_split[-2]
     repo = remote_url_no_token_split[-1]
     tag = get_latest_release_tag(owner, repo)
-    remote_url_no_token_with_tag = f"{remote_url_no_token}/releases/tag/{tag}"
+    remote_url_no_token_with_tag = f"{remote_url_no_token}/blob/{tag}"
     remote_url = remote_url_no_token_with_tag.replace("https://", f"https://{auth_token}@")
-    split_url = remote_url.split('/releases/tag/')
+    split_url = remote_url.split('/blob/')
     repo_url = split_url[0]
     pyproject_toml_url = f"{repo_url}/blob/{tag}/pyproject.toml"    
     
@@ -60,12 +54,14 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         typer.echo("pyproject.toml missing [project][name] field")
         raise typer.Exit()    
         
+    curr_dir = os.getcwd()
     os.chdir(install_package_root_folder)
     github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
     github_full_url_with_egg = github_full_url + "#egg=" + official_package_name
     typer.echo(f"pip installing package {package_name}...")
-    github_full_url_with_egg = github_full_url_with_egg.replace("/releases/tag/", "@")
+    github_full_url_with_egg = github_full_url_with_egg.replace("/blob/", "@")
     result = subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
+    os.chdir(curr_dir) # Revert back to the original working directory
  
     language = pyproject_content["tool"][CLI_NAME]["language"]
 
@@ -77,21 +73,6 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
             install_dep_r(dep)            
         elif language.lower() == "matlab":
             install_dep_matlab(dep)
-
-    # Remove the .git folders from the installed packages.
-    for package_name in os.listdir(full_install_folder_path):
-        package_dir = os.path.join(full_install_folder_path, package_name)
-
-        if not os.path.isdir(package_dir):
-            continue
-
-        git_dir = os.path.join(package_dir, ".git")
-
-        if os.path.exists(git_dir) and os.path.isdir(git_dir):
-            try:
-                shutil.rmtree(git_dir)
-            except Exception as e:
-                typer.echo(f"Failed to remove .git folder from: {git_dir}")
 
     typer.echo(f"Successfully installed package {package_name}")
 
@@ -113,14 +94,15 @@ def install_dep_r(dep: str):
         subprocess.run(command, check=True)
 
 def install_dep_matlab(dep: str):
-
-    if "/releases/tag" not in dep:
+    """Download GitHub repo from the /archive/ endpoint, so that the .git folder is not downloaded.
+    Also names the folder as {repository}-{tag} because the MATLAB repo likely does not contain a file documenting its version."""
+    if "/blob/" not in dep:
         typer.echo(f"MATLAB dependency not specified as a release URL: {dep}")
         raise typer.Exit()
     
     # Parse the dependency for the owner, repo, and tag.
     output_dir = os.environ["PIP_SRC"]
-    split_url = dep.split("/releases/tag/")
+    split_url = dep.split("/blob/")
     tag = split_url[1]
     split_repo_url = split_url[0].split("/")
     owner = split_repo_url[-2]

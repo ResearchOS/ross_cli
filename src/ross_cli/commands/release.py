@@ -22,8 +22,7 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd(), me
     # Switch to the package folder    
     if not os.path.exists(package_folder_path):
         typer.echo(f"Folder {package_folder_path} does not exist.")
-        raise typer.Exit()
-    os.chdir(package_folder_path)   
+        raise typer.Exit()    
 
     check_local_and_remote_git_repo_exist(package_folder_path)
     
@@ -62,7 +61,9 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd(), me
     with open(rossproject_toml_path, 'wb') as f:
         tomli_w.dump(rossproject_toml, f)
         
-    # git push    
+    # git push   
+    curr_dir = os.getcwd()
+    os.chdir(package_folder_path)    
     try:        
         subprocess.run(["git", "add", pyproject_toml_path], check = True)
     except:
@@ -78,6 +79,8 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd(), me
         typer.echo("Failed to `git push`, likely because you do not have permission to push to this repository.")
         typer.echo("Try opening a pull request instead, or contact the repository's maintainer(s) to change your permissions.")
         raise typer.Exit()
+    
+    os.chdir(curr_dir) # Revert back to the original working directory
     
     if message is None:
         message = f"Release {rossproject_toml['version']}"

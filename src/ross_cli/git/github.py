@@ -8,6 +8,7 @@ import json
 import base64
 from datetime import datetime
 import tempfile
+import zipfile
 
 import typer
 
@@ -243,42 +244,49 @@ def download_github_release(owner: str, repository: str, tag: str = None, output
     Returns:
         str: Path to the extracted repository
     """
+    repo_url = f"https://github.com/{owner}/{repository}.git"
+    if not output_dir:
+        output_dir = os.getcwd()
     # Create a temporary directory for the zip file
-    with tempfile.TemporaryDirectory(delete=True) as temp_dir:
-
-        # If no tag is specified, get the latest release tag
-        if not tag:
-            print(f"No tag specified, getting latest release for {owner}/{repository}...")
+    # If no tag is specified, get the latest release tag
+    if not tag:
+        print(f"No tag specified, getting latest release for {owner}/{repository}...")
+        try:
             result = subprocess.run([
                 "gh", "api", 
                 f"repos/{owner}/{repository}/releases/latest"
             ], capture_output=True, text=True, check=True)
-            
+        
             release_info = json.loads(result.stdout)
             tag = release_info['tag_name']
             print(f"Latest release tag: {tag}")
-
-        repo_url = f"https://github.com/{owner}/{repository}.git"
-        if not tag:
+        except subprocess.CalledProcessError:
             print(f"No release found, getting default branch for {owner}/{repository}...")
             tag = get_default_branch_name(repo_url)
 
-        # Determine the output directory
-        if not output_dir:
-            output_dir = os.getcwd()
-        else:
-            os.makedirs(output_dir, exist_ok=True)
-        
-        # Use gh cli to download the release zipball
-        print(f"Downloading {tag} from {owner}/{repository} to {output_dir}")        
-        result = subprocess.run([
-            "git", "clone",
-            "--depth=1",
-            f"--branch={tag}",
-            f"--separate-git-dir={temp_dir}",
-            repo_url,
-            output_dir
-        ], check=True, capture_output=True)
+    # Make the output directory
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Use gh cli to download the release zipball
+    print(f"Downloading {tag} from {owner}/{repository} to {output_dir}")       
+    result = subprocess.run([
+        "gh", "api",
+        f"repos/{owner}/{repository}/zipball/{tag}"            
+    ], check = True, capture_output=True) 
+
+    zip_filename = os.path.join(output_dir, f"{repository}.zip")
+    with open(zip_filename, "wb") as f:
+        f.write(result.stdout)
+
+    with zipfile.ZipFile(zip_filename, 'r') as zip_ref:
+        zip_ref.extractall(path=output_dir)
+        orig_folder_name = zip_ref.filelist[0].filename
+
+    # Rename the folder
+    os.rename(os.path.join(output_dir, orig_folder_name), os.path.join(output_dir, f"{repository}-{tag}"))
+
+    # Remove the .zip file
+    os.remove(zip_filename)              
         
 
 def get_latest_release_tag(owner: str, repository: str) -> str:
