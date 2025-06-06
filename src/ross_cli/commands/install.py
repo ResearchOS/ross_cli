@@ -8,7 +8,8 @@ import tomli
 
 from ..constants import *
 from ..git.index import search_indexes_for_package_info
-from ..git.github import read_github_file_from_release, download_github_release, get_latest_release_tag
+from ..git.github import read_github_file_from_release, download_github_release, get_latest_release_tag, parse_github_url
+from ..utils.venv import get_venv_path_in_dir, get_install_loc_in_venv
 
 def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, install_package_root_folder: str = os.getcwd(), args: List[str] = []):
     f"""Install a package.
@@ -20,14 +21,14 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     # Create the install folder if it does not exist
     os.makedirs(full_install_folder_path, exist_ok=True)   
 
-    os.environ["PIP_SRC"] = full_install_folder_path
+    # os.environ["PIP_SRC"] = full_install_folder_path
 
     pkg_info = search_indexes_for_package_info(package_name)
     # If a package is not in the ROSS index, then treat it exactly the same as if the user ran "pip install".
     if not pkg_info:
         typer.echo(f"Package {package_name} not found in ROSS index. Attempting to editable install using pip...")        
         try:
-            subprocess.run(["pip", "install", "-e", package_name] + args, check=True)
+            subprocess.run(["pip", "install", package_name] + args, check=True)
         except subprocess.CalledProcessError as e:
             typer.echo(f"Package {package_name} not found in ROSS index, and failed to install it using pip. Aborting.")
             raise typer.Exit()
@@ -36,16 +37,13 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     # Get the pyproject.toml file from the package's GitHub repository
     auth_token = subprocess.run(["gh", "auth", "token"], capture_output=True, check=True).stdout.decode().strip()    
     remote_url_no_token = pkg_info['url'].replace(".git", "")
-    remote_url_no_token_split = remote_url_no_token.split("/")
-    owner = remote_url_no_token_split[-2]
-    repo = remote_url_no_token_split[-1]
+    owner, repo, _ = parse_github_url(remote_url_no_token)    
     tag = get_latest_release_tag(owner, repo)
     remote_url_no_token_with_tag = f"{remote_url_no_token}/blob/{tag}"
     remote_url = remote_url_no_token_with_tag.replace("https://", f"https://{auth_token}@")
     split_url = remote_url.split('/blob/')
     repo_url = split_url[0]
-    pyproject_toml_url = f"{repo_url}/blob/{tag}/pyproject.toml"    
-    
+    pyproject_toml_url = f"{repo_url}/blob/{tag}/pyproject.toml"        
     pyproject_content = tomli.loads(read_github_file_from_release(pyproject_toml_url, tag=tag))
 
     if "project" in pyproject_content and "name" in pyproject_content["project"]:
@@ -54,30 +52,38 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         typer.echo("pyproject.toml missing [project][name] field")
         raise typer.Exit()    
         
+    # pip install the package
     curr_dir = os.getcwd()
     os.chdir(install_package_root_folder)
     github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
     github_full_url_with_egg = github_full_url + "#egg=" + official_package_name
     typer.echo(f"pip installing package {package_name}...")
     github_full_url_with_egg = github_full_url_with_egg.replace("/blob/", "@")
-    result = subprocess.run(["pip", "install", "-e", github_full_url_with_egg] + args, check=True)
-    os.chdir(curr_dir) # Revert back to the original working directory
+    venv_path = get_venv_path_in_dir(install_package_root_folder)
+    if os.name == "nt": # Windows
+        pip_path = os.path.join(venv_path, "Scripts", "pip")
+    else:
+        pip_path = os.path.join(venv_path, "bin", "pip")
+    result = subprocess.run([pip_path, "install", github_full_url_with_egg] + args, check=True)    
  
     language = pyproject_content["tool"][CLI_NAME]["language"]
 
     if "dependencies" not in pyproject_content["tool"][CLI_NAME]:
             pyproject_content["tool"][CLI_NAME]["dependencies"] = []
           
+    # MATLAB & R dependencies should install to the venv folder too to keep everything in one place.
     for dep in pyproject_content["tool"][CLI_NAME]["dependencies"]:
         if language.lower() == "r":  
-            install_dep_r(dep)            
+            folder_path = install_dep_r(dep, venv_path)            
         elif language.lower() == "matlab":
-            install_dep_matlab(dep)
+            folder_path = install_dep_matlab(dep, venv_path)        
+
+    os.chdir(curr_dir) # Revert back to the original working directory
 
     typer.echo(f"Successfully installed package {package_name}")
 
 
-def install_dep_r(dep: str):
+def install_dep_r(dep: str, venv_path: str):
     # Run R's `install.packages()` command                
     if "cran.r-project.org" in dep:      
         print(f"Trying CRAN installation for {dep}...")
@@ -93,7 +99,8 @@ def install_dep_r(dep: str):
         command = ["Rscript", "-e", f"devtools::install_github('{dep}')"]
         subprocess.run(command, check=True)
 
-def install_dep_matlab(dep: str):
+
+def install_dep_matlab(dep: str, venv_path: str):
     """Download GitHub repo from the /archive/ endpoint, so that the .git folder is not downloaded.
     Also names the folder as {repository}-{tag} because the MATLAB repo likely does not contain a file documenting its version."""
     if "/blob/" not in dep:
@@ -101,10 +108,17 @@ def install_dep_matlab(dep: str):
         raise typer.Exit()
     
     # Parse the dependency for the owner, repo, and tag.
-    output_dir = os.environ["PIP_SRC"]
+    # output_dir = os.environ["PIP_SRC"]
     split_url = dep.split("/blob/")
     tag = split_url[1]
     split_repo_url = split_url[0].split("/")
     owner = split_repo_url[-2]
     repo = split_repo_url[-1]
-    download_github_release(owner, repo, tag, output_dir)
+    folder_path = download_github_release(owner, repo, tag)
+    folder_name = os.path.basename(folder_path) # Get the folder name
+    # Figure out where in the virtual environment the package should be moved to.
+    install_loc = get_install_loc_in_venv(venv_path)
+    # Move the folder into the venv
+    install_folder_path = os.path.join(install_loc, folder_name)
+    os.rename(folder_path, install_folder_path)
+    return install_folder_path

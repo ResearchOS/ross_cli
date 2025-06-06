@@ -42,6 +42,17 @@ def temp_dir():
     with tempfile.TemporaryDirectory() as temp_dir:
         yield temp_dir
 
+@pytest.fixture(scope="function")
+def temp_dir_with_venv():
+    """Temporary directory"""
+    # Folder only
+    curr_dir = os.getcwd()
+    with tempfile.TemporaryDirectory() as temp_dir:        
+        os.chdir(temp_dir)
+        subprocess.run(["python3", "-m", "venv", ".venv"])
+        os.chdir(curr_dir)
+        yield temp_dir
+
 
 @pytest.fixture(scope="function")
 def temp_dir_with_git_repo():

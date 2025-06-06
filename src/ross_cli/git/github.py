@@ -231,7 +231,7 @@ def create_empty_file_in_repo(repo_git_url: str, file_path: str, commit_message:
             print(f"Error output: {e.stderr}")
         raise typer.Exit()
 
-def download_github_release(owner: str, repository: str, tag: str = None, output_dir: str = None) -> None:
+def download_github_release(owner: str, repository: str, tag: str = None, output_dir: str = None) -> str:
     """
     Download a GitHub repository release using GitHub CLI.
     
@@ -283,10 +283,13 @@ def download_github_release(owner: str, repository: str, tag: str = None, output
         orig_folder_name = zip_ref.filelist[0].filename
 
     # Rename the folder
-    os.rename(os.path.join(output_dir, orig_folder_name), os.path.join(output_dir, f"{repository}-{tag}"))
+    installed_folder_path = os.path.join(output_dir, f"{repository}-{tag}")
+    os.rename(os.path.join(output_dir, orig_folder_name), installed_folder_path)
 
     # Remove the .zip file
     os.remove(zip_filename)              
+
+    return installed_folder_path
         
 
 def get_latest_release_tag(owner: str, repository: str) -> str:

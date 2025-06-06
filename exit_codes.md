@@ -6,3 +6,5 @@
 5: add-to-index: Tried to add package to index, but the index is not tapped. 
 6: release: Release version already exists in the package's repository.
 7: release: Incorrect dependency version specification. Does not follow the semantic versioning regex.
+8: install: More than one venv found in the install location.
+9: install: No venv found in the install location.
