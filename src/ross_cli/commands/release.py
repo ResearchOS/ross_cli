@@ -17,7 +17,7 @@ from ..utils.urls import is_valid_url, check_url_exists, convert_owner_repo_form
 from ..utils.rossproject import load_rossproject, convert_hyphen_in_name_to_underscore
 from ..utils.check_gh import check_local_and_remote_git_repo_exist
 
-def release(release_type: str = None, package_folder_path: str = os.getcwd(), message: str = None):
+def release(release_type: str = None, package_folder_path: str = os.getcwd(), message: str = None, _config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH):
     """Release a new version of the package on GitHub.""" 
     # Switch to the package folder    
     if not os.path.exists(package_folder_path):
@@ -41,7 +41,7 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd(), me
     rossproject_toml["version"] = version    
 
     # Get the new pyproject_toml data
-    pyproject_toml_new = build_pyproject_from_rossproject(rossproject_toml)
+    pyproject_toml_new = build_pyproject_from_rossproject(rossproject_toml, _config_file_path)
     if not os.path.exists(pyproject_toml_path):
         pyproject_toml_content_orig = {}
     else:
@@ -105,7 +105,7 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd(), me
     typer.echo(f"Successfully released to {release_url}")
 
 
-def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
+def build_pyproject_from_rossproject(rossproject_toml: dict, _config_file_path: str) -> dict:
     """Build the pyproject.toml file from the rossproject.toml file."""   
 
     if "name" not in rossproject_toml:
@@ -135,7 +135,7 @@ def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
     pyproject_toml["tool"][CLI_NAME]["language"] = rossproject_toml["language"].lower()
 
     # Define the dependencies based on the language
-    dependencies, tool_dependencies = parse_dependencies(rossproject_toml["dependencies"], rossproject_toml["language"])
+    dependencies, tool_dependencies = parse_dependencies(rossproject_toml["dependencies"], rossproject_toml["language"], _config_file_path)
     pyproject_toml["project"]["dependencies"] = dependencies
     pyproject_toml["tool"][CLI_NAME]["dependencies"] = tool_dependencies
 
@@ -161,7 +161,7 @@ def build_pyproject_from_rossproject(rossproject_toml: dict) -> dict:
     return pyproject_toml
 
 
-def parse_dependencies(dependencies: list, language: str) -> tuple[list, list]:
+def parse_dependencies(dependencies: list, language: str, _config_file_path: str) -> tuple[list, list]:
     """Parse the dependencies from the rossproject.toml file.
     Returns the project.dependencies list for ROSS packages (any language) & non-ROSS Python packages.
     Returns the tool.ROSS.dependencies list for non-ROSS MATLAB and R packages.
@@ -170,7 +170,7 @@ def parse_dependencies(dependencies: list, language: str) -> tuple[list, list]:
     tool_deps = []
     any_invalid = False # True if any of the dependencies are specified in an invalid manner/are not found.
     for dep in dependencies:
-        processed_dep, processed_tool_dep = parse_dependency(dep, language)
+        processed_dep, processed_tool_dep = parse_dependency(dep, language, _config_file_path)
         if processed_dep is None and processed_tool_dep is None:
             any_invalid = True
             continue
@@ -185,12 +185,12 @@ def parse_dependencies(dependencies: list, language: str) -> tuple[list, list]:
     return deps, tool_deps
 
 
-def parse_dependency(dep: str, language: str) -> tuple[list, list]:
+def parse_dependency(dep: str, language: str, _config_file_path: str) -> tuple[list, list]:
     """Parse a single dependency from the rossproject.toml file."""
     processed_dep = []
     processed_tool_dep = []
     # All languages: If package is in a ROSS index, put the .git URL in project.dependencies    
-    ross_pkg_info = search_indexes_for_package_info(dep)
+    ross_pkg_info = search_indexes_for_package_info(dep, _config_file_path)
     is_ross_pkg = False
     if ross_pkg_info is not None:
         is_ross_pkg = True

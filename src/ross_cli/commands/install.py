@@ -1,6 +1,8 @@
 import os
 from typing import List
 import re
+import errno
+import tempfile
 
 import subprocess
 import typer
@@ -97,7 +99,7 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
                 typer.echo("Wrong number of '@' in dependency.")
                 typer.Exit(code=11)
             version = dep[at_idx[1][0]+1:]
-            install(f"{dep_package_name}=={version}", install_package_root_folder=install_package_root_folder)
+            install(f"{dep_package_name}=={version}", install_package_root_folder=install_package_root_folder, _config_file_path=_config_file_path)
             continue
         if language.lower() == "r":  
             folder_path = install_dep_r(dep, venv_path)            
@@ -141,11 +143,17 @@ def install_dep_matlab(dep: str, venv_path: str):
     split_repo_url = split_url[0].split("/")
     owner = split_repo_url[-2]
     repo = split_repo_url[-1]
-    folder_path = download_github_release(owner, repo, tag)
-    folder_name = os.path.basename(folder_path) # Get the folder name
-    # Figure out where in the virtual environment the package should be moved to.
-    install_loc = get_install_loc_in_venv(venv_path)
-    # Move the folder into the venv
-    install_folder_path = os.path.join(install_loc, folder_name)
-    os.rename(folder_path, install_folder_path)
+    # Downloads to the root folder    
+    with tempfile.TemporaryDirectory() as temp_dir:
+        folder_path = download_github_release(owner, repo, tag, temp_dir)
+        folder_name = os.path.basename(folder_path) # Get the folder name
+        # Figure out where in the virtual environment the package should be moved to.
+        install_loc = get_install_loc_in_venv(venv_path)
+        # Move the folder into the venv
+        install_folder_path = os.path.join(install_loc, folder_name)
+        try:
+            os.rename(folder_path, install_folder_path)
+        except OSError as e:
+            if e.errno != errno.ENOTEMPTY:
+                raise
     return install_folder_path

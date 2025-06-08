@@ -12,7 +12,7 @@ INDEX_REPO_NAME = "index"
 # INDEX_REPO_OWNER = "rto-tihub"
 INDEX_TOML_REPO_URL = "https://github.com/{INDEX_REPO_OWNER}/{INDEX_REPO_NAME}/index.toml"
 
-PACKAGE_REPO_NAME = "test-repo"
+PACKAGE_REPO_NAME = "test_repo"
 
 ROSSPROJECT_TOML_CONTENT_TEST = """# ROSS project configuration file
 name = "{PACKAGE_REPO_NAME}"

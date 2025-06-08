@@ -9,6 +9,7 @@ import base64
 from datetime import datetime
 import tempfile
 import zipfile
+import errno
 
 import typer
 
@@ -263,18 +264,16 @@ def download_github_release(owner: str, repository: str, tag: str = None, output
         except subprocess.CalledProcessError:
             print(f"No release found, getting default branch for {owner}/{repository}...")
             tag = get_default_branch_name(repo_url)
-
-    # Make the output directory
-    os.makedirs(output_dir, exist_ok=True)
     
     # Use gh cli to download the release zipball
     print(f"Downloading {tag} from {owner}/{repository} to {output_dir}")       
     result = subprocess.run([
         "gh", "api",
         f"repos/{owner}/{repository}/zipball/{tag}"            
-    ], check = True, capture_output=True) 
-
+    ], check = True, capture_output=True)     
+    
     zip_filename = os.path.join(output_dir, f"{repository}.zip")
+
     with open(zip_filename, "wb") as f:
         f.write(result.stdout)
 
@@ -283,11 +282,12 @@ def download_github_release(owner: str, repository: str, tag: str = None, output
         orig_folder_name = zip_ref.filelist[0].filename
 
     # Rename the folder
-    installed_folder_path = os.path.join(output_dir, f"{repository}-{tag}")
-    os.rename(os.path.join(output_dir, orig_folder_name), installed_folder_path)
-
-    # Remove the .zip file
-    os.remove(zip_filename)              
+    try:
+        installed_folder_path = os.path.join(output_dir, f"{repository}-{tag}")
+        os.rename(os.path.join(output_dir, orig_folder_name), installed_folder_path)          
+    except OSError as e:
+        if e.errno != errno.ENOTEMPTY:
+            raise
 
     return installed_folder_path
         
