@@ -7,6 +7,7 @@ import typer
 import tomli
 import tomli_w
 
+import constants # To make the defaults fill in
 from .commands import index, init, tap, install, release
 from .utils.check_gh import check_gh
 
