@@ -39,7 +39,7 @@ def check_url_exists(url: str, ignore_file_path: bool = False) -> bool:
     if not is_valid_url(url):
         return None
     try:
-        # Make HTTP request to PyPI API
+        # Make HTTP request
         with urllib.request.urlopen(url) as response:
             if response.status == 200:
                 return True
@@ -56,27 +56,72 @@ def check_url_exists(url: str, ignore_file_path: bool = False) -> bool:
     
     if ignore_file_path:
         return exists
+    
+    # Return if not a GitHub URL, or if it is a GitHub URL and already found to exist.
+    if exists or "github.com" not in url:
+        return exists
+    
+    # Trying new method of determining if URL exists for GitHub only.
+    owner, repo, file_path = parse_github_url(url)
+    branch = get_branch_from_github_url(url)
+    blob_tree_version_regex = r'^(blob|tree)/[^/]+$'
 
-    if not exists and "github.com" in url:
-        try:
-            owner, repo, file_path = parse_github_url(url)
-            if file_path is None:
-                repos_str = f"repos/{owner}/{repo}"
+    try:
+        # Repo URL (no branches)
+        if file_path is None and branch is None:
+            result = subprocess.run(["gh", "api",
+                                     f"repos/{owner}/{repo}"], check=True, capture_output=True)
+        # Branch (not release) URL
+        elif file_path is None and branch is not None:
+            result = subprocess.run(["gh", "api",
+                            f"repos/{owner}/{repo}/branches/{branch}", 
+                            "--jq", ".name"
+                            ], check=True, capture_output=True) 
+        # Release URL
+        elif file_path.startswith("releases/tag/") or re.search(blob_tree_version_regex, file_path) is not None:
+            if file_path.startswith("releases/tag/"):
+                file_path = file_path.replace("releases/tag/", "")
+                branch = file_path
+                file_path = None
             else:
-                file_path = remove_blob_and_branch_from_url(file_path)
-                file_path = file_path.lstrip("/")
-                # Release tags are a special case vs. normal file paths
-                if "releases/" in file_path:
-                    tag = file_path.replace("releases/tag/", "")
-                    repos_str = f"repos/{owner}/{repo}/releases/tags/{tag}"                    
-                else:
-                    repos_str = f"repos/{owner}/{repo}/contents/{file_path}"
-            output = subprocess.run(["gh", "api", repos_str], check=True, capture_output=True)
-            exists = True
-        except subprocess.CalledProcessError as e:
-            pass
+                branch = file_path[5:]
+                file_path = None
+            result = subprocess.run(["gh", "api",
+                            f"repos/{owner}/{repo}/git/refs/tags/{branch}",
+                            "--jq", ".ref"
+                            ], check=True, capture_output=True)            
+        # File URL (in branch or release)
+        else:                
+            file_path = file_path.replace(f"blob/{branch}/", "")
+            file_path = file_path.replace(f"tree/{branch}/", "")
+            result = subprocess.run(["gh", "api",
+                            f"repos/{owner}/{repo}/contents/{file_path}?ref={branch}",
+                            "--jq", ".name"
+                            ], check=True, capture_output=True)                    
+        return result.returncode == 0
+    except subprocess.CalledProcessError as e:
+        return False
 
-    return exists
+    # if not exists and "github.com" in url:
+    #     try:
+    #         owner, repo, file_path = parse_github_url(url)
+    #         if file_path is None:
+    #             repos_str = f"repos/{owner}/{repo}"
+    #         else:
+    #             file_path = remove_blob_and_branch_from_url(file_path)
+    #             file_path = file_path.lstrip("/")
+    #             # Release tags are a special case vs. normal file paths
+    #             if "releases/" in file_path:
+    #                 tag = file_path.replace("releases/tag/", "")
+    #                 repos_str = f"repos/{owner}/{repo}/releases/tags/{tag}"                    
+    #             else:
+    #                 repos_str = f"repos/{owner}/{repo}/contents/{file_path}"
+    #         output = subprocess.run(["gh", "api", repos_str], check=True, capture_output=True)
+    #         exists = True
+    #     except subprocess.CalledProcessError as e:
+    #         pass
+
+    # return exists
     
 
 def remove_blob_and_branch_from_url(url: str) -> str:
@@ -116,3 +161,14 @@ def convert_owner_repo_format_to_url(owner_repo_string: str) -> bool:
     split_str = owner_repo_string.split("/")
     url = f"https://github.com/{split_str[0]}/{split_str[1]}"
     return url
+
+
+def get_branch_from_github_url(url: str) -> str:
+    """Return the branch name in the specified GitHub URL.
+    If no branch (repo only), return None."""
+    pattern = r'github\.com/[^/]+/[^/]+/(?:tree|blob)/([^/]+)'
+    match = re.search(pattern, url)
+
+    if match:
+        return match.group(1)
+    return None

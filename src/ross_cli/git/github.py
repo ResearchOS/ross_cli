@@ -326,3 +326,10 @@ def get_latest_release_tag(owner: str, repository: str) -> str:
     
     latest_release = sorted_releases[0]
     return latest_release['tag_name']
+
+
+def add_auth_token_to_github_url(url: str) -> str:
+    """Add an authorization token to a GitHub URL using the `gh` CLI."""
+    auth_token = subprocess.run(["gh", "auth", "token"], capture_output=True, check=True).stdout.decode().strip() 
+    remote_url = url.replace("https://", f"https://{auth_token}@")
+    return remote_url

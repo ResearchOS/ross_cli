@@ -232,9 +232,6 @@ def process_non_ross_dependency(dep: str, language: str) -> tuple[list, list]:
             else:
                 raise typer.Exit(code=7)
 
-        # if not check_url_exists(formatted_dep):
-        #     typer.echo(f"Invalid dependency specification, URL does not exist: {formatted_dep}")
-        #     return None, None
         if language == "r" or language == "matlab":
             processed_tool_dep = formatted_dep
         else:
@@ -281,13 +278,13 @@ def format_dep_with_version(dep_without_version: str, version: str) -> str:
     branch_url = f"{repo_url}/blob/{branch}"
     pyproject_url = f"{repo_url}/blob/{branch}/pyproject.toml"   
 
-    branch_url_exists = check_url_exists(branch_url, ignore_file_path=True)
+    branch_url_exists = check_url_exists(branch_url)
     if not branch_url_exists:
         typer.echo(f"Release {tag} not found in dependency GitHub repository: {dep_without_version}")        
         return None
     pyproject_toml_exists = check_url_exists(pyproject_url)
     if not pyproject_toml_exists and tag is not None:
-        typer.echo(f"No pyproject.toml found in branch {branch} of dependency GitHub repository: {dep_without_version}")
+        typer.echo(f"No pyproject.toml found in branch or release {branch} of dependency GitHub repository: {dep_without_version}")
         return f"{dep_without_version}/blob/{version}"
     elif not pyproject_toml_exists:
         return None

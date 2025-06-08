@@ -8,8 +8,9 @@ import tomli
 
 from ..constants import *
 from ..git.index import search_indexes_for_package_info
-from ..git.github import read_github_file_from_release, download_github_release, get_latest_release_tag, parse_github_url
+from ..git.github import read_github_file_from_release, download_github_release, get_latest_release_tag, parse_github_url, get_default_branch_name, add_auth_token_to_github_url
 from ..utils.venv import get_venv_path_in_dir, get_install_loc_in_venv
+from ..utils.urls import check_url_exists
 
 def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, install_package_root_folder: str = os.getcwd(), args: List[str] = []):
     f"""Install a package.
@@ -35,15 +36,19 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
         return None
     
     # Get the pyproject.toml file from the package's GitHub repository
-    auth_token = subprocess.run(["gh", "auth", "token"], capture_output=True, check=True).stdout.decode().strip()    
-    remote_url_no_token = pkg_info['url'].replace(".git", "")
-    owner, repo, _ = parse_github_url(remote_url_no_token)    
+    remote_url_no_token = pkg_info['url'].replace(".git", "")     
+    owner, repo, _ = parse_github_url(remote_url_no_token)
     tag = get_latest_release_tag(owner, repo)
+    if tag is None:
+        tag = get_default_branch_name(remote_url_no_token)
     remote_url_no_token_with_tag = f"{remote_url_no_token}/blob/{tag}"
-    remote_url = remote_url_no_token_with_tag.replace("https://", f"https://{auth_token}@")
-    split_url = remote_url.split('/blob/')
-    repo_url = split_url[0]
-    pyproject_toml_url = f"{repo_url}/blob/{tag}/pyproject.toml"        
+    remote_url_with_token = add_auth_token_to_github_url(remote_url_no_token_with_tag)           
+    repo_url = f"https://github.com/{owner}/{repo}"
+    pyproject_toml_url = f"{repo_url}/blob/{tag}/pyproject.toml"
+    if not check_url_exists(pyproject_toml_url):
+        typer.echo(f"Missing pyproject.toml file for {owner}/{repo}")
+        typer.echo(f"Run `ross release` for the package {package_name} to generate this file.")
+        raise typer.Exit(code=4)
     pyproject_content = tomli.loads(read_github_file_from_release(pyproject_toml_url, tag=tag))
 
     if "project" in pyproject_content and "name" in pyproject_content["project"]:
@@ -55,7 +60,7 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     # pip install the package
     curr_dir = os.getcwd()
     os.chdir(install_package_root_folder)
-    github_full_url = f"git+{remote_url}" # Add git+ to the front of the URL
+    github_full_url = f"git+{remote_url_with_token}" # Add git+ to the front of the URL
     github_full_url_with_egg = github_full_url + "#egg=" + official_package_name
     typer.echo(f"pip installing package {package_name}...")
     github_full_url_with_egg = github_full_url_with_egg.replace("/blob/", "@")

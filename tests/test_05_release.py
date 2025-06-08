@@ -139,3 +139,8 @@ def test_16_release_twice(temp_dir_ross_project_github_repo):
     with pytest.raises(typer.Exit) as e:
         release_command(release_type, temp_dir_ross_project_github_repo)
     assert e.value.exit_code == 6
+
+
+def test_17_release_package_with_ross_dependencies():
+    package_folder_path = "/Users/mitchelltillman/Desktop/Work/Shirley_Ryan_Postdoc/code/test-Stroke-R01" # Path to test-Stroke-R01
+    release_command(release_type="patch", package_folder_path=package_folder_path)

@@ -26,3 +26,25 @@ def test_03_install_no_venv(temp_dir):
     with pytest.raises(typer.Exit) as e:
         install_command(package_name, install_package_root_folder=temp_dir)
     assert e.value.exit_code == 9
+
+
+def test_04_install_ross_package_with_ross_deps(temp_dir_with_venv):
+    # Tests installing a ROSS package that has other ROSS packages as dependencies.
+    # e.g. segment-gaitcycles with a dependency on load-gaitrite
+    package_name = "test-Stroke-R01"
+    deps = [
+        "load_gaitrite",
+        "load_xsens",
+        "load_delsys",        
+    ]
+    dep_of_deps = [
+        "matlab-toml"
+    ]
+    install_command(package_name, install_package_root_folder=temp_dir_with_venv)
+    assert os.path.exists(os.path.join(temp_dir_with_venv, ".venv", "lib", "python3.13", "site-packages", package_name))
+    # Check that the dependencies were all installed.
+    for dep in deps:
+        assert os.path.exists(os.path.join(temp_dir_with_venv, ".venv", "lib", "python3.13", "site-packages", dep))
+    # Check that the dependencies' dependencies were installed.
+    for dep in dep_of_deps:
+        assert os.path.exists(os.path.join(temp_dir_with_venv, ".venv", "lib", "python3.13", "site-packages", dep))

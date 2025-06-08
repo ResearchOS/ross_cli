@@ -6,7 +6,5 @@ from pathlib import Path
 # sys.path.append(p)
 
 import pytest
-# pytest.main(["-v", f"{os.path.join(os.path.dirname(__file__),"test_02_init.py")}::test_07_init_with_git_and_github"])
-# pytest.main(["-v", f"{os.path.join(os.path.dirname(__file__),"test_06_install.py")}::test_02_install"])
-pytest.main(["-v", f"{os.path.join(os.path.dirname(__file__),"test_06_install.py")}::test_02_install"])
-# pytest.main(["-v", f"{os.path.join(os.path.dirname(__file__),"test_04_add_to_index.py")}::test_02_add_to_index_after_tap"])
+# pytest.main(["-v", f"{os.path.join(os.path.dirname(__file__),"test_06_install.py")}::test_04_install_ross_package_with_ross_deps"])
+pytest.main(["-v", f"{os.path.join(os.path.dirname(__file__),"test_05_release.py")}::test_17_release_package_with_ross_dependencies"])
