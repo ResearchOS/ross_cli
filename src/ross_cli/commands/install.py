@@ -1,6 +1,6 @@
 import os
 from typing import List
-import shutil
+import re
 
 import subprocess
 import typer
@@ -12,7 +12,7 @@ from ..git.github import read_github_file_from_release, download_github_release,
 from ..utils.venv import get_venv_path_in_dir, get_install_loc_in_venv
 from ..utils.urls import check_url_exists
 
-def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, install_package_root_folder: str = os.getcwd(), args: List[str] = []):
+def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, install_package_root_folder: str = os.getcwd(), _config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH, args: List[str] = []):
     f"""Install a package.
     1. Get the URL from the .toml file (default: {DEFAULT_ROSS_INDICES_FOLDER})
     2. Install the package using pip""" 
@@ -22,9 +22,14 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     # Create the install folder if it does not exist
     os.makedirs(full_install_folder_path, exist_ok=True)   
 
-    # os.environ["PIP_SRC"] = full_install_folder_path
+    # Get the release tag, if specified
+    tag = None
+    if "==" in package_name:
+        equals_idx = package_name.find("==")
+        tag = package_name[equals_idx+2:]
+        package_name = package_name[0:equals_idx]
 
-    pkg_info = search_indexes_for_package_info(package_name)
+    pkg_info = search_indexes_for_package_info(package_name, config_file_path=_config_file_path)
     # If a package is not in the ROSS index, then treat it exactly the same as if the user ran "pip install".
     if not pkg_info:
         typer.echo(f"Package {package_name} not found in ROSS index. Attempting to editable install using pip...")        
@@ -38,8 +43,11 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
     # Get the pyproject.toml file from the package's GitHub repository
     remote_url_no_token = pkg_info['url'].replace(".git", "")     
     owner, repo, _ = parse_github_url(remote_url_no_token)
-    tag = get_latest_release_tag(owner, repo)
     if tag is None:
+        # No tag specified
+        tag = get_latest_release_tag(owner, repo)
+    if tag is None:
+        # No releases in this repository
         tag = get_default_branch_name(remote_url_no_token)
     remote_url_no_token_with_tag = f"{remote_url_no_token}/blob/{tag}"
     remote_url_with_token = add_auth_token_to_github_url(remote_url_no_token_with_tag)           
@@ -77,7 +85,20 @@ def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER
             pyproject_content["tool"][CLI_NAME]["dependencies"] = []
           
     # MATLAB & R dependencies should install to the venv folder too to keep everything in one place.
+    ross_package_url_regex = r'^[a-zA-Z][a-zA-Z0-9_-]*\s@\sgit\+.*'
     for dep in pyproject_content["tool"][CLI_NAME]["dependencies"]:
+        if re.search(ross_package_url_regex, dep) is not None:
+            # Get the dependency package name
+            split_dep = dep.split(" ")
+            dep_package_name = split_dep[0]
+            # Get the dependency version
+            at_idx = [(i, c) for i, c in enumerate(dep) if c == "@"]
+            if len(at_idx) != 2:
+                typer.echo("Wrong number of '@' in dependency.")
+                typer.Exit(code=11)
+            version = dep[at_idx[1][0]+1:]
+            install(f"{dep_package_name}=={version}", install_package_root_folder=install_package_root_folder)
+            continue
         if language.lower() == "r":  
             folder_path = install_dep_r(dep, venv_path)            
         elif language.lower() == "matlab":
@@ -109,8 +130,9 @@ def install_dep_matlab(dep: str, venv_path: str):
     """Download GitHub repo from the /archive/ endpoint, so that the .git folder is not downloaded.
     Also names the folder as {repository}-{tag} because the MATLAB repo likely does not contain a file documenting its version."""
     if "/blob/" not in dep:
-        typer.echo(f"MATLAB dependency not specified as a release URL: {dep}")
-        raise typer.Exit()
+        typer.echo(r"Dependency located on GitHub declared in pyproject.toml must be of the format: https://github.com/{owner}/{repo}/blob/{tag}")
+        typer.echo(f"Dependency incorrectly specified as: {dep}")
+        raise typer.Exit(code=12)
     
     # Parse the dependency for the owner, repo, and tag.
     # output_dir = os.environ["PIP_SRC"]

@@ -3,11 +3,21 @@ import tempfile
 import subprocess
 
 import pytest
+import tomli
+import tomli_w
+
+from src.ross_cli.cli import init_command
+
+INDEX_REPO_NAME = "index"
+# INDEX_REPO_OWNER = "rto-tihub"
+INDEX_TOML_REPO_URL = "https://github.com/{INDEX_REPO_OWNER}/{INDEX_REPO_NAME}/index.toml"
+
+PACKAGE_REPO_NAME = "test-repo"
 
 ROSSPROJECT_TOML_CONTENT_TEST = """# ROSS project configuration file
-name = "test_package"
+name = "{PACKAGE_REPO_NAME}"
 version = "0.1.0"
-repository_url = "https://github.com/test-owner/test-package"
+repository_url = "https://github.com/{PACKAGE_REPO_OWNER}/{PACKAGE_REPO_NAME}"
 language = "python"
 authors = [
 
@@ -18,13 +28,40 @@ dependencies = [
 readme = "README.md"
 """
 
-INDEX_REPO_NAME = "test-index"
-INDEX_REPO_OWNER = "mtillman14"
-INDEX_REPO_URL = f"https://github.com/{INDEX_REPO_OWNER}/{INDEX_REPO_NAME}/.git"
-INDEX_TOML_REPO_URL = f"https://github.com/{INDEX_REPO_OWNER}/{INDEX_REPO_NAME}/index.toml"
+def get_owner_from_github_username():
+    result = subprocess.run("gh api user --jq .login", shell=True, capture_output=True, check=True)
+    OWNER = result.stdout.decode().strip()
+    return OWNER
 
-PACKAGE_REPO_NAME = "test-repo"
-PACKAGE_REPO_OWNER = "mtillman14"
+
+def create_github_repo(temp_dir: str, index: bool = False):
+    os.chdir(temp_dir)
+    REPO_OWNER = get_owner_from_github_username()
+    # Initialize git and configure basic settings
+    subprocess.run(["git", "init"], check=True)
+    subprocess.run(["git", "config", "init.defaultBranch", "main"], check=True)
+    
+    # Create and configure GitHub repository
+    if index:
+        repo_name = INDEX_REPO_NAME
+    else:
+        repo_name = PACKAGE_REPO_NAME
+    try:
+        subprocess.run(["gh", "repo", "create", repo_name, "--private"], check=True)
+    except subprocess.CalledProcessError as e:
+        pass # Repo already exists because test was aborted.
+    subprocess.run(["git", "remote", "add", "origin", 
+                    f"https://github.com/{REPO_OWNER}/{repo_name}.git"], 
+                    check=True)        
+    subprocess.run("git branch --set-upstream-to=origin/main main", shell=True)
+    
+    # Create initial commit and push
+    subprocess.run(["git", "pull"])
+    subprocess.run(["git", "add", "."])
+    subprocess.run(["git", "commit", "--allow-empty", "-m", "Initial commit"], check=True)
+    subprocess.run(["git", "push"], check=True)
+
+######################## FIXTURES ########################
 
 @pytest.fixture(scope="function")
 def temp_config_path():
@@ -42,15 +79,14 @@ def temp_dir():
     with tempfile.TemporaryDirectory() as temp_dir:
         yield temp_dir
 
+
 @pytest.fixture(scope="function")
 def temp_dir_with_venv():
     """Temporary directory"""
     # Folder only
-    curr_dir = os.getcwd()
     with tempfile.TemporaryDirectory() as temp_dir:        
         os.chdir(temp_dir)
         subprocess.run(["python3", "-m", "venv", ".venv"])
-        os.chdir(curr_dir)
         yield temp_dir
 
 
@@ -72,23 +108,8 @@ def temp_dir_with_github_repo():
     original_dir = os.getcwd()  # Store original directory
     
     try:
-        os.chdir(temp_dir)
-        # Initialize git and configure basic settings
-        subprocess.run(["git", "init"], check=True)
-        subprocess.run(["git", "config", "init.defaultBranch", "main"], check=True)
-        
-        # Create and configure GitHub repository
-        subprocess.run(["gh", "repo", "create", PACKAGE_REPO_NAME, "--private"], check=True)
-        subprocess.run(["git", "remote", "add", "origin", 
-                      f"https://github.com/{PACKAGE_REPO_OWNER}/{PACKAGE_REPO_NAME}.git"], 
-                      check=True)        
-        
-        # Create initial commit and push
-        subprocess.run(["git", "commit", "--allow-empty", "-m", "Initial commit"], check=True)
-        subprocess.run(["git", "push"], check=True)
-        
+        create_github_repo(temp_dir)
         yield temp_dir
-        
     finally:
         os.chdir(original_dir)  # Always return to original directory
         try:
@@ -113,7 +134,7 @@ def temp_dir_ross_project():
         with open(os.path.join(src_folder, "__init__.py"), 'w') as f:
             f.write("")
         with open(os.path.join(temp_dir, "rossproject.toml"), 'w') as f:
-            f.write(ROSSPROJECT_TOML_CONTENT_TEST)
+            f.write(ROSSPROJECT_TOML_CONTENT_TEST.format(PACKAGE_REPO_OWNER=get_owner_from_github_username(), PACKAGE_REPO_NAME=PACKAGE_REPO_NAME))
         yield temp_dir
 
 
@@ -126,16 +147,7 @@ def temp_dir_ross_project_github_repo():
     # Initialized ross project.
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
-            os.chdir(temp_dir)
-            # Initialize a git repository in the temporary directory
-            subprocess.run(["git", "init", temp_dir])
-            subprocess.run(["git", "config", "init.defaultBranch", "main"], check=True)
-            
-            # Create and configure GitHub repository
-            subprocess.run(["gh", "repo", "create", PACKAGE_REPO_NAME, "--private"], check=True)
-            subprocess.run(["git", "remote", "add", "origin", 
-                        f"https://github.com/{PACKAGE_REPO_OWNER}/{PACKAGE_REPO_NAME}.git"], 
-                        check=True)
+            create_github_repo(temp_dir)
                         
             # Create a sample ross project structure
             src_folder = os.path.join(temp_dir, "src")
@@ -151,9 +163,10 @@ def temp_dir_ross_project_github_repo():
             with open(os.path.join(project_src_folder, "__init__.py"), 'w') as f:
                 f.write("# test_package")
             with open(os.path.join(temp_dir, "rossproject.toml"), 'w') as f:
-                f.write(ROSSPROJECT_TOML_CONTENT_TEST)
+                f.write(ROSSPROJECT_TOML_CONTENT_TEST.format(PACKAGE_REPO_OWNER=get_owner_from_github_username(), PACKAGE_REPO_NAME=PACKAGE_REPO_NAME))
 
             # Create initial commit and push
+            subprocess.run(["git", "pull"])
             subprocess.run(["git", "add", "."], check=True)
             subprocess.run(["git", "commit", "-m", "Initial commit"], check=True)
             subprocess.run(["git", "push"], check=True)
@@ -162,22 +175,53 @@ def temp_dir_ross_project_github_repo():
         finally:
             os.chdir(original_dir)  # Always return to original directory
             try:
-                # print("Deleting the GitHub repository...")
                 subprocess.run(["gh", "repo", "delete", PACKAGE_REPO_NAME, "--yes"], check=True)
             finally:
                 pass
 
+
 @pytest.fixture(scope="function")
 def temp_index_github_repo_url_only():
     """URL for the index GitHub repository, but no actual repository"""
-    yield INDEX_TOML_REPO_URL
+    INDEX_REPO_OWNER = get_owner_from_github_username()
+    index_toml_repo_url = INDEX_TOML_REPO_URL.format(INDEX_REPO_OWNER=INDEX_REPO_OWNER, INDEX_REPO_NAME=INDEX_REPO_NAME)
+    yield index_toml_repo_url
+
 
 @pytest.fixture(scope="function")
 def temp_index_github_repo():
     """URL for the index GitHub repository, and create the actual repository"""
     try:
-        subprocess.run(["gh", "repo", "create", "test-index", "--private"], check=True)
+        subprocess.run(["gh", "repo", "create", INDEX_REPO_NAME, "--private"], check=True)
     except:
         pass
-    yield INDEX_TOML_REPO_URL
-    subprocess.run(["gh", "repo", "delete", "test-index", "--yes"], check=True)
+    INDEX_REPO_OWNER = get_owner_from_github_username()
+    index_toml_repo_url = INDEX_TOML_REPO_URL.format(INDEX_REPO_OWNER=INDEX_REPO_OWNER, INDEX_REPO_NAME=INDEX_REPO_NAME)
+    yield index_toml_repo_url
+    subprocess.run(["gh", "repo", "delete", INDEX_REPO_NAME, "--yes"], check=True)
+    
+
+@pytest.fixture(scope="function")
+def temp_package_with_ross_dependencies_dir(temp_dir_ross_project_github_repo):    
+
+    # 1. Write ross dependencies to rossproject.toml
+    init_command(PACKAGE_REPO_NAME, package_path=temp_dir_ross_project_github_repo)
+    rossproject_path = os.path.join(temp_dir_ross_project_github_repo, "rossproject.toml")
+    with open(rossproject_path, 'rb') as f:
+        rossproject = tomli.load(f)
+    rossproject["dependencies"] = [
+        "load_gaitrite",
+        "load_xsens",
+        "load_delsys"
+    ]
+    rossproject["language"] = "matlab"
+    with open(rossproject_path, 'wb') as f:
+        tomli_w.dump(rossproject, f)
+
+    # 2. Create git repo and github repository    
+    subprocess.run(["git", "pull"])
+    subprocess.run("python3 -m venv .venv", shell=True) # Add the .venv
+    subprocess.run("git add .", shell=True)
+    subprocess.run("git commit -m 'Added ROSS dependencies'", shell=True)
+    subprocess.run(f"git push -u origin main", shell=True)
+    yield temp_dir_ross_project_github_repo

@@ -19,7 +19,7 @@ def test_02_add_to_index_after_tap(temp_index_github_repo, temp_dir_ross_project
     tap.tap_github_repo_for_ross_index(temp_index_github_repo, _config_file_path = temp_config_path)
 
     # Add the project to the index
-    index.add_to_index(temp_index_github_repo, temp_dir_ross_project_github_repo, _config_file_path = temp_config_path)
+    index.add_to_index(temp_index_github_repo, temp_dir_ross_project_github_repo, _config_file_path = temp_config_path)    
 
 
 def test_03_add_to_index_twice(temp_index_github_repo, temp_dir_ross_project_github_repo, temp_config_path):

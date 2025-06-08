@@ -1,7 +1,11 @@
+import os
+import subprocess
+
 import pytest
 
 from src.ross_cli.cli import *
 from src.ross_cli.commands.release import process_non_ross_dependency
+
 
 def test_01_release(temp_dir_ross_project_github_repo):
     release_type = "patch"
@@ -141,6 +145,7 @@ def test_16_release_twice(temp_dir_ross_project_github_repo):
     assert e.value.exit_code == 6
 
 
-def test_17_release_package_with_ross_dependencies():
-    package_folder_path = "/Users/mitchelltillman/Desktop/Work/Shirley_Ryan_Postdoc/code/test-Stroke-R01" # Path to test-Stroke-R01
-    release_command(release_type="patch", package_folder_path=package_folder_path)
+def test_17_release_package_with_ross_dependencies(temp_package_with_ross_dependencies_dir): 
+
+    # 4. Run the release command
+    release_command(release_type="patch", package_folder_path=temp_package_with_ross_dependencies_dir)

@@ -213,10 +213,4 @@ def check_local_and_remote_git_repo_exist(folder_path: str) -> bool:
         typer.echo(f"Missing remote GitHub repository for the local git repository at: {folder_path}")
         raise typer.Exit()
     
-    # Check for the rossproject.toml file
-    rossproject_toml_path = os.path.join(folder_path, "rossproject.toml")
-    if not os.path.exists(rossproject_toml_path):
-        typer.echo(f"Folder {folder_path} is missing a rossproject.toml file")
-        raise typer.Exit()  
-    
     return True

@@ -9,7 +9,7 @@ def load_rossproject(rossproject_toml_path: str) -> dict:
     # Check if the file exists
     if not os.path.exists(rossproject_toml_path):
         typer.echo(f"File does not exist: {rossproject_toml_path}")
-        raise typer.Exit()
+        raise typer.Exit(code=10)
     
     # Load the file.
     with open(rossproject_toml_path, 'rb') as f:

@@ -8,3 +8,6 @@
 7: release: Incorrect dependency version specification. Does not follow the semantic versioning regex.
 8: install: More than one venv found in the install location.
 9: install: No venv found in the install location.
+10: No rossproject.toml found in the repository.
+11: install: Dependency improperly specified. Wrong number of '@'.
+12: install: Incorrect dependency URL specification. Must use the "/blob/" URL endpoint.
