@@ -191,15 +191,19 @@ def parse_dependency(dep: str, language: str, _config_file_path: str) -> tuple[l
     processed_tool_dep = []
     # All languages: If package is in a ROSS index, put the .git URL in project.dependencies  
     dep_no_ver = dep # Initialization 
+    version = None
     if "==" in dep:
         dep_no_ver = dep.replace(" ", "") # Remove whitespace
         equals_idx = dep_no_ver.find("==")
         dep_no_ver = dep_no_ver[0:equals_idx]
+        version = dep[equals_idx+2:]
         
     # Search by package name or URL
+    pkg_name = ""
     ross_pkg_info = search_indexes_for_package_info(dep_no_ver, _config_file_path)
     is_ross_pkg = False
     if ross_pkg_info is not None:
+        pkg_name = ross_pkg_info["name"]
         is_ross_pkg = True
 
     # ROSS package specified (name or URL). Put the ROSS package's URL into the project.dependencies table.
@@ -207,8 +211,27 @@ def parse_dependency(dep: str, language: str, _config_file_path: str) -> tuple[l
         dep = ross_pkg_info["url"].replace(".git", "")        
 
     # Non-ROSS package specified (name, owner/repo, or URL).
-    processed_dep, processed_tool_dep = process_non_ross_dependency(dep, language)
+    if is_ross_pkg and version is not None:        
+        dep = f"{dep}@{version}" 
+
+    if is_valid_url(dep):
+        github_url = dep.replace("@", "/blob/")
+        if not check_url_exists(github_url):
+            if version is not None:
+                typer.echo(f"Specified release tag does not exist: {version} for repository: {dep}")
+                raise typer.Exit(code=13)
+            else:
+                typer.echo(f"Non-existent URL provided for a dependency: {github_url}")
+                raise typer.Exit()
+    
+    processed_dep = []
+    processed_tool_dep = f"{pkg_name} @ git+{dep}" # Initialize
+
+    if version is None or not is_ross_pkg:
+        processed_dep, processed_tool_dep = process_non_ross_dependency(dep, language)
+
     return processed_dep, processed_tool_dep
+
 
 def process_non_ross_dependency(dep: str, language: str) -> tuple[list, list]:
     """Process a non-ROSS dependency from the simpler form in the rossproject.toml file to the more complex form in the pyproject.toml file."""
