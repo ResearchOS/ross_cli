@@ -7,7 +7,7 @@ import typer
 import tomli
 import tomli_w
 
-import constants # To make the defaults fill in
+from .constants import * # Do this first to instantiate the default constants
 from .commands import index, init, tap, install, release
 from .utils.check_gh import check_gh
 
@@ -15,8 +15,6 @@ app = typer.Typer()
 
 index_app = typer.Typer() # Create a new app for the index command
 app.add_typer(index_app, name="index") # Add the index app to the main app
-
-from .constants import *
 
 @app.command(name="init")
 def init_command(name: str = None, package_path: str = os.getcwd()):
@@ -75,7 +73,7 @@ def install_command(package_name: str, install_relative_folder_path: str = DEFAU
     """Install a package.
     1. Get the URL from the .toml file
     2. Install the package using pip""" 
-    install.install(package_name, install_relative_folder_path, install_package_root_folder, args)
+    install.install(package_name, install_relative_folder_path, install_package_root_folder, args=args)
 
 
 @app.command(name="release")

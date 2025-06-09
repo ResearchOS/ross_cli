@@ -14,7 +14,7 @@ def get_indexes_info_from_config(config_file_path: str = DEFAULT_ROSS_CONFIG_FIL
         
     toml_content = load_config(config_file_path)  
     if "index" not in toml_content:
-        return None
+        return {}
     else:
         return toml_content["index"]
 

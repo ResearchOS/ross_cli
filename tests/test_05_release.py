@@ -135,17 +135,19 @@ def test_15_process_non_ross_dependency_github_url_matlab_with_github_release_ok
     assert processed_tool_dep.startswith("https://github.com/g-s-k/matlab-toml/blob/")
 
 
-def test_16_release_twice(temp_dir_ross_project_github_repo):
+def test_16_release_twice(temp_dir_ross_project_github_repo, temp_config_path):
     release_type = None
     # First release
-    release_command(release_type, temp_dir_ross_project_github_repo)
+    release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)   
     # Second release
     with pytest.raises(typer.Exit) as e:
-        release_command(release_type, temp_dir_ross_project_github_repo)
+        release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)   
     assert e.value.exit_code == 6
 
 
-def test_17_release_package_with_ross_dependencies(temp_package_with_ross_dependencies_dir): 
+def test_17_release_package_with_ross_dependencies(temp_package_with_ross_dependencies_dir, temp_config_path): 
+    release.release(release_type="patch", package_folder_path=temp_package_with_ross_dependencies_dir, _config_file_path=temp_config_path)    
 
-    # 4. Run the release command
-    release_command(release_type="patch", package_folder_path=temp_package_with_ross_dependencies_dir)
+
+def test_18_release_with_dep_version_specified(temp_package_with_ross_dependencies_and_versions_dir, temp_config_path):    
+    release.release(release_type="patch", package_folder_path=temp_package_with_ross_dependencies_and_versions_dir, _config_file_path=temp_config_path)   

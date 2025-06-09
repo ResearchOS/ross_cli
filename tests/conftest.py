@@ -104,14 +104,12 @@ def temp_dir_with_git_repo():
 def temp_dir_with_github_repo():
     """Temporary directory with github repository"""
     # Folder and git repository
-    temp_dir = tempfile.mkdtemp()  # Create temporary directory
-    original_dir = os.getcwd()  # Store original directory
+    temp_dir = tempfile.mkdtemp()  # Create temporary directory    
     
     try:
         create_github_repo(temp_dir)
         yield temp_dir
-    finally:
-        os.chdir(original_dir)  # Always return to original directory
+    finally:        
         try:
             subprocess.run(["gh", "repo", "delete", PACKAGE_REPO_NAME, "--yes"], check=True)
         finally:
@@ -142,8 +140,7 @@ def temp_dir_ross_project():
 def temp_dir_ross_project_github_repo():
     """Temporary directory with git repository and ross project structure, including a GitHub repo"""
     # Folder and git repository
-    temp_dir = tempfile.mkdtemp()  # Create temporary directory
-    original_dir = os.getcwd()  # Store original directory
+    temp_dir = tempfile.mkdtemp()  # Create temporary directory    
     # Initialized ross project.
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
@@ -172,8 +169,7 @@ def temp_dir_ross_project_github_repo():
             subprocess.run(["git", "push"], check=True)
             yield temp_dir
 
-        finally:
-            os.chdir(original_dir)  # Always return to original directory
+        finally:            
             try:
                 subprocess.run(["gh", "repo", "delete", PACKAGE_REPO_NAME, "--yes"], check=True)
             finally:
@@ -213,6 +209,32 @@ def temp_package_with_ross_dependencies_dir(temp_dir_ross_project_github_repo):
         "load_gaitrite",
         "load_xsens",
         "load_delsys"
+    ]
+    rossproject["language"] = "matlab"
+    with open(rossproject_path, 'wb') as f:
+        tomli_w.dump(rossproject, f)
+
+    # 2. Create git repo and github repository    
+    subprocess.run(["git", "pull"])
+    subprocess.run("python3 -m venv .venv", shell=True) # Add the .venv
+    subprocess.run("git add .", shell=True)
+    subprocess.run("git commit -m 'Added ROSS dependencies'", shell=True)
+    subprocess.run(f"git push -u origin main", shell=True)
+    yield temp_dir_ross_project_github_repo
+
+
+@pytest.fixture(scope="function")
+def temp_package_with_ross_dependencies_and_versions_dir(temp_dir_ross_project_github_repo):    
+
+    # 1. Write ross dependencies to rossproject.toml
+    init_command(PACKAGE_REPO_NAME, package_path=temp_dir_ross_project_github_repo)
+    rossproject_path = os.path.join(temp_dir_ross_project_github_repo, "rossproject.toml")
+    with open(rossproject_path, 'rb') as f:
+        rossproject = tomli.load(f)
+    rossproject["dependencies"] = [
+        "load_gaitrite==0.1.3",
+        "load_xsens==0.1.1",
+        "load_delsys==0.1.1"
     ]
     rossproject["language"] = "matlab"
     with open(rossproject_path, 'wb') as f:

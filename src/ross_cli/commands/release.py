@@ -189,8 +189,14 @@ def parse_dependency(dep: str, language: str, _config_file_path: str) -> tuple[l
     """Parse a single dependency from the rossproject.toml file."""
     processed_dep = []
     processed_tool_dep = []
-    # All languages: If package is in a ROSS index, put the .git URL in project.dependencies    
-    ross_pkg_info = search_indexes_for_package_info(dep, _config_file_path)
+    # All languages: If package is in a ROSS index, put the .git URL in project.dependencies   
+    if "==" in dep:
+        dep_no_ver = dep.replace(" ", "") # Remove whitespace
+        equals_idx = dep_no_ver.find("==")
+        dep_no_ver = dep_no_ver[0:equals_idx]
+        
+    # Search by package name or URL
+    ross_pkg_info = search_indexes_for_package_info(dep_no_ver, _config_file_path)
     is_ross_pkg = False
     if ross_pkg_info is not None:
         is_ross_pkg = True
