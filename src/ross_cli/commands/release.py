@@ -65,16 +65,16 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd(), me
     curr_dir = os.getcwd()
     os.chdir(package_folder_path)    
     try:        
-        subprocess.run(["git", "add", pyproject_toml_path], check = True)
+        subprocess.run(["git", "add", pyproject_toml_path], check = True, capture_output=True)
     except:
         pass
     try:
-        subprocess.run(["git", "add", rossproject_toml_path], check=True)
+        subprocess.run(["git", "add", rossproject_toml_path], check=True, capture_output=True)
     except:
         pass
-    subprocess.run(["git", "commit", "-m", f"Update version to {rossproject_toml['version']}"])
+    subprocess.run(["git", "commit", "-m", f"Update version to {rossproject_toml['version']}"], capture_output=True)
     try:
-        subprocess.run(["git", "push"], check=True)
+        subprocess.run(["git", "push"], check=True, capture_output=True)
     except:
         typer.echo("Failed to `git push`, likely because you do not have permission to push to this repository.")
         typer.echo("Try opening a pull request instead, or contact the repository's maintainer(s) to change your permissions.")
