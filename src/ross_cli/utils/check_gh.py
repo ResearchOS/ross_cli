@@ -36,6 +36,8 @@ def check_gh() -> bool:
         install_gh_cli_windows()
     elif system == "Darwin":  # macOS
         install_gh_cli_mac()
+    elif system == "Linux": # Linux
+        install_gh_cli_linux()
     else:
         print(f"Unsupported operating system: {system}")
         print("This script only supports Windows and macOS.")
@@ -198,6 +200,19 @@ def install_gh_cli_mac() -> None:
     finally:
         # Clean up temporary directory
         shutil.rmtree(temp_dir)
+
+
+def install_gh_cli_linux() -> None:
+    """Install the gh cli for Linux distros."""
+    linux_install_path_sh = os.path.join(os.path.dirname(__file__), "linux_install.sh")
+    os.chmod(linux_install_path_sh, 0o755) # Make script executable
+    try:
+        result = subprocess.run([linux_install_path_sh],
+                                capture_output=True,
+                                text=True,
+                                check=True)
+    except subprocess.CalledProcessError as e:
+        typer.echo("Failed to install gh cli automatically. Please manually install it following the instructions: https://github.com/cli/cli#installation")        
 
 
 def check_local_and_remote_git_repo_exist(folder_path: str) -> bool:
