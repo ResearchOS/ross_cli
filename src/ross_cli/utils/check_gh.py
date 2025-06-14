@@ -40,7 +40,7 @@ def check_gh() -> bool:
         install_gh_cli_linux()
     else:
         print(f"Unsupported operating system: {system}")
-        print("This script only supports Windows and macOS.")
+        print("This script only supports Windows macOS, and Linux.")
         sys.exit(1)
 
     print("After installing the gh cli, you will need to completely close and reopen the Terminal/VSCode (if using integrated terminal).")
