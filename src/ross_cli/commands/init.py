@@ -55,7 +55,6 @@ def init_ross_project(package_name: str, package_folder_path: str = os.getcwd())
 
     # Initialize the content of the .gitignore, one per line
     gitignore_content = f""".DS_Store
-src/site-packages/*
 .venv/    
     """
     with open(os.path.join(package_folder_path, INIT_PATHS[".gitignore"]), 'w') as f:

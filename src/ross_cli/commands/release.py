@@ -122,6 +122,8 @@ def build_pyproject_from_rossproject(rossproject_toml: dict, _config_file_path: 
     pyproject_toml["project"]["version"] = rossproject_toml["version"] if "version" in rossproject_toml else None     
     pyproject_toml["project"]["authors"] = rossproject_toml["authors"] if "authors" in rossproject_toml else None
     pyproject_toml["project"]["readme"] = rossproject_toml["readme"] if "readme" in rossproject_toml else None      
+    pyproject_toml["project"]["urls"] = {}
+    pyproject_toml["project"]["urls"]["Repository"] = get_remote_url_from_git_repo(".").replace(".git", "")
 
     # Validate language    
     if rossproject_toml["language"].lower() not in SUPPORTED_LANGUAGES:

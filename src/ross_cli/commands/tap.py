@@ -6,7 +6,7 @@ import typer
 from ..constants import *
 from ..utils.config import load_config, validate_index_entries
 from ..git.github import get_default_branch_name, create_empty_file_in_repo, parse_github_url
-from ..utils.urls import check_url_exists
+from ..utils.urls import check_url_exists, is_owner_repo_format, convert_owner_repo_format_to_url
 
 def tap_github_repo_for_ross_index(index_remote_url: str, index_relative_path = "index.toml",
                                    _config_file_path = DEFAULT_ROSS_CONFIG_FILE_PATH):
@@ -23,6 +23,9 @@ def tap_github_repo_for_ross_index(index_remote_url: str, index_relative_path = 
 
     validate_index_entries(ross_config["index"])
 
+    if is_owner_repo_format(index_remote_url):
+        index_remote_url = convert_owner_repo_format_to_url(index_remote_url)
+    
     owner, repo, _ = parse_github_url(index_remote_url)
     index_remote_url = f"https://github.com/{owner}/{repo}.git"
 

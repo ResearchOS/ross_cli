@@ -39,7 +39,7 @@ def create_github_repo(temp_dir: str, index: bool = False):
     REPO_OWNER = get_owner_from_github_username()
     # Initialize git and configure basic settings
     subprocess.run(["git", "init"], check=True)
-    subprocess.run(["git", "config", "init.defaultBranch", "main"], check=True)
+    # subprocess.run(["git", "config", "init.defaultBranch", "main"], check=True)
     
     # Create and configure GitHub repository
     if index:
@@ -112,6 +112,8 @@ def temp_dir_with_github_repo():
     finally:        
         try:
             subprocess.run(["gh", "repo", "delete", PACKAGE_REPO_NAME, "--yes"], check=True)
+        except subprocess.CalledProcessError:
+            pass
         finally:
             pass
 

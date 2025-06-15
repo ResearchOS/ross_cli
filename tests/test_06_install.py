@@ -4,6 +4,24 @@ from src.ross_cli.cli import *
 from src.ross_cli.commands.index import add_to_index
 from .conftest import PACKAGE_REPO_NAME
 
+PATHS = [
+        "/Users/mitchelltillman/Desktop/Work/Shirley_Ryan_Postdoc/code/load-delsys",
+        "/Users/mitchelltillman/Desktop/Work/Shirley_Ryan_Postdoc/code/load-xsens",
+        "/Users/mitchelltillman/Desktop/Work/Shirley_Ryan_Postdoc/code/load-gaitrite"
+    ]
+
+def tap_index_and_add_to_index(temp_index_github_repo, temp_config_path, temp_package_with_ross_dependencies_dir):
+    try:
+        tap.tap_github_repo_for_ross_index(temp_index_github_repo, _config_file_path=temp_config_path)        
+    except typer.Exit as e:
+        pass    
+    # Add the package being installed to the index
+    try:
+        add_to_index(temp_index_github_repo, package_folder_path=temp_package_with_ross_dependencies_dir, _config_file_path=temp_config_path)        
+    except typer.Exit as e:
+        pass
+
+
 def test_01_install(temp_dir, temp_index_github_repo, temp_config_path):
 
     # Fails to add this project to the index because the index repository is not tapped.
@@ -22,9 +40,10 @@ def test_02_install(temp_dir_with_venv, temp_config_path):
     assert os.path.exists(os.path.join(temp_dir_with_venv, ".venv", "lib", "python3.13", "site-packages", package_name))
 
 
-def test_03_install_no_venv(temp_dir, temp_config_path):
+def test_03_install_no_venv(temp_dir, temp_config_path, temp_index_github_repo, temp_package_with_ross_dependencies_dir):
     # Fails because there's no venv in this folder
-    package_name = "load_gaitrite"
+    package_name = "test_repo" # Comes from temp_package_with_ross_dependencies_dir
+    tap_index_and_add_to_index(temp_index_github_repo, temp_config_path, temp_package_with_ross_dependencies_dir)
     with pytest.raises(typer.Exit) as e:
         install.install(package_name, install_package_root_folder=temp_dir, _config_file_path = temp_config_path)
     assert e.value.exit_code == 9
@@ -35,26 +54,14 @@ def test_04_install_ross_package_with_ross_deps(temp_package_with_ross_dependenc
     # e.g. segment-gaitcycles with a dependency on load-gaitrite    
 
     # Set up by adding the test package to the index.
-    try:
-        tap.tap_github_repo_for_ross_index(temp_index_github_repo, _config_file_path=temp_config_path)        
-    except typer.Exit as e:
-        pass
-    paths = [
-        "/Users/mitchelltillman/Desktop/Work/Shirley_Ryan_Postdoc/code/load-delsys",
-        "/Users/mitchelltillman/Desktop/Work/Shirley_Ryan_Postdoc/code/load-xsens",
-        "/Users/mitchelltillman/Desktop/Work/Shirley_Ryan_Postdoc/code/load-gaitrite"
-    ]
-    # Add the package being installed to the index
-    try:
-        add_to_index(temp_index_github_repo, package_folder_path=temp_package_with_ross_dependencies_dir, _config_file_path=temp_config_path)        
-    except typer.Exit as e:
-        pass
+    tap_index_and_add_to_index(temp_index_github_repo, temp_config_path, temp_package_with_ross_dependencies_dir)
     # Add the package's dependencies to the index
-    for path in paths:
+    for path in PATHS:
         try:            
             add_to_index(temp_index_github_repo, package_folder_path=path, _config_file_path=temp_config_path)                
         except typer.Exit as e:
             pass
+
     deps = [
         "load_gaitrite",
         "load_xsens",
@@ -96,16 +103,7 @@ def test_05_install_ross_package_missing_rossproject_file(temp_package_with_ross
     # Fails because the package being installed is missing a pyproject.toml file.
 
     # Set up by adding the test package to the index.
-    try:
-        tap.tap_github_repo_for_ross_index(temp_index_github_repo, _config_file_path=temp_config_path)
-        # tap_command(temp_index_github_repo)
-    except typer.Exit as e:
-        pass
-    try:
-        add_to_index(temp_index_github_repo, package_folder_path=temp_package_with_ross_dependencies_dir, _config_file_path=temp_config_path)
-        # add_to_index_command(temp_index_github_repo, package_folder_path=temp_package_with_ross_dependencies_dir)
-    except typer.Exit as e:
-        pass
+    tap_index_and_add_to_index(temp_index_github_repo, temp_config_path, temp_package_with_ross_dependencies_dir)
 
     with pytest.raises(typer.Exit) as e:
         install.install(PACKAGE_REPO_NAME, install_package_root_folder=temp_package_with_ross_dependencies_dir, _config_file_path=temp_config_path)   

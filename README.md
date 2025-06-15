@@ -68,7 +68,7 @@ url = "https://github.com/example_user1/example_package2.git"
 ```bash
 ross install package_name
 ```
-This will search through all of the tapped indexes for the package name, and `pip install --editable git+<url>#egg=package_name` the package. By default, each package is installed into `project_folder/src/site-packages/package_name`. Installing a package in editable mode allows you to have just as much control over the packages you install as if you had written it yourself.
+This will search through all of the tapped indexes for the package name, and `pip install --editable git+<url>#egg=package_name` the package. By default, each package is installed into the default `pip install` location. Installing a package in editable mode allows you to have just as much control over the packages you install as if you had written it yourself.
 
 ## Installing MATLAB and R packages
 `pip install` is a native Python command. For MATLAB and R, the appropriate installation commands are executed - `git clone`, and `install.packages()` (if on CRAN), respectively.

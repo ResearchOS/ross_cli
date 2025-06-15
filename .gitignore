@@ -1,8 +1,6 @@
 .DS_Store
-    src/site-packages/*
-    .venv/    
+.venv/    
     
 *.pyc
-/src/site-packages
 /site
 /dist

@@ -18,7 +18,6 @@ DEFAULT_PACKAGE_NAME = "template"
 ROSSPROJECT_REQUIRED_FIELDS = [
     "name",    
     "version",
-    "repository_url",
     "language",
     "authors",
     "dependencies",
@@ -62,7 +61,6 @@ DEFAULT_ROSSPROJECT_TOML_PATH = os.path.join(PROJECT_FOLDER, "rossproject.toml")
 INIT_PATHS = {
     "README.md": "README.md",
     "src/": "src",
-    "src/installed/": "src/site-packages",
     "tests/": "tests",
     "docs/": "docs",
     ".gitignore": ".gitignore"    
