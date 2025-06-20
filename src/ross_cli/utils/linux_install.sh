@@ -1,40 +1,25 @@
 #!/bin/bash
 
-# Install GitHub CLI on Debian Linux
+# Install GitHub CLI on Ubuntu Linux
 # This script installs gh CLI using the official GitHub repository
 
 set -e  # Exit on any error
 
-echo "Installing GitHub CLI (gh) on Debian Linux..."
+# Create a local bin directory
+mkdir -p ~/.local/bin
 
-# Update package list
-echo "Updating package list..."
-sudo apt update
+# Download the latest release (adjust version/architecture as needed)
+wget https://github.com/cli/cli/releases/download/v2.40.1/gh_2.40.1_linux_amd64.tar.gz
 
-# Install required dependencies
-echo "Installing dependencies..."
-sudo apt install -y curl gnupg lsb-release
+# Extract it
+tar -xzf gh_2.40.1_linux_amd64.tar.gz
 
-# Add GitHub's official GPG key
-echo "Adding GitHub's GPG key..."
-curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+# Copy the binary to your local bin
+cp gh_2.40.1_linux_amd64/bin/gh ~/.local/bin/
 
-# Add GitHub CLI repository to sources
-echo "Adding GitHub CLI repository..."
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-
-# Update package list with new repository
-echo "Updating package list with GitHub CLI repository..."
-sudo apt update
-
-# Install GitHub CLI
-echo "Installing GitHub CLI..."
-sudo apt install -y gh
-
-# Verify installation
-echo "Verifying installation..."
-gh --version
+# Make sure ~/.local/bin is in your PATH
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
 
 echo "GitHub CLI installation completed successfully!"
 echo "You can now use 'gh' commands. Run 'gh auth login' to authenticate with GitHub."

@@ -9,7 +9,6 @@ import tomli_w
 from src.ross_cli.cli import init_command
 
 INDEX_REPO_NAME = "index"
-# INDEX_REPO_OWNER = "rto-tihub"
 INDEX_TOML_REPO_URL = "https://github.com/{INDEX_REPO_OWNER}/{INDEX_REPO_NAME}/index.toml"
 
 PACKAGE_REPO_NAME = "test_repo"
@@ -39,7 +38,6 @@ def create_github_repo(temp_dir: str, index: bool = False):
     REPO_OWNER = get_owner_from_github_username()
     # Initialize git and configure basic settings
     subprocess.run(["git", "init"], check=True)
-    # subprocess.run(["git", "config", "init.defaultBranch", "main"], check=True)
     
     # Create and configure GitHub repository
     if index:
@@ -61,7 +59,9 @@ def create_github_repo(temp_dir: str, index: bool = False):
     subprocess.run(["git", "commit", "--allow-empty", "-m", "Initial commit"], check=True)
     subprocess.run(["git", "push"], check=True)
 
+##########################################################
 ######################## FIXTURES ########################
+##########################################################
 
 @pytest.fixture(scope="function")
 def temp_config_path():
@@ -103,6 +103,11 @@ def temp_dir_with_git_repo():
 @pytest.fixture(scope="function")
 def temp_dir_with_github_repo():
     """Temporary directory with github repository"""
+    # Reset GitHub repo
+    try:
+        subprocess.run(["gh", "repo", "delete", PACKAGE_REPO_NAME, "--yes"], check=True)
+    except subprocess.CalledProcessError as e:
+        pass
     # Folder and git repository
     temp_dir = tempfile.mkdtemp()  # Create temporary directory    
     
@@ -113,8 +118,6 @@ def temp_dir_with_github_repo():
         try:
             subprocess.run(["gh", "repo", "delete", PACKAGE_REPO_NAME, "--yes"], check=True)
         except subprocess.CalledProcessError:
-            pass
-        finally:
             pass
 
 
@@ -141,8 +144,11 @@ def temp_dir_ross_project():
 @pytest.fixture(scope="function")
 def temp_dir_ross_project_github_repo():
     """Temporary directory with git repository and ross project structure, including a GitHub repo"""
-    # Folder and git repository
-    temp_dir = tempfile.mkdtemp()  # Create temporary directory    
+    # Reset the GitHub repo status
+    try:
+        subprocess.run(["gh", "repo", "delete", PACKAGE_REPO_NAME, "--yes"], check=True)
+    except subprocess.CalledProcessError as e:
+        pass
     # Initialized ross project.
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
@@ -174,7 +180,7 @@ def temp_dir_ross_project_github_repo():
         finally:            
             try:
                 subprocess.run(["gh", "repo", "delete", PACKAGE_REPO_NAME, "--yes"], check=True)
-            finally:
+            except subprocess.CalledProcessError as e:
                 pass
 
 
@@ -191,7 +197,7 @@ def temp_index_github_repo():
     """URL for the index GitHub repository, and create the actual repository"""
     try:
         subprocess.run(["gh", "repo", "create", INDEX_REPO_NAME, "--private"], check=True)
-    except:
+    except subprocess.CalledProcessError as e:
         pass
     INDEX_REPO_OWNER = get_owner_from_github_username()
     index_toml_repo_url = INDEX_TOML_REPO_URL.format(INDEX_REPO_OWNER=INDEX_REPO_OWNER, INDEX_REPO_NAME=INDEX_REPO_NAME)

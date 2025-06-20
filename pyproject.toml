@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ross-cli"
-version = "0.3.6"
+version = "0.3.7"
 description = "CLI for data analysis code reuse in MATLAB, Python, and R."
 requires-python = ">=3.9"
 license = "MIT"
