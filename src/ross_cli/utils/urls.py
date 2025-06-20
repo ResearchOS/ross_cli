@@ -101,27 +101,6 @@ def check_url_exists(url: str, ignore_file_path: bool = False) -> bool:
         return result.returncode == 0
     except subprocess.CalledProcessError as e:
         return False
-
-    # if not exists and "github.com" in url:
-    #     try:
-    #         owner, repo, file_path = parse_github_url(url)
-    #         if file_path is None:
-    #             repos_str = f"repos/{owner}/{repo}"
-    #         else:
-    #             file_path = remove_blob_and_branch_from_url(file_path)
-    #             file_path = file_path.lstrip("/")
-    #             # Release tags are a special case vs. normal file paths
-    #             if "releases/" in file_path:
-    #                 tag = file_path.replace("releases/tag/", "")
-    #                 repos_str = f"repos/{owner}/{repo}/releases/tags/{tag}"                    
-    #             else:
-    #                 repos_str = f"repos/{owner}/{repo}/contents/{file_path}"
-    #         output = subprocess.run(["gh", "api", repos_str], check=True, capture_output=True)
-    #         exists = True
-    #     except subprocess.CalledProcessError as e:
-    #         pass
-
-    # return exists
     
 
 def remove_blob_and_branch_from_url(url: str) -> str:

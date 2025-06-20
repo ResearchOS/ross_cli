@@ -40,12 +40,12 @@ def check_gh() -> bool:
         install_gh_cli_linux()
     else:
         print(f"Unsupported operating system: {system}")
-        print("This script only supports Windows macOS, and Linux.")
+        print("This script only supports Windows, macOS, and Linux.")
         sys.exit(1)
 
-    print("After installing the gh cli, you will need to completely close and reopen the Terminal/VSCode (if using integrated terminal).")
-    print("You may even need to restart the computer for the gh installation to take effect.")
-    print("After successfully running gh --version, then run gh auth login to connect to your GitHub account.")
+    print("After installing the gh cli, you may need to completely close and reopen the Terminal/VSCode (if using integrated terminal).")
+    print("You may even need to restart the computer for the `gh` installation to take effect.")
+    print("After successfully running `gh --version`, then run `gh auth login` to connect to your GitHub account.")
 
     return False
 
