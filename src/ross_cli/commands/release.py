@@ -16,6 +16,7 @@ from ..git.github import read_github_file_from_release, get_latest_release_tag, 
 from ..utils.urls import is_valid_url, check_url_exists, convert_owner_repo_format_to_url, is_owner_repo_format
 from ..utils.rossproject import load_rossproject, convert_hyphen_in_name_to_underscore
 from ..utils.check_gh import check_local_and_remote_git_repo_exist
+from ..utils.validate_authors import validate_authors
 
 def release(release_type: str = None, package_folder_path: str = os.getcwd(), message: str = None, _config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH):
     """Release a new version of the package on GitHub.""" 
@@ -130,6 +131,10 @@ def build_pyproject_from_rossproject(rossproject_toml: dict, _config_file_path: 
     pyproject_toml["project"]["readme"] = rossproject_toml["readme"] if "readme" in rossproject_toml else None      
     pyproject_toml["project"]["urls"] = {}
     pyproject_toml["project"]["urls"]["Repository"] = get_remote_url_from_git_repo(".").replace(".git", "")
+
+    # Validate the authors format
+    if pyproject_toml["project"]["authors"] is not None:
+        validate_authors(pyproject_toml["project"]["authors"])
 
     # Validate language    
     if rossproject_toml["language"].lower() not in SUPPORTED_LANGUAGES:

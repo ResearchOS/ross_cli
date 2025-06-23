@@ -175,3 +175,49 @@ def test_20_no_repository_url_field(temp_dir_ross_project_github_repo, temp_conf
         tomli_w.dump(rossproject, f)
 
     release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)
+
+
+def test_21_validate_author_fields_string_only(temp_dir_ross_project_github_repo, temp_config_path):
+    rossproject_toml_path = os.path.join(temp_dir_ross_project_github_repo, "rossproject.toml")
+    with open(rossproject_toml_path, 'rb') as f:
+        rossproject = tomli.load(f)
+
+    rossproject["authors"] = [
+        "Mitchell"
+    ]
+    with open(rossproject_toml_path, 'wb') as f:
+        tomli_w.dump(rossproject, f)
+
+    with pytest.raises(typer.Exit) as e:
+        release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)
+    assert e.value.exit_code == 15
+
+    
+def test_22_validate_author_fields_wrong_email(temp_dir_ross_project_github_repo, temp_config_path):
+    rossproject_toml_path = os.path.join(temp_dir_ross_project_github_repo, "rossproject.toml")
+    with open(rossproject_toml_path, 'rb') as f:
+        rossproject = tomli.load(f)
+
+    rossproject["authors"] = [
+        {"name": "Mitchell", "email": "test"}
+    ]
+    with open(rossproject_toml_path, 'wb') as f:
+        tomli_w.dump(rossproject, f)
+
+    with pytest.raises(typer.Exit) as e:
+        release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)
+    assert e.value.exit_code == 15
+
+
+def test_23_validate_author_fields_passes(temp_dir_ross_project_github_repo, temp_config_path):
+    rossproject_toml_path = os.path.join(temp_dir_ross_project_github_repo, "rossproject.toml")
+    with open(rossproject_toml_path, 'rb') as f:
+        rossproject = tomli.load(f)
+
+    rossproject["authors"] = [
+        {"name": "Mitchell", "email": "test.email@gmail.com"}
+    ]
+    with open(rossproject_toml_path, 'wb') as f:
+        tomli_w.dump(rossproject, f)
+
+    release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)
