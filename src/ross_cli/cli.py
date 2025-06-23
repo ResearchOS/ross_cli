@@ -69,11 +69,11 @@ def add_to_index_command(index_file_url: str, package_folder_path: str = os.getc
     
 
 @app.command(name="install")
-def install_command(package_name: str, install_relative_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, install_package_root_folder: str = os.getcwd(), args: List[str] = []):
+def install_command(package_name: str, install_package_root_folder: str = os.getcwd(), args: List[str] = []):
     """Install a package.
     1. Get the URL from the .toml file
     2. Install the package using pip""" 
-    install.install(package_name, install_relative_folder_path, install_package_root_folder, args=args)
+    install.install(package_name, install_package_root_folder, args=args)
 
 
 @app.command(name="release")

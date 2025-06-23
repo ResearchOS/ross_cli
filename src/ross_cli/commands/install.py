@@ -14,15 +14,10 @@ from ..git.github import read_github_file_from_release, download_github_release,
 from ..utils.venv import get_venv_path_in_dir, get_install_loc_in_venv
 from ..utils.urls import check_url_exists
 
-def install(package_name: str, install_folder_path: str = DEFAULT_PIP_SRC_FOLDER_PATH, install_package_root_folder: str = os.getcwd(), _config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH, args: List[str] = []):
+def install(package_name: str, install_package_root_folder: str = os.getcwd(), _config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH, args: List[str] = []):
     f"""Install a package.
     1. Get the URL from the .toml file (default: {DEFAULT_ROSS_INDICES_FOLDER})
     2. Install the package using pip""" 
-    
-    full_install_folder_path = os.path.join(install_package_root_folder, install_folder_path)
-    
-    # Create the install folder if it does not exist
-    os.makedirs(full_install_folder_path, exist_ok=True)   
 
     # Get the release tag, if specified
     tag = None
