@@ -35,6 +35,12 @@ def release(release_type: str = None, package_folder_path: str = os.getcwd(), me
         typer.echo("Version number does not follow semantic versioning! For example, 'v1.0.0'.")
         typer.echo("See https://semver.org for the full semantic versioning specification.")
         raise typer.Exit()
+    
+    # Check that the src/{project_name} folder exists
+    src_project_name_folder = os.path.join(package_folder_path, "src", rossproject_toml["name"])
+    if not os.path.exists(src_project_name_folder):
+        typer.echo(f"Missing target folder for packaging release: {src_project_name_folder}")
+        raise typer.Exit(code=14)
 
     previous_version = rossproject_toml["version"]  
     version = increment_version(previous_version, release_type)    

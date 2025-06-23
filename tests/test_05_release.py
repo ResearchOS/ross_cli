@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 
 import pytest
 
@@ -151,3 +152,12 @@ def test_17_release_package_with_ross_dependencies(temp_package_with_ross_depend
 
 def test_18_release_with_dep_version_specified(temp_package_with_ross_dependencies_and_versions_dir, temp_config_path):    
     release.release(release_type="patch", package_folder_path=temp_package_with_ross_dependencies_and_versions_dir, _config_file_path=temp_config_path)   
+
+
+def test_19_release_with_wrong_folder_structure(temp_dir_ross_project_github_repo, temp_config_path):
+    # Remove the "src" folder.
+    src_folder = os.path.join(temp_dir_ross_project_github_repo, "src")
+    shutil.rmtree(src_folder)
+    with pytest.raises(typer.Exit) as e:
+        release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)
+    assert e.value.exit_code == 14

@@ -12,3 +12,4 @@
 11: install: Dependency improperly specified. Wrong number of '@'.
 12: install: Incorrect dependency URL specification. Must use the "/blob/" URL endpoint.
 13: release: The specified dependency version tag does not exist.
+14: release: The src/project_name folder does not exist.
