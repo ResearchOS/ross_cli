@@ -171,4 +171,7 @@ def test_20_no_repository_url_field(temp_dir_ross_project_github_repo, temp_conf
     if "repository_url" in rossproject:
         del rossproject["repository_url"]
 
+    with open(rossproject_toml_path, 'wb') as f:
+        tomli_w.dump(rossproject, f)
+
     release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)
