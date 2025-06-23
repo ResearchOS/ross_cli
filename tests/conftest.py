@@ -16,7 +16,6 @@ PACKAGE_REPO_NAME = "test_repo"
 ROSSPROJECT_TOML_CONTENT_TEST = """# ROSS project configuration file
 name = "{PACKAGE_REPO_NAME}"
 version = "0.1.0"
-repository_url = "https://github.com/{PACKAGE_REPO_OWNER}/{PACKAGE_REPO_NAME}"
 language = "python"
 authors = [
 
@@ -157,7 +156,7 @@ def temp_dir_ross_project_github_repo():
             # Create a sample ross project structure
             src_folder = os.path.join(temp_dir, "src")
             os.makedirs(src_folder, exist_ok=True)
-            project_src_folder = os.path.join(src_folder, "test_package")
+            project_src_folder = os.path.join(src_folder, PACKAGE_REPO_NAME)
             os.makedirs(project_src_folder)
 
             # Create the content of the GitHub repository

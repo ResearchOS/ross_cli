@@ -161,3 +161,14 @@ def test_19_release_with_wrong_folder_structure(temp_dir_ross_project_github_rep
     with pytest.raises(typer.Exit) as e:
         release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)
     assert e.value.exit_code == 14
+
+
+def test_20_no_repository_url_field(temp_dir_ross_project_github_repo, temp_config_path):
+    rossproject_toml_path = os.path.join(temp_dir_ross_project_github_repo, "rossproject.toml")
+    with open(rossproject_toml_path, 'rb') as f:
+        rossproject = tomli.load(f)
+
+    if "repository_url" in rossproject:
+        del rossproject["repository_url"]
+
+    release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)
