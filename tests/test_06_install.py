@@ -33,7 +33,7 @@ def test_01_install(temp_dir, temp_index_github_repo, temp_config_path):
 def test_02_install(temp_dir_with_venv, temp_config_path):
     # Install a ROSS package with no dependencies.
 
-    # Install
+    # Install 
     package_name = "load_gaitrite"
     install.install(package_name, install_package_root_folder=temp_dir_with_venv, _config_file_path = temp_config_path)
     # No version tag in the folder name because that's in the pyproject.toml
