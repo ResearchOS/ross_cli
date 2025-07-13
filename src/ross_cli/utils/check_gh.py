@@ -221,11 +221,11 @@ def check_local_and_remote_git_repo_exist(folder_path: str) -> bool:
     # Check if the package folder is a git repository
     if not os.path.exists(os.path.join(folder_path, ".git")):
         typer.echo(f"Folder {folder_path} is not a git repository.")
-        raise typer.Exit()
+        raise typer.Exit(code=17)
     
     remote_url = get_remote_url_from_git_repo(folder_path)
     if remote_url is None:
         typer.echo(f"Missing remote GitHub repository for the local git repository at: {folder_path}")
-        raise typer.Exit()
+        raise typer.Exit(code=18)
     
     return True

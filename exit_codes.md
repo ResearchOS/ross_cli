@@ -14,3 +14,6 @@
 13: release: The specified dependency version tag does not exist.
 14: release: The src/project_name folder does not exist.
 15: release: The authors are not specified correctly.
+16: release: Package name does not match canonical regex.
+17: Local git repository not found in the specified path.
+18: Remote GitHub repository not found at the specified URL.

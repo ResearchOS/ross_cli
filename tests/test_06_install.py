@@ -88,6 +88,9 @@ def test_04_install_ross_package_with_ross_deps(temp_package_with_ross_dependenc
                 dep_found = True
                 break
         assert dep_found
+        dist_info_folder = os.path.join(site_packages_folder, f"{item}.dist-info")
+        assert os.path.exists(dist_info_folder)
+        assert os.path.exists(dist_info_folder, "METADATA")
 
     # Check that the dependencies' dependencies were installed.
     for dep in dep_of_deps:

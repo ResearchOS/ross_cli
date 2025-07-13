@@ -3,6 +3,7 @@ from typing import List
 import re
 import errno
 import tempfile
+import json
 
 import subprocess
 import typer
@@ -13,6 +14,7 @@ from ..git.index import search_indexes_for_package_info
 from ..git.github import read_github_file_from_release, download_github_release, get_latest_release_tag, parse_github_url, get_default_branch_name, add_auth_token_to_github_url
 from ..utils.venv import get_venv_path_in_dir, get_install_loc_in_venv
 from ..utils.urls import check_url_exists
+from ..utils.check_install import canonicalize_package_name
 
 def install(package_name: str, install_package_root_folder: str = os.getcwd(), _config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH, args: List[str] = []):
     f"""Install a package.
@@ -96,10 +98,13 @@ def install(package_name: str, install_package_root_folder: str = os.getcwd(), _
             version = dep[at_idx[1][0]+1:]
             install(f"{dep_package_name}=={version}", install_package_root_folder=install_package_root_folder, _config_file_path=_config_file_path)
             continue
+        # Install the R or MATLAB non-pip installable package.
         if language.lower() == "r":  
             folder_path = install_dep_r(dep, venv_path)            
         elif language.lower() == "matlab":
-            folder_path = install_dep_matlab(dep, venv_path)        
+            folder_path = install_dep_matlab(dep, venv_path)  
+        # Create package metadata
+        create_metadata(folder_path, dep)
 
     os.chdir(curr_dir) # Revert back to the original working directory
 
@@ -141,7 +146,11 @@ def install_dep_matlab(dep: str, venv_path: str):
     # Downloads to the root folder    
     with tempfile.TemporaryDirectory() as temp_dir:
         folder_path = download_github_release(owner, repo, tag, temp_dir)
-        folder_name = os.path.basename(folder_path) # Get the folder name
+        package_name_with_version = os.path.basename(folder_path)
+        last_hyphen_index = package_name_with_version.rfind("-")        
+        package_name = package_name_with_version[0:last_hyphen_index]        
+        folder_name = canonicalize_package_name(package_name) # Get the folder name   
+        folder_name = "matlab_toml-1.0.3"     
         # Figure out where in the virtual environment the package should be moved to.
         install_loc = get_install_loc_in_venv(venv_path)
         # Move the folder into the venv
@@ -152,3 +161,53 @@ def install_dep_matlab(dep: str, venv_path: str):
             if e.errno != errno.ENOTEMPTY:
                 raise
     return install_folder_path
+
+
+def create_metadata(folder_path: str, dep: str):
+    """Create the package metadata.
+    folder_path: The full path to the installed folder
+    dep: URL of the package being installed"""
+    # Create .dist-info folder
+    dist_info_folder_path = folder_path + ".dist-info"
+    os.mkdir(dist_info_folder_path)
+
+    dep_package_name_with_version = os.path.basename(folder_path)
+    last_hyphen_index = dep_package_name_with_version.rfind("-")
+    package_name = dep_package_name_with_version[0:last_hyphen_index]    
+    version = dep_package_name_with_version[last_hyphen_index+1:]
+
+    # Create METADATA
+    metadata_file_path = os.path.join(dist_info_folder_path, "METADATA")
+    METADATA = f"""Metadata-Version: 2.4
+Name: {package_name}
+Version: {version}
+Description-Content-Type: text/markdown"""
+
+    with open(metadata_file_path, 'w', encoding="utf-8") as f:
+        f.write(METADATA)
+
+    # Create INSTALLER
+    INSTALLER = "ross"
+    installer_file_path = os.path.join(dist_info_folder_path, "INSTALLER")
+    with open(installer_file_path, 'w', encoding="utf-8") as f:
+        f.write(INSTALLER)
+
+    # Create direct_url.json
+    owner, repo, _ = parse_github_url(dep)
+    result = subprocess.run(f"""gh api repos/{owner}/{repo}/tags --jq '.[] | select(.name=="{version}") | .commit.sha' """, shell=True, capture_output=True)
+    commit_id = result.stdout.decode(encoding="utf-8")[0:-2] # Omit the '\n' at the end.
+    direct_url = {}
+    direct_url["url"] = f"https://github.com/{owner}/{repo}"
+    direct_url["vcs_info"] = {}
+    direct_url["vcs_info"]["commit_id"] = commit_id
+    direct_url["vcs_info"]["requested_revision"] = version
+    direct_url["vcs_info"]["vcs"] = "git"
+    direct_url_json_file_path = os.path.join(dist_info_folder_path, "direct_url.json")
+    with open(direct_url_json_file_path, 'w', encoding="utf-8") as f:
+        json.dump(direct_url, f)
+
+    # Create REQUESTED
+    REQUESTED = ""
+    requested_file_path = os.path.join(dist_info_folder_path, "REQUESTED")
+    with open(requested_file_path, "w", encoding="utf-8") as f:
+        f.write(REQUESTED)

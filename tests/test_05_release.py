@@ -136,25 +136,33 @@ def test_15_process_non_ross_dependency_github_url_matlab_with_github_release_ok
     assert processed_tool_dep.startswith("https://github.com/g-s-k/matlab-toml/blob/")
 
 
-def test_16_release_twice(temp_dir_ross_project_github_repo, temp_config_path):
+def test_16_release_twice(temp_dir_ross_project_github_repo, temp_config_path, gh_protocol):
     release_type = None
     # First release
     release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)   
     # Second release
     with pytest.raises(typer.Exit) as e:
-        release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)   
+        release.release(release_type=None, package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)   
     assert e.value.exit_code == 6
 
 
-def test_17_release_package_with_ross_dependencies(temp_package_with_ross_dependencies_dir, temp_config_path): 
-    release.release(release_type="patch", package_folder_path=temp_package_with_ross_dependencies_dir, _config_file_path=temp_config_path)    
+def test_17_release_package_with_ross_dependencies_that_are_not_in_any_index(temp_package_with_ross_dependencies_dir, temp_config_path, gh_protocol): 
+    with pytest.raises(typer.Exit) as e:
+        release.release(release_type="patch", package_folder_path=temp_package_with_ross_dependencies_dir, _config_file_path=temp_config_path)    
+    assert e.value.exit_code == 3
 
 
-def test_18_release_with_dep_version_specified(temp_package_with_ross_dependencies_and_versions_dir, temp_config_path):    
-    release.release(release_type="patch", package_folder_path=temp_package_with_ross_dependencies_and_versions_dir, _config_file_path=temp_config_path)   
+# def test_18_release_package_with_ross_dependencies(temp_package_with_ross_dependencies_dir_added_to_index, temp_config_path, gh_protocol): 
+#     """TODO: IN THE FIRST INPUT FIXTURE, CREATE THE DEPENDENCIES' FOLDERS AND REPOS, AND ADD THEM TO THE INDEX REPO."""
+#     release.release(release_type="patch", package_folder_path=temp_package_with_ross_dependencies_dir_added_to_index, _config_file_path=temp_config_path)        
 
 
-def test_19_release_with_wrong_folder_structure(temp_dir_ross_project_github_repo, temp_config_path):
+# def test_19_release_with_dep_version_specified(temp_package_with_ross_dependencies_and_versions_dir, temp_config_path, gh_protocol):    
+#     """TODO: IN THE FIRST INPUT FIXTURE, CREATE THE DEPENDENCIES' FOLDERS AND REPOS, AND ADD THEM TO THE INDEX REPO."""
+#     release.release(release_type="patch", package_folder_path=temp_package_with_ross_dependencies_and_versions_dir, _config_file_path=temp_config_path)   
+
+
+def test_20_release_with_wrong_folder_structure(temp_dir_ross_project_github_repo, temp_config_path, gh_protocol):
     # Remove the "src" folder.
     src_folder = os.path.join(temp_dir_ross_project_github_repo, "src")
     shutil.rmtree(src_folder)
@@ -163,7 +171,7 @@ def test_19_release_with_wrong_folder_structure(temp_dir_ross_project_github_rep
     assert e.value.exit_code == 14
 
 
-def test_20_no_repository_url_field(temp_dir_ross_project_github_repo, temp_config_path):
+def test_21_no_repository_url_field(temp_dir_ross_project_github_repo, temp_config_path, gh_protocol):
     rossproject_toml_path = os.path.join(temp_dir_ross_project_github_repo, "rossproject.toml")
     with open(rossproject_toml_path, 'rb') as f:
         rossproject = tomli.load(f)
@@ -177,7 +185,7 @@ def test_20_no_repository_url_field(temp_dir_ross_project_github_repo, temp_conf
     release.release(release_type="patch", package_folder_path=temp_dir_ross_project_github_repo, _config_file_path=temp_config_path)
 
 
-def test_21_validate_author_fields_string_only(temp_dir_ross_project_github_repo, temp_config_path):
+def test_22_validate_author_fields_string_only(temp_dir_ross_project_github_repo, temp_config_path, gh_protocol):
     rossproject_toml_path = os.path.join(temp_dir_ross_project_github_repo, "rossproject.toml")
     with open(rossproject_toml_path, 'rb') as f:
         rossproject = tomli.load(f)
@@ -193,7 +201,7 @@ def test_21_validate_author_fields_string_only(temp_dir_ross_project_github_repo
     assert e.value.exit_code == 15
 
     
-def test_22_validate_author_fields_wrong_email(temp_dir_ross_project_github_repo, temp_config_path):
+def test_23_validate_author_fields_wrong_email(temp_dir_ross_project_github_repo, temp_config_path, gh_protocol):
     rossproject_toml_path = os.path.join(temp_dir_ross_project_github_repo, "rossproject.toml")
     with open(rossproject_toml_path, 'rb') as f:
         rossproject = tomli.load(f)
@@ -209,7 +217,7 @@ def test_22_validate_author_fields_wrong_email(temp_dir_ross_project_github_repo
     assert e.value.exit_code == 15
 
 
-def test_23_validate_author_fields_passes(temp_dir_ross_project_github_repo, temp_config_path):
+def test_24_validate_author_fields_passes(temp_dir_ross_project_github_repo, temp_config_path, gh_protocol):
     rossproject_toml_path = os.path.join(temp_dir_ross_project_github_repo, "rossproject.toml")
     with open(rossproject_toml_path, 'rb') as f:
         rossproject = tomli.load(f)

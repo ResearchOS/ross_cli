@@ -236,6 +236,12 @@ def parse_dependency(dep: str, language: str, _config_file_path: str) -> tuple[l
             else:
                 typer.echo(f"Non-existent URL provided for a dependency: {github_url}")
                 raise typer.Exit()
+    else:
+        if is_ross_pkg is False and "/" not in dep:
+            # Specified as a package name (not a URL or owner/repo format), but not found in a ROSS index.
+            typer.echo(f"{language} package {dep} not found in ROSS index.")
+            if language == "matlab":
+                raise typer.Exit(code=3)
     
     processed_dep = []
     processed_tool_dep = f"{pkg_name} @ git+{dep}" # Initialize
