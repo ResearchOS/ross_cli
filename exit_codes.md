@@ -17,3 +17,4 @@
 16: release: Package name does not match canonical regex.
 17: Local git repository not found in the specified path.
 18: Remote GitHub repository not found at the specified URL.
+19: Package with specified name is not installed.

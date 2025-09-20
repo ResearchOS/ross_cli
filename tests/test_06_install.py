@@ -22,7 +22,7 @@ def tap_index_and_add_to_index(temp_index_github_repo, temp_config_path, temp_pa
         pass
 
 
-def test_01_install(temp_dir, temp_index_github_repo, temp_config_path):
+def test_01_install(temp_dir, temp_index_github_repo, temp_config_path, gh_protocol):
 
     # Fails to add this project to the index because the index repository is not tapped.
     with pytest.raises(typer.Exit) as e:
@@ -30,7 +30,7 @@ def test_01_install(temp_dir, temp_index_github_repo, temp_config_path):
     assert e.value.exit_code == 5
 
 
-def test_02_install(temp_dir_with_venv, temp_config_path):
+def test_02_install(temp_dir_with_venv, temp_config_path, gh_protocol):
     # Install a ROSS package with no dependencies.
 
     # Install 
@@ -49,7 +49,7 @@ def test_03_install_no_venv(temp_dir, temp_config_path, temp_index_github_repo, 
     assert e.value.exit_code == 9
 
 
-def test_04_install_ross_package_with_ross_deps(temp_package_with_ross_dependencies_dir, temp_index_github_repo, temp_config_path):
+def test_04_install_ross_package_with_ross_deps(temp_package_with_ross_dependencies_dir, temp_index_github_repo, temp_config_path, gh_protocol):
     # Tests installing a ROSS package that has other ROSS packages as dependencies.
     # e.g. segment-gaitcycles with a dependency on load-gaitrite    
 
@@ -102,7 +102,7 @@ def test_04_install_ross_package_with_ross_deps(temp_package_with_ross_dependenc
         assert dep_found
 
 
-def test_05_install_ross_package_missing_rossproject_file(temp_package_with_ross_dependencies_dir, temp_index_github_repo, temp_config_path):
+def test_05_install_ross_package_missing_rossproject_file(temp_package_with_ross_dependencies_dir, temp_index_github_repo, temp_config_path, gh_protocol):
     # Fails because the package being installed is missing a pyproject.toml file.
 
     # Set up by adding the test package to the index.

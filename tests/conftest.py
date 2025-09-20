@@ -69,7 +69,7 @@ def create_github_repo(temp_dir: str, index: bool = False):
 ##########################################################
 
 # @pytest.fixture(scope="session", params=["https", "ssh"])
-@pytest.fixture(scope="session", params=["https"])
+@pytest.fixture(scope="session", params=["https", "ssh"])
 def gh_protocol(request):
     """Configure gh CLI to use either https or ssh protocol"""
     protocol = request.param

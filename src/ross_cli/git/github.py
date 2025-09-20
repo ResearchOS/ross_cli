@@ -10,6 +10,7 @@ from datetime import datetime
 import tempfile
 import zipfile
 import errno
+from pathlib import Path
 
 import typer
 
@@ -184,6 +185,7 @@ def read_github_file_from_release(file_url: str, tag: str = None) -> str:
     content = base64.b64decode(content_json["content"]).decode("utf-8")
     return content
 
+
 def create_empty_file_in_repo(repo_git_url: str, file_path: str, commit_message: str = "Add empty file") -> dict:
     """
     Create an empty file in a GitHub repository using the GitHub CLI.
@@ -231,6 +233,7 @@ def create_empty_file_in_repo(repo_git_url: str, file_path: str, commit_message:
         if e.stderr:
             print(f"Error output: {e.stderr}")
         raise typer.Exit()
+
 
 def download_github_release(owner: str, repository: str, tag: str = None, output_dir: str = None) -> str:
     """
@@ -333,3 +336,27 @@ def add_auth_token_to_github_url(url: str) -> str:
     auth_token = subprocess.run(["gh", "auth", "token"], capture_output=True, check=True).stdout.decode().strip() 
     remote_url = url.replace("https://", f"https://{auth_token}@")
     return remote_url
+
+
+def clone_repo(repo_url: str, clone_path: Path):
+    """Clone a GitHub repository to a specified path."""
+    try:
+        subprocess.run(
+            ["git", "clone", repo_url, clone_path],
+            check=True
+        )
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"Error cloning repository: {e}")
+        raise typer.Exit()
+    
+
+def install_package_from_repo_editable(repo_path: Path):
+    """Install a package in editable mode from a local repository path."""
+    try:
+        subprocess.run(
+            ["pip", "install", "-e", str(repo_path)],
+            check=True
+        )
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"Error installing package in editable mode: {e}")
+        raise typer.Exit()

@@ -8,7 +8,7 @@ import tomli
 import tomli_w
 
 from .constants import * # Do this first to instantiate the default constants
-from .commands import index, init, tap, install, release
+from .commands import index, init, set_editable, tap, install, release
 from .utils.check_gh import check_gh
 
 app = typer.Typer()
@@ -99,6 +99,22 @@ def release_command(
     if not isinstance(message, (str, type(None))):
         message = None
     release.release(release_type, package_folder_path, message)
+
+
+@app.command(name="set-editable")
+def set_editable_command(
+    package_name: str = typer.Argument(
+        None,
+        help = "Run this to clone the git repo for the purposes of pushing changes back to that repo. Preserves any changes made before this command is run."
+    )
+):
+    """Clone the git repo for the installed package."""
+    if not isinstance(package_name, (str, type(None))):
+        package_name = None
+    if package_name is None:
+        typer.echo(f"Must enter a package name to get its git repo")
+        raise typer.Exit()
+    set_editable.set_editable(package_name)
 
 
 @app.command(name="config")

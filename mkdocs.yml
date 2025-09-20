@@ -39,9 +39,10 @@ markdown_extensions:
   - admonition
 
 nav:
-  - Overview:
-    - Philosophy: Overview/index.md  
-    - ROSS Indexes: Overview/index_repo.md  
-    - Add a Package to a ROSS Index: Overview/add_to_index.md
-    - Release: Overview/release.md
-    - Install: Overview/install.md    
+  - Overview: index.md
+  - Philosophy: Overview/index.md  
+  - ROSS Indexes: Overview/index_repo.md  
+  - Add a Package to a ROSS Index: Overview/add_to_index.md
+  - Release: Overview/release.md
+  - Install: Overview/install.md    
+  - Edit: Overview/set_editable.md
