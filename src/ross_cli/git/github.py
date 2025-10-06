@@ -82,6 +82,22 @@ def get_remote_url_from_git_repo(directory: str = ".") -> str:
     except Exception as e:
         typer.echo(f"Error: {str(e)}")
         raise typer.Exit()
+    
+
+def build_github_url(owner: str, repo: str, file_path: str = "", branch: str = None) -> str:
+    """Build a GitHub URL from owner and repo name, and file name.
+    
+    Args:
+        owner: GitHub username or organization name
+        repo: GitHub repository name
+        file_path: Optional file path within the repository
+        branch: Optional branch name (default: main)
+    """
+    remote_url = f"https://github.com/{owner}/{repo}"
+    if branch is None:
+        branch = get_default_branch_name(remote_url)
+    url = f"{remote_url}/blob/{branch}/{file_path}" if file_path else remote_url
+    return url
 
 
 def parse_github_url(url: str) -> Tuple[str, str, str]:
@@ -120,6 +136,7 @@ def parse_github_url(url: str) -> Tuple[str, str, str]:
         typer.echo(f"URL must start with 'https://' or 'git@': {url}")
         raise typer.Exit()
     
+
 def get_default_branch_name(remote_url: str) -> str:
     """Get the name of the default branch from the GitHub repository URL"""
     # Get the default branch name

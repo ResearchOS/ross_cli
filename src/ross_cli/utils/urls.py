@@ -128,6 +128,7 @@ def is_owner_repo_format(owner_repo_string: str) -> bool:
     
     return True
 
+
 def convert_owner_repo_format_to_url(owner_repo_string: str) -> bool:
     """Convert a GitHub repository from owner/repo format to URL format."""
 

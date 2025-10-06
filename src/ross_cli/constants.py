@@ -1,6 +1,7 @@
 import os
 
-POSSIBLE_VERSION_CHARS = "=<>!~[@"  
+POSSIBLE_VERSION_CHARS = "=<>!~[@"  # Characters that can appear in a version specifier
+VERSION_SPECIFIER_REGEX = "(===|==|!=|<=|>=|<|>|~=)" # Regex to match PEP 440 PyPI version specifiers in dependency strings
 
 REQUIRED_INDEX_KEYS = ["url", "index_path"] # The keys in the config file for each index.
 
@@ -67,4 +68,4 @@ INIT_PATHS = {
 
 EMAIL_REGEX = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
-CANONICAL_PACKAGE_NAME_REGEX = r"^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$"
+CANONICAL_PACKAGE_NAME_REGEX = r"^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])\Z"

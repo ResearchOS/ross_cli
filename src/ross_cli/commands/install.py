@@ -11,104 +11,198 @@ import tomli
 
 from ..constants import *
 from ..git.index import search_indexes_for_package_info
-from ..git.github import read_github_file_from_release, download_github_release, get_latest_release_tag, parse_github_url, get_default_branch_name, add_auth_token_to_github_url
+from ..git.github import read_github_file_from_release, download_github_release, get_latest_release_tag, parse_github_url, get_default_branch_name, add_auth_token_to_github_url, build_github_url
 from ..utils.venv import get_venv_path_in_dir, get_install_loc_in_venv
 from ..utils.urls import check_url_exists
 from ..utils.check_install import canonicalize_package_name
 
-def install(package_name: str, install_package_root_folder: str = os.getcwd(), _config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH, args: List[str] = []):
+def get_package_source_type(package_name: str) -> str:
+    """Get the package source from the package name.
+    Source: GitHub repository ("github"), ROSS package ("ross"), or PyPI ("pypi") package.
+    """
+    pass
+
+
+def has_file(owner_repo: str, version_tag: str, file_path: str) -> bool:
+    """Check if the GitHub repository contains a file at the specified path."""
+    owner, repo = owner_repo.split("/")    
+
+    built_url = build_github_url(owner, repo, version_tag, file_path)
+    return check_url_exists(built_url)
+
+
+def normalize_package_name(name: str) -> str:
+    """Normalize the package name according to PEP 503.
+    This is used to compare package names.
+    """
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def parse_inputted_package_str(user_inputted_package_name: str) -> tuple[str, str|None, str]:
+    """Parse the package name and version tag from the user inputted package name.
+    If no version tag is specified, return None for the version tag.
+    Example inputs:
+    - package_name
+    - package_name==1.0.0
+    - package_name==v1.0.0
+    - package_name >= v1.0.0
+    - package_name <= v1.0.0
+    - package_name > v1.0.0
+    - package_name < v1.0.0
+    - package_name ~= v1.0.0
+    - package_name === v1.0.0
+    """
+    user_inputted_package_name = user_inputted_package_name.strip()
+    
+    # Match and extract the package name
+    package_name_match = re.search(CANONICAL_PACKAGE_NAME_REGEX, user_inputted_package_name, re.IGNORECASE)
+    package_name = package_name_match.group(0) if package_name_match else ""
+    
+    # Match and extract the version tag
+    version_tag_match = re.search(SEMANTIC_VERSIONING_REGEX, user_inputted_package_name, re.IGNORECASE)
+    version_tag = version_tag_match.group(0) if version_tag_match else None
+    
+    version_specifier_match = re.search(VERSION_SPECIFIER_REGEX, user_inputted_package_name)
+    version_specifier = version_specifier_match.group(0) if version_specifier_match else ""
+    
+    return package_name, version_tag, version_specifier
+
+
+def install(user_inputted_package_name: str, install_package_root_folder: str = os.getcwd(), _config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH, args: List[str] = []):
     f"""Install a package.
     1. Get the URL from the .toml file (default: {DEFAULT_ROSS_INDICES_FOLDER})
-    2. Install the package using pip""" 
+    2. Install the package using pip"""
 
-    # Get the release tag, if specified
-    tag = None
-    if "==" in package_name:
-        equals_idx = package_name.find("==")
-        tag = package_name[equals_idx+2:]
-        package_name = package_name[0:equals_idx]
-
-    pkg_info = search_indexes_for_package_info(package_name, config_file_path=_config_file_path)
-    # If a package is not in the ROSS index, then treat it exactly the same as if the user ran "pip install".
-    if not pkg_info:
-        typer.echo(f"Package {package_name} not found in ROSS index. Attempting to editable install using pip...")        
-        try:
-            subprocess.run(["pip", "install", package_name] + args, check=True)
-        except subprocess.CalledProcessError as e:
-            typer.echo(f"Package {package_name} not found in ROSS index, and failed to install it using pip. Aborting.")
+    source_location = get_package_source_type(user_inputted_package_name)
+    match source_location:
+        case "github":
+            # Split the version tag from the package name if it exists.
+            package_name, version_tag, version_specifier = parse_inputted_package_str(user_inputted_package_name)
+            if version_tag is None:
+                version_tag = "main" # TODO: Get the default branch name from the GitHub repository
+            has_ross_project_bool = has_file(package_name, version_tag, "rossproject.toml")
+            has_pyproject_bool = has_file(package_name, version_tag, "pyproject.toml")
+            if has_ross_project_bool and has_pyproject_bool:
+                ross_install(package_name, version_tag, version_specifier, install_package_root_folder, _config_file_path, args)
+            elif has_pyproject_bool:
+                pip_install(package_name, version_tag, version_specifier, install_package_root_folder, args)
+            else:
+                typer.echo(f"Package {package_name} does not contain a rossproject.toml and/or pyproject.toml file. Cannot install.")
+                raise typer.Exit(code=4)
+        case "ross":
+            ross_install(package_name, install_package_root_folder, _config_file_path, args)
+        case "pypi":
+            pip_install(package_name, install_package_root_folder, args)
+        case _:
+            typer.echo(f"Package {package_name} not found in ROSS index or PyPI")
             raise typer.Exit()
-        return None
+
+    # # Get the release tag, if specified
+    # tag = None
+    # if "==" in package_name:
+    #     equals_idx = package_name.find("==")
+    #     tag = package_name[equals_idx+2:]
+    #     package_name = package_name[0:equals_idx]
+
+    # pkg_info = search_indexes_for_package_info(package_name, config_file_path=_config_file_path)
+    # # If a package is not in the ROSS index, then treat it exactly the same as if the user ran "pip install".
+    # if not pkg_info:
+    #     typer.echo(f"Package {package_name} not found in ROSS index. Attempting to editable install using pip...")        
+    #     try:
+    #         subprocess.run(["pip", "install", package_name] + args, check=True)
+    #     except subprocess.CalledProcessError as e:
+    #         typer.echo(f"Package {package_name} not found in ROSS index, and failed to install it using pip. Aborting.")
+    #         raise typer.Exit()
+    #     return None
     
-    # Get the pyproject.toml file from the package's GitHub repository
-    remote_url_no_token = pkg_info['url'].replace(".git", "")     
-    owner, repo, _ = parse_github_url(remote_url_no_token)
-    if tag is None:
-        # No tag specified
-        tag = get_latest_release_tag(owner, repo)
-    if tag is None:
-        # No releases in this repository
-        tag = get_default_branch_name(remote_url_no_token)
-    remote_url_no_token_with_tag = f"{remote_url_no_token}/blob/{tag}"
-    remote_url_with_token = add_auth_token_to_github_url(remote_url_no_token_with_tag)           
-    repo_url = f"https://github.com/{owner}/{repo}"
-    pyproject_toml_url = f"{repo_url}/blob/{tag}/pyproject.toml"
-    if not check_url_exists(pyproject_toml_url):
-        typer.echo(f"Missing pyproject.toml file for {owner}/{repo}")
-        typer.echo(f"Run `ross release` for the package {package_name} to generate this file.")
-        raise typer.Exit(code=4)
-    pyproject_content = tomli.loads(read_github_file_from_release(pyproject_toml_url, tag=tag))
+    # # Get the pyproject.toml file from the package's GitHub repository
+    # remote_url_no_token = pkg_info['url'].replace(".git", "")     
+    # owner, repo, _ = parse_github_url(remote_url_no_token)
+    # if tag is None:
+    #     # No tag specified
+    #     tag = get_latest_release_tag(owner, repo)
+    # if tag is None:
+    #     # No releases in this repository
+    #     tag = get_default_branch_name(remote_url_no_token)
+    # remote_url_no_token_with_tag = f"{remote_url_no_token}/blob/{tag}"
+    # remote_url_with_token = add_auth_token_to_github_url(remote_url_no_token_with_tag)           
+    # repo_url = f"https://github.com/{owner}/{repo}"
+    # pyproject_toml_url = f"{repo_url}/blob/{tag}/pyproject.toml"
+    # if not check_url_exists(pyproject_toml_url):
+    #     typer.echo(f"Missing pyproject.toml file for {owner}/{repo}")
+    #     typer.echo(f"Run `ross release` for the package {package_name} to generate this file.")
+    #     raise typer.Exit(code=4)
+    # pyproject_content = tomli.loads(read_github_file_from_release(pyproject_toml_url, tag=tag))
 
-    if "project" in pyproject_content and "name" in pyproject_content["project"]:
-        official_package_name = pyproject_content["project"]["name"]
-    else:
-        typer.echo("pyproject.toml missing [project][name] field")
-        raise typer.Exit()    
+    # if "project" in pyproject_content and "name" in pyproject_content["project"]:
+    #     official_package_name = pyproject_content["project"]["name"]
+    # else:
+    #     typer.echo("pyproject.toml missing [project][name] field")
+    #     raise typer.Exit()    
         
-    # pip install the package
-    curr_dir = os.getcwd()
-    os.chdir(install_package_root_folder)
-    github_full_url = f"git+{remote_url_with_token}" # Add git+ to the front of the URL
-    github_full_url_with_egg = github_full_url + "#egg=" + official_package_name
-    typer.echo(f"pip installing package {package_name}...")
-    github_full_url_with_egg = github_full_url_with_egg.replace("/blob/", "@")
-    venv_path = get_venv_path_in_dir(install_package_root_folder)
-    if os.name == "nt": # Windows
-        pip_path = os.path.join(venv_path, "Scripts", "pip")
-    else:
-        pip_path = os.path.join(venv_path, "bin", "pip")
-    result = subprocess.run([pip_path, "install", github_full_url_with_egg] + args, check=True)    
+    # # pip install the package
+    # curr_dir = os.getcwd()
+    # os.chdir(install_package_root_folder)
+    # github_full_url = f"git+{remote_url_with_token}" # Add git+ to the front of the URL
+    # github_full_url_with_egg = github_full_url + "#egg=" + official_package_name
+    # typer.echo(f"pip installing package {package_name}...")
+    # github_full_url_with_egg = github_full_url_with_egg.replace("/blob/", "@")
+    # venv_path = get_venv_path_in_dir(install_package_root_folder)
+    # if os.name == "nt": # Windows
+    #     pip_path = os.path.join(venv_path, "Scripts", "pip")
+    # else:
+    #     pip_path = os.path.join(venv_path, "bin", "pip")
+    # result = subprocess.run([pip_path, "install", github_full_url_with_egg] + args, check=True)    
  
-    language = pyproject_content["tool"][CLI_NAME]["language"]
+    # language = pyproject_content["tool"][CLI_NAME]["language"]
 
-    if "dependencies" not in pyproject_content["tool"][CLI_NAME]:
-            pyproject_content["tool"][CLI_NAME]["dependencies"] = []
+    # if "dependencies" not in pyproject_content["tool"][CLI_NAME]:
+    #         pyproject_content["tool"][CLI_NAME]["dependencies"] = []
           
-    # MATLAB & R dependencies should install to the venv folder too to keep everything in one place.
-    ross_package_url_regex = r'^[a-zA-Z][a-zA-Z0-9_-]*\s@\sgit\+.*'
-    for dep in pyproject_content["tool"][CLI_NAME]["dependencies"]:
-        if re.search(ross_package_url_regex, dep) is not None:
-            # Get the dependency package name
-            split_dep = dep.split(" ")
-            dep_package_name = split_dep[0]
-            # Get the dependency version
-            at_idx = [(i, c) for i, c in enumerate(dep) if c == "@"]
-            if len(at_idx) != 2:
-                typer.echo("Wrong number of '@' in dependency.")
-                typer.Exit(code=11)
-            version = dep[at_idx[1][0]+1:]
-            install(f"{dep_package_name}=={version}", install_package_root_folder=install_package_root_folder, _config_file_path=_config_file_path)
-            continue
-        # Install the R or MATLAB non-pip installable package.
-        if language.lower() == "r":  
-            folder_path = install_dep_r(dep, venv_path)            
-        elif language.lower() == "matlab":
-            folder_path = install_dep_matlab(dep, venv_path)  
-        # Create package metadata
-        create_metadata(folder_path, dep)
+    # # MATLAB & R dependencies should install to the venv folder too to keep everything in one place.
+    # ross_package_url_regex = r'^[a-zA-Z][a-zA-Z0-9_-]*\s@\sgit\+.*'
+    # for dep in pyproject_content["tool"][CLI_NAME]["dependencies"]:
+    #     if re.search(ross_package_url_regex, dep) is not None:
+    #         # Get the dependency package name
+    #         split_dep = dep.split(" ")
+    #         dep_package_name = split_dep[0]
+    #         # Get the dependency version
+    #         at_idx = [(i, c) for i, c in enumerate(dep) if c == "@"]
+    #         if len(at_idx) != 2:
+    #             typer.echo("Wrong number of '@' in dependency.")
+    #             typer.Exit(code=11)
+    #         version = dep[at_idx[1][0]+1:]
+    #         install(f"{dep_package_name}=={version}", install_package_root_folder=install_package_root_folder, _config_file_path=_config_file_path)
+    #         continue
+    #     # Install the R or MATLAB non-pip installable package.
+    #     if language.lower() == "r":  
+    #         folder_path = install_dep_r(dep, venv_path)            
+    #     elif language.lower() == "matlab":
+    #         folder_path = install_dep_matlab(dep, venv_path)  
+    #     # Create package metadata
+    #     create_metadata(folder_path, dep)
 
-    os.chdir(curr_dir) # Revert back to the original working directory
+    # os.chdir(curr_dir) # Revert back to the original working directory
 
-    typer.echo(f"Successfully installed package {package_name}")
+    # typer.echo(f"Successfully installed package {package_name}")
+
+
+def ross_install(package_name: str, version_specifier: str, install_package_root_folder: str = os.getcwd(), _config_file_path: str = DEFAULT_ROSS_CONFIG_FILE_PATH, args: List[str] = []):
+    """Install a ROSS package using the pyproject.toml file built from the rossproject.toml file in its GitHub repository.
+    """
+    pass
+
+
+def pip_install(package_name: str, version_tag: str, version_specifier: str, install_package_root_folder: str = os.getcwd(), args: List[str] = []):
+    """Install a package using pip.
+    """
+    built_pip_install_command = ["pip", "install", f"{package_name}{version_specifier}{version_tag}"] + args
+    try:
+        subprocess.run(built_pip_install_command, check=True)
+        typer.echo(f"Successfully installed package {package_name} using pip")
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"ROSS failed to install package {package_name} using pip. Aborting.")
+        raise typer.Exit()
 
 
 def install_dep_r(dep: str, venv_path: str):
